@@ -1,0 +1,9 @@
+[G] Concussion Grenade
+[G] Frag Grenade
+[G] Flash Grenade
+[G] Smoke Grenade
+[G] Electric Grenade
+[G] Nail Bomb
+[G] Stick Grenade
+[G] Tear Gas Grenade
+[G] Decoy Grenade

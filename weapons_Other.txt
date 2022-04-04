@@ -1,0 +1,17 @@
+A: Ammo Supply
+A: Ammo Supply
+A: Ammo Supply
+A: Ammo Supply
+Katana
+Machete
+Paddle
+Spade
+Sledgehammer
+Combat Knife
+Ice Axe
+Hatchet
+Baton
+Chef's Knife
+Crowbar
+Frying Pan
+Electric Guitar

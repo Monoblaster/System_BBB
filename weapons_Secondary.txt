@@ -1,0 +1,11 @@
+B&E: M1911
+B&E: M9 Beretta
+B&E: M9 Beretta SD
+B&E: M93 Raffica
+B&E: Glock 17
+B&E: Glock 18
+B&E: Colt Python
+B&E: USP .45
+B&E: TT-33
+B&E: TEC-9
+B&E: Luger

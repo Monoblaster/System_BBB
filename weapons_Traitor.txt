@@ -1,0 +1,11 @@
+[G] Molotov
+[G] Thermite Stick
+[G] Remote Explosive
+[T] Laser Tripmine
+[T] Proxy Mine
+[T] Blast Mine
+[T] Claymore
+Disguiser
+Throwing Knife
+Silenced Gun
+Flare Gun

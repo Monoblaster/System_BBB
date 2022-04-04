@@ -1,0 +1,39 @@
+B&E: AA-12
+B&E: 9A-91
+B&E: AK-47
+B&E: FN P90
+B&E: AKS-74U
+B&E: American-180
+B&E: AR-15
+B&E: AR-15.50
+B&E: AUG A2
+B&E: FAD
+B&E: Falcon
+B&E: FAMAS
+B&E: FMG-9
+B&E: G3
+B&E: Intervention
+B&E: Ithaca 37
+B&E: L96
+B&E: KS-23
+B&E: M4A1
+B&E: M16A3
+B&E: M60
+B&E: MAC-10
+B&E: MK14 EBR
+B&E: MP5K
+B&E: MP7
+B&E: Olin CAWS
+B&E: PDR
+B&E: Ranger
+B&E: RPK
+B&E: Saiga 12
+B&E: SKS Sport
+B&E: SPAS-12
+B&E: Armsel Striker
+B&E: SVD Dragunov
+B&E: M1A1 Thompson
+B&E: M1928 Thompson
+B&E: UMP .45
+B&E: Uzi
+B&E: L85A2

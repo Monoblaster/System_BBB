@@ -1,0 +1,5 @@
+id: 1544
+icon: camera
+type: Miscellaneous
+title: Night Vision Goggles - Item
+version: 1
