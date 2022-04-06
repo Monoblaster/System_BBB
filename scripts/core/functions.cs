@@ -785,11 +785,11 @@ function GameConnection::BBB_Give_Role(%client, %role)
 	switch$(%role)
 	{
 	    case "Detective":
-			Billboard_MountToPlayer(Billboard_ClearGhostTo(Billboard_Create(detectiveBillboard,BillboardMountPlayer),%client),%client.player);
+			Billboard_MountToPlayer(Billboard_ClearGhostTo(Billboard_Create("detectiveBillboard","MountedBillboardPlayer"),%client),%client.player);
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c1D<font:Palatino Linotype:43>\c1ETECTIVE";
 			%client.credits = 3;
 	    case "Traitor":
-			Billboard_MountToPlayer(Billboard_ClearGhostTo(Billboard_Create(traitorBillboard,BillboardMountPlayer),"ALL"),%client.player);
+			Billboard_MountToPlayer(Billboard_ClearGhostTo(Billboard_Create("traitorBillboard","MountedBillboardPlayer",true),"ALL"),%client.player);
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c0T<font:Palatino Linotype:43>\c0RAITOR";
 			%client.credits = 3;
 		case "Innocent":
