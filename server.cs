@@ -15,7 +15,7 @@
 // 1. Preferences
 // =================================================
 // Enable
-$BBB::Enable = false;
+$BBB::Enable = true;
 
 // Maps
 $BBB::Start::Map		= "Add-Ons/BBB_Roy_The_Shipper/save.bls";

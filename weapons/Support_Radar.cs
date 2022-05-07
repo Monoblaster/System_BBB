@@ -13,7 +13,7 @@
 $Pref::Radar::NumBars = 100; // Number of bars
 $Pref::Radar::SearchRadius = 1000; // How far to look for players
 $Pref::Radar::Size = 13; // Font size
-$Pref::Radar::UpdateTime = 0;
+$Pref::Radar::UpdateTime = 1;
 
 // =================================================
 // 2. Functions
@@ -61,6 +61,7 @@ function Player::displayRadar(%player)
 
 function Player::updateRadarPositions(%player)
 {
+	
 	if((getSimTime() - %player.lastRadarCheck) < $Pref::Radar::UpdateTime && %player.lastRadarCheck !$= "")
 	{
 		return;
@@ -82,59 +83,15 @@ function Player::updateRadarPositions(%player)
 		%count++;
 	}
 
-	%groupCount = %player.xrayGhostGroup.getCount();
+	%group = %player.client.visibleBillboardGroup;
+	%group.ClearBillboards("xray");
 	//create new ghosts at our positions and move them there
-	for(%i = 0; %i < %groupCount; %i++)
+	for(%i = 0; %i < %count; %i++)
 	{
-		%billboard = %player.xrayGhostGroup.getObject(%i);
 		%pos = %radarPos[%i];
 		if(%pos !$= "")
 		{
-			%billboard.setTransform(%pos);
-			%billboard.light.setEnable(true);
-		}
-		else
-		{
-			%billboard.light.setEnable(false);
+			%group.billboard("detectiveBillboard",%pos,"xray");
 		}
 	}
-}
-
-function createRadarBillboards(%player)
-{
-	%ghostGroup = %player.xrayGhostGroup;
-	if(!isObject(%ghostGroup))
-	{
-		%ghostGroup = %player.xrayGhostGroup = new scriptGroup();
-	}
-	else
-	{
-		//clear all the previous ghosts
-		%groupCount = %ghostGroup.getCount();
-		for(%i = %groupCount - 1; %i >= 0; %i--)
-		{
-			Billboard_Delete(%ghostGroup.getObject(%i));
-		}
-	}
-
-	for(%i = 0; %i < 30; %i++)
-	{
-		%billboard = Billboard_Create("ghostRadarBillboard","FloatingBillboardPlayer",true);
-
-		//move it to the player and ghost it there
-		Billboard_GhostTo(%billboard,%player.client);
-		%billboard.light.attachtoObject(bob);
-
-		//now move it to it's final resting place
-		schedule(100,0,"finishRadarBillboard",%player,%billboard);
-		%billboard.setnetFlag(1,true);
-	}
-}
-
-function finishRadarBillboard(%player,%billboard)
-{
-	%billboard.light.setDatablock("normalRadarBillboard");
-	%billboard.light.attachtoObject(%billboard);
-	%billboard.light.setEnable(false);
-	%player.xrayGhostGroup.add(%billboard);
 }

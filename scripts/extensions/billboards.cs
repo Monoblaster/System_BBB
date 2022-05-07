@@ -67,7 +67,7 @@ datablock fxLightData(normalRadarBillboard)
 
 	flareOn = true;
 	flarebitmap = "./radar.png";
-	ConstantSize = 1.25;
+	ConstantSize = 1.35;
     ConstantSizeOn = true;
     FadeTime = 999999;
 
@@ -125,25 +125,19 @@ function Billboard_Create(%lightDB,%mountDB,%dontGhost)
 	%billboard.attachToObject(%mount);
 	
 
+	%billboard.setNetFlag(6,true);
+	%mount.setNetFlag(6,true);
 	if(!%dontGhost)
 	{
-		//ghost to prevent it from not ghosting
-		%billboard.setNetFlag(6,true);
+		//make sure it scopes just because it has to manually be done with these flags
 		%billboard.setScopeAlways();
-		%billboard.setNetFlag(6,true);
-		%mount.setNetFlag(6,true);
 		%mount.setScopeAlways();
-		%mount.setNetFlag(6,true);
 	}
 	else
 	{
-		//clear scope to prevent it from ghosting ever
-		%billboard.setNetFlag(6,true);
-		%billboard.ClearScopeAlways();
-		%billboard.setNetFlag(6,true);
-		%mount.setNetFlag(6,true);
-		%mount.ClearScopeAlways();
-		%mount.setNetFlag(6,true);
+		//disable ghosting automaticaly
+		%billboard.setNetFlag(8,false);
+		%mount.setNetFlag(8,false);
 	}
 
 	return %mount;
@@ -158,41 +152,37 @@ function Billboard_Ghost(%billboard,%client)
 		for(%i = 0; %i < %count; %i++)
 		{	
 			%client = %group.getObject(%i);
-			Billboard_GhostTo(%billboard,%client);
+			Billboard_Ghost(%billboard,%client);
 		}
 		return %billboard;
 	}
 
 	if(!isObject(%billboard) || !isObject(%billboard.light))
 	{
-		warn("Billboard_GhostTo: " @ %billboard @ " is not a valid billboard");
+		warn("Billboard_Ghost: " @ %billboard @ " is not a valid billboard");
 		return;
 	}
 
 	if(%billboard.getClassName() !$= "aiPlayer" && %billboard.light.getClassName() $= "fxLight")
 	{
-		warn("Billboard_GhostTo: " @ %billboard @ " is not a valid billboard");
+		warn("Billboard_Ghost: " @ %billboard @ " is not a valid billboard");
 		return;
 	}
 
 	if(!isObject(%client))
 	{
-		warn("Billboard_GhostTo: " @ %client @ " is not a valid client");
+		warn("Billboard_Ghost: " @ %client @ " is not a valid client");
 		return;
 	}
 
 	if(%client.getClassName() !$= "GameConnection")
 	{
-		warn("Billboard_GhostTo: " @ %client @ " is not a valid client");
+		warn("Billboard_Ghost: " @ %client @ " is not a valid client");
 		return;
 	}
 
-	%Billboard.setNetFlag(6,true);
 	%billboard.ScopeToClient(%client);
-	%Billboard.setNetFlag(6,true);
-	%Billboard.light.setNetFlag(6,true);
 	%billboard.light.ScopeToClient(%client);
-	%Billboard.light.setNetFlag(6,true);
 
 	return %billboard;
 }
@@ -206,41 +196,37 @@ function Billboard_ClearGhost(%billboard,%client)
 		for(%i = 0; %i < %count; %i++)
 		{	
 			%client = %group.getObject(%i);
-			Billboard_ClearGhostTo(%billboard,%client);
+			Billboard_ClearGhost(%billboard,%client);
 		}
 		return %billboard;
 	}
 
 	if(!isObject(%billboard) || !isObject(%billboard.light))
 	{
-		warn("Billboard_ClearGhostTo: " @ %billboard @ " is not a valid billboard");
+		warn("Billboard_ClearGhost: " @ %billboard @ " is not a valid billboard");
 		return;
 	}
 
 	if(%billboard.getClassName() !$= "aiPlayer" && %billboard.light.getClassName() $= "fxLight")
 	{
-		warn("Billboard_ClearGhostTo: " @ %billboard @ " is not a valid billboard");
+		warn("Billboard_ClearGhost: " @ %billboard @ " is not a valid billboard");
 		return;
 	}
 
 	if(!isObject(%client))
 	{
-		warn("Billboard_ClearGhostTo: " @ %client @ " is not a valid client");
+		warn("Billboard_ClearGhost: " @ %client @ " is not a valid client");
 		return;
 	}
 
 	if(%client.getClassName() !$= "GameConnection")
 	{
-		warn("Billboard_ClearGhostTo: " @ %client @ " is not a valid client");
+		warn("Billboard_ClearGhost: " @ %client @ " is not a valid client");
 		return;
 	}
 
-	%Billboard.setNetFlag(6,true);
 	%billboard.ClearScopeToClient(%client);
-	%Billboard.setNetFlag(6,true);
-	%Billboard.light.setNetFlag(6,true);
 	%billboard.light.ClearScopeToClient(%client);
-	%Billboard.light.setNetFlag(6,true);
 
 	return %billboard;
 }
@@ -249,19 +235,19 @@ function Billboard_Mount(%billboard,%player)
 {	
 	if(!isObject(%billboard) || !isObject(%billboard.light))
 	{
-		warn("Billboard_MountToPlayer: " @ %billboard @ " is not a valid billboard");
+		warn("Billboard_Mount: " @ %billboard @ " is not a valid billboard");
 		return;
 	}
 
 	if(%billboard.getClassName() !$= "aiPlayer" && %billboard.light.getClassName() $= "fxLight")
 	{
-		warn("Billboard_MountToPlayer: " @ %billboard @ " is not a valid billboard");
+		warn("Billboard_Mount: " @ %billboard @ " is not a valid billboard");
 		return;
 	}
 
 	if(isObject(%player.billboard))
 	{
-		warn("Billboard_MountToPlayer: Billboard already mounted to " @ %player);
+		warn("Billboard_Mount: Billboard already mounted to " @ %player);
 		return;
 	}
 
@@ -275,20 +261,20 @@ function Billboard_Ummount(%player)
 {	
 	if(!isObject(%player.billboard))
 	{
-		warn("Billboard_UmMountFromPlayer: Billboard is not already mounted to " @ %player);
+		warn("Billboard_Ummount: Billboard is not already mounted to " @ %player);
 		return;
 	}
 
 	%billboard = %player.billboard;
 	if(!isObject(%billboard) || !isObject(%billboard.light))
 	{
-		warn("Billboard_UmMountFromPlayer: " @ %billboard @ " is not a valid billboard");
+		warn("Billboard_Ummount: " @ %billboard @ " is not a valid billboard");
 		return;
 	}
 
 	if(%billboard.getClassName() !$= "aiPlayer" && %billboard.light.getClassName() $= "fxLight")
 	{
-		warn("Billboard_UmMountFromPlayer: " @ %billboard @ " is not a valid billboard");
+		warn("Billboard_Ummount: " @ %billboard @ " is not a valid billboard");
 		return;
 	}
     
@@ -317,25 +303,43 @@ function Billboard_Delete(%billboard)
 
 function VisibleBillboard_Create(%client,%mountDB,%count)
 {
+	if(!isObject(%mountDB))
+	{
+		warn("VisibleBillboard_Create: " @ %mountDB @ " is not a valid player datablock");
+		return;
+	}
+
+	if(%mountDB.getClassName() !$= "PlayerData")
+	{
+		warn("VisibleBillboard_Create: " @ %mountDB @ " is not a valid player datablock");
+		return;
+	}
+
 	%client.visibleBillboardGroup = %group = new scriptGroup()
 	{
 		class = "VisibleBillboard";
-	}
+		client = %client;
+	};
 
 	%mount = new aiPlayer()
 	{
 		dataBlock = "FloatingBillboardPlayer";
 	};
+	%mount.setDamageLevel(10000);
+	
+	%mount.setNetFlag(8,false);
 	%mount.setNetFlag(6,true);
-	%mount.ClearScopeAlways();
-	%mount.setNetFlag(6,true);
+	%mount.ScopeToClient(%client);
+
+	%client.player.mountObject(%mount,8);
+
 	for(%i = 0; %i < %count; %i++)
 	{
 		%billboard = Billboard_Create("GhostRadarBillboard",%mountDB,true);
 		Billboard_Ghost(%billboard,%client);
 		%billboard.light.attachToObject(%mount);
 
-		schedule(%count * 5, 0, "FinishvisibleBillboard", %billboard, %group);		
+		schedule(%i * 300 + 300, 0, "FinishvisibleBillboard", %billboard, %group);		
 	}
 
 	return %group;
@@ -345,11 +349,23 @@ function FinishVisibleBillboard(%billboard,%group)
 {
 	%group.add(%billboard);
 	%billboard.light.attachToObject(%billboard);
-	%billboard.light.setEnable(false);
+	Billboard_ClearGhost(%billboard,%group.client);
 }
 
-function VisibleBillboard::Billboard(%group,%lightDB,%position)
+function VisibleBillboard::Billboard(%group,%lightDB,%position,%tag)
 {
+	if(!isObject(%lightDB))
+	{
+		warn("VisibleBillboard::Billboard: " @ %lightDB @ " is not a valid fxLight datablock");
+		return;
+	}
+
+	if(%lightDB.getClassName() !$= "fxLightData")
+	{
+		warn("VisibleBillboard::Billboard: " @ %lightDB @ " is not a valid fxLight datablock");
+		return;
+	}
+
 	%active = %group.active;
 	if(%active >= %group.getCount())
 	{
@@ -359,31 +375,29 @@ function VisibleBillboard::Billboard(%group,%lightDB,%position)
 	
 	//get an inactive billboard
 	%billboard = %group.getObject(%active);
+	%billboard.tag = %tag;
 	%group.active++;
 
 	//set it's datablock and enable
-	%billboard.light.setEnable(true);
 	%billboard.light.setDatablock(%lightDB);
+	Billboard_Ghost(%billboard,%group.client);
 
-	if(isObject(%position))
-	{
-		//mount to object
-		%position.mountObject(%billboard,8);
-	}
-	else
-	{
-		%billboard.setTransform(%position);
-	}
+	%billboard.setTransform(%position);
+
+	return %billboard;
 }
 
-function VisibleBillboard::ClearBillboards(%group)
+function VisibleBillboard::ClearBillboards(%group,%tag)
 {
-	%group.active = 0;
-
 	%count = %group.getCount();
-	for(%i = 0; %i < %count; %i++)
+	for(%i = %count - 1; %i >= 0; %i--)
 	{
 		%billboard = %group.getObject(%i);
+		if(%tag !$= "" && %tag !$= %billboard.tag)
+		{
+			continue;
+		}
+
 		//disable all of the lights and unmount if mounted
 		%mount = %billboard.getObjectMount();
 		if(isObject(%mount))
@@ -391,8 +405,16 @@ function VisibleBillboard::ClearBillboards(%group)
 			%mount.unmountObject(%billboard);
 		}
 
-		%billboard.light.setEnable(false);
+		Billboard_ClearGhost(%billboard,%group.client);
+		//remove old tag
+		%billboard.tag = "";
+
+		//push to back so only active billboards are in fornt
+		%group.pushToBack(%billboard);
+		%group.active--;
 	}
+
+	return %group;
 }
 
 package billboards
@@ -414,5 +436,24 @@ package billboards
         }
         Parent::Delete(%this);
     }
+
+	//when the player is first spawned create their always billboards group
+	// function GameConnection::onClientEnterGame(%client)
+	// {	
+	// 	%r = Parent::onClientEnterGame(%client);
+	// 	schedule(5000,%client,"VisibleBillboard_Create",%client,"FloatingBillboardPlayer",30);	
+	// 	return %r;
+	// }
+
+	// function GameConnection::onClientLeaveGame(%client)
+	// {
+	// 	if(isObject(%client.visibleBillboardGroup))
+	// 	{
+	// 		%client.visibleBillboardGroup.deleteall();
+	// 		%client.visibleBillboardGroup.delete();
+	// 	}
+		
+	// 	return Parent::onClientLeaveGame(%client);
+	// }
 };
 activatePackage("billboards");

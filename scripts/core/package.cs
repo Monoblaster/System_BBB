@@ -79,7 +79,7 @@ package BBB_Armor
 		{
 			%client = %obj.client;
 
-			if(isObject(%client) && isObject(%obj))
+			if(isObject(%client) && isObject(%obj) && isObject(AE_AmmoItem))
 			{
 
 				if((%col.getType() & $TypeMasks::ItemObjectType) && %col.getDatablock() != AE_AmmoItem.getID())
