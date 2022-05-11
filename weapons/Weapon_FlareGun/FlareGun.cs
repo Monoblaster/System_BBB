@@ -304,7 +304,8 @@ package Flare
       if(%col.getType() & $TypeMasks::PlayerObjectType)
       {
          %col.damage(%obj, %pos, 10, $DamageType::Flare_Impact);
-         %col.flareBurnSche = %col.schedule(2500,FlareBurn,%obj, %pos, %this.burnDamage, $DamageType::Flare_Burn,10);
+         %col.preFlareBurnSche = %col.schedule(2500,FlareBurn,%obj, %pos, %this.burnDamage, $DamageType::Flare_Burn,10);
+         
       }
       else
       {
@@ -331,6 +332,8 @@ package Flare
    }
    function player::FlareBurn(%player,%obj,%pos,%damage,%type,%ticks)
    {
+      cencel(%player.flareBurnSche);
+
       %player.burning = false;
       %player.damage(%obj, %pos, 1, %type);
       %ticks--;

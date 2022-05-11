@@ -106,6 +106,9 @@ function BBB_RebuildItemTable()
 						warn("BBB_RebuildItemTable() - Couldn't find weapon \"" @ %str @ "\" for table \"" @ %table @ "\"");
 				}
 			}
+
+			%fileObj.close();
+			%fileobj.delete();
 		}
 	}
 }
@@ -172,6 +175,11 @@ function BBB() // -- The only non-packaged function not in functions.cs! Wow! (I
 
 			isBBB = true;
 		};
+
+		MinigameGroup.add(BBB_Minigame);
+		$MiniGameColorTaken[BBB_Minigame.colorIdx] = 1;
+		$DefaultMinigame = BBB_Minigame;
+		commandToAll('AddMinigameLine', BBB_Minigame.getLine(), BBB_Minigame.getId(), BBB_Minigame.colorIdx);
 
 		BBB_RebuildItemTable();
 		BBB_BuildMapList();

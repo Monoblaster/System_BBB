@@ -785,11 +785,11 @@ function GameConnection::BBB_Give_Role(%client, %role)
 	switch$(%role)
 	{
 	    case "Detective":
-			Billboard_MountToPlayer(Billboard_ClearGhostTo(Billboard_Create("detectiveBillboard","MountedBillboardPlayer"),%client),%client.player);
+			Billboard_Mount(Billboard_ClearGhost(Billboard_Create("detectiveBillboard","MountedBillboardPlayer"),%client),%client.player);
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c1D<font:Palatino Linotype:43>\c1ETECTIVE";
 			%client.credits = 3;
 	    case "Traitor":
-			Billboard_MountToPlayer(Billboard_ClearGhostTo(Billboard_Create("traitorBillboard","MountedBillboardPlayer",true),"ALL"),%client.player);
+			Billboard_Mount(Billboard_ClearGhost(Billboard_Create("traitorBillboard","MountedBillboardPlayer",true),"ALL"),%client.player);
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c0T<font:Palatino Linotype:43>\c0RAITOR";
 			%client.credits = 3;
 		case "Innocent":
@@ -1451,10 +1451,9 @@ function BBB_Minigame::assignRoles(%so)
 			for(%i = 0; %i < %playerCount; %i++)
 			{
 				%checkTraitor = %so.member[%i];
-				talk(%checkTraitor SPC %checkTraitor.role);
 				if(%checkTraitor.role $= "Traitor" && %checkTraitor !$= %client)
 				{
-					Billboard_GhostTo(%client.player.billboard,%checkTraitor);
+					Billboard_Ghost(%client.player.billboard,%checkTraitor);
 				}
 			}	
 
@@ -1790,6 +1789,8 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 // =================================================
 function serverCmdBuy(%client, %search)
 {
+	%player.lastBoughtItem = "";
+
 	%role = %client.role;
 	if((%role !$= "Detective" && %role !$= "Traitor") || ( !isObject(%client.player)))
 		return;
@@ -1828,6 +1829,7 @@ function serverCmdBuy(%client, %search)
 				 %player.weaponCount++;
 				 messageClient(%client,'MsgItemPickup','',%i,%image); //%image.getID());
 				 %player.bought[%image] = true;
+				 %player.lastBoughtItem = %image;
 				 %itemGiven = true;
 				 %client.credits--;
 				 break;
@@ -1865,6 +1867,7 @@ function serverCmdBuy(%client, %search)
 					 %player.weaponCount++;
 					 messageClient(%client,'MsgItemPickup','',%i,%image); //%image.getID());
 					 %player.bought[%image] = true;
+					 %player.lastBoughtItem = %image;
 					 %itemGiven = true;
 					 %client.credits--;
 					 break;
@@ -1947,6 +1950,8 @@ function serverCmdSlayNR(%client, %search, %amount)
 
 function serverCmdVoteMap(%client, %w0, %w1, %w2, %w3, %w4, %w5, %w6, %w8, %w9, %w10)
 {
+	%client.lastvotedmap = "";
+
 	if($BBB::Round::Phase !$= "MapVote")
 		return;
 
@@ -2012,6 +2017,8 @@ function serverCmdVoteMap(%client, %w0, %w1, %w2, %w3, %w4, %w5, %w6, %w8, %w9, 
 		messageClient(%client, '', "<bitmap:base/client/ui/ci/star>\c6 You " @ "\c4voted for \c6" @ %displayName @ "\c4.");
 		%client.play2D(BBB_Chat_Sound);
 	}
+
+	%client.lastvotedmap = %displayName;
 }
 
 function serverCmdRole(%cl, %t)
