@@ -1,2 +1,4 @@
+XRay
 Syringe
 Riot Shield
+DNA Scanner

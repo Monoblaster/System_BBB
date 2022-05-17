@@ -862,7 +862,7 @@ package BBB_ServerCMD
 			return;
 		}
 
-		%msg = StripMLControlChars(%msg);
+		%msg = trim(StripMLControlChars(%msg));
 
 		%msg = strreplace(%msg, "https://", "http://");
 
@@ -911,7 +911,7 @@ package BBB_ServerCMD
 					%player = %tarClient.player;
 					if(!isObject(%player))
 					{
-						chatMessageClient (%tarClient, %client, '%6 %5 \c4%2<color:DDDDDD>: %4', %client.clanPrefix, %client.getPlayerName(), %client.clanSuffix, %msg, %type, %client.icon, %a7, %a8, %a9, %a10);
+						chatMessageClient (%tarClient, %client,'','' ,'%5 %6 \c4%2<color:DDDDDD>: %4', %client.clanPrefix, %client.getPlayerName(), %client.clanSuffix, %msg, %type, %client.icon, %a7, %a8, %a9, %a10);
 						//messageClient(%tarClient, "", %send);
 						%tarClient.play2D(BBB_Chat_Sound);
 					}

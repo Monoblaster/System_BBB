@@ -165,60 +165,48 @@ package DNA_Scanner
 	function Player::updateRadarPositions(%obj)
 	{
 		if(!%obj.hasDNAScanner)
-			return parent::updateRadarPositions(%obj);
-			
-		if($Sim::Time - %obj.lastRadarCheck < $Pref::Radar::UpdateTime)
-			return;
-			
-		%obj.lastRadarCheck = $Sim::Time;
-		// clear cache
-		%counter1 = 0;
-		while(%obj.radarPos[%counter1] !$= "")
 		{
-			%obj.radarPos[%counter1] = "";
-			%counter1++;
+			return parent::updateRadarPositions(%obj);
 		}
+			
+		if((getSimTime() - %player.lastRadarCheck) < $Pref::Radar::UpdateTime && %player.lastRadarCheck !$= "")
+		{
+			return;
+		}
+		%player.lastRadarCheck = getSimTime();
 		
 		// get pos
-		initContainerRadiusSearch(%obj.getPosition(), $Pref::Radar::SearchRadius, $TypeMasks::PlayerObjectType);		
-		%counter2 = 0;
-		while(isObject(%col = containerSearchNext()))
+		initContainerRadiusSearch(%player.getPosition(), $Pref::Radar::SearchRadius, $TypeMasks::PlayerObjectType);		
+		%count = 0;
+		while(isObject(%currObj = containerSearchNext()))
 		{
-			if(%col == %obj)
+			if(strstr(%currObj, %obj.DNA) < 0)
+			{
 				continue;
-			if(strstr(%col, %obj.DNA) < 0)
-				continue;
-			if(%col.getClassName() $= "AIPlayer")
-				continue;
-			
-			%obj.radarPos[%counter2] = %col.getPosition();
+			}
 
-			%counter2++;
+			if(%currObj == %player)
+			{
+				continue;
+			}
+			// if(%col.getClassName() $= "AIPlayer")
+			// 	continue;
+			%radarPos[%count] = %currObj.getPosition();
+			%count++;
+		}
+
+		%group = %player.client.visibleBillboardGroup;
+		%group.ClearBillboards("xray");
+		//create new ghosts at our positions and move them there
+		for(%i = 0; %i < %count; %i++)
+		{
+			%pos = %radarPos[%i];
+			if(%pos !$= "")
+			{
+				%group.billboard("normalRadarBillboard",%pos,"xray");
+			}
 		}
 	}
-	
-	// function DNAScannerProjectile::onCollision(%this, %obj, %col, %fade, %pos, %normal, %velocity)
-	// {
-		// initContainerRadiusSearch(%pos, 0.1, $TypeMasks::CorpseObjectType); //Scale radius search so it searches the entirety of raycast
-		// while (isObject(%col = containerSearchNext()))
-		// {
-			// if (%col.isBody)
-			// {
-				// %found = true;
-				// break;
-			// }
-		// }
-		
-		// if(%found)
-		// {
-			// for(%i = 0; %i < getFieldCount(%col.fingerPrints); %i++)
-			// {
-				// %field = getField(%col.fingerPrints, %i);
-				// if(strstr(%obj.DNA, %field) < 0)
-					// %obj.DNA = %obj.DNA @ "	" @ %field;
-			// }
-		// }
-	// }
 	
 	function XrayImage::onFire(%this,%obj,%slot)
 	{

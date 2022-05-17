@@ -10,7 +10,6 @@ datablock PlayerData(MountedBillboardPlayer)
 	boundingBox = vectorScale("20 20 20", 4);
 };
 
-
 //custom billboards
 datablock fxLightData(detectiveBillboard)
 {
@@ -42,7 +41,7 @@ datablock fxLightData(traitorBillboard)
 	flareColor = "1 0 0 1";
 };
 
-datablock fxLightData(ghostRadarBillboard)
+datablock fxLightData(LoadingBillboard)
 {
 	LightOn = false;
 
@@ -57,8 +56,27 @@ datablock fxLightData(ghostRadarBillboard)
 	flareColor = "1 0 0 1";
 
 	AnimOffsets = true;
-	startOffset = "0 0 2.2";
-	endOffset = "0 0 2.2";
+	startOffset = "0 0 0";
+	endOffset = "0 0 0";
+};
+
+datablock fxLightData(LoadedBillboard)
+{
+	LightOn = false;
+
+	flareOn = true;
+	flarebitmap = "./radar.png";
+	ConstantSize = 1;
+    ConstantSizeOn = true;
+    FadeTime = inf;
+
+	LinkFlare = false;
+	blendMode = 1;
+	flareColor = "1 0 0 1";
+
+	AnimOffsets = true;
+	startOffset = "0 0 0";
+	endOffset = "0 0 0";
 };
 
 datablock fxLightData(normalRadarBillboard)
@@ -69,11 +87,30 @@ datablock fxLightData(normalRadarBillboard)
 	flarebitmap = "./radar.png";
 	ConstantSize = 1.35;
     ConstantSizeOn = true;
-    FadeTime = 999999;
+    FadeTime = inf;
 
 	LinkFlare = false;
 	blendMode = 1;
 	flareColor = "0 1 0 1";
+
+	AnimOffsets = true;
+	startOffset = "0 0 1.25";
+	endOffset = "0 0 1.25";
+};
+
+datablock fxLightData(traitorRadarBillboard)
+{
+	LightOn = false;
+
+	flareOn = true;
+	flarebitmap = "./radar.png";
+	ConstantSize = 1.35;
+    ConstantSizeOn = true;
+    FadeTime = inf;
+
+	LinkFlare = false;
+	blendMode = 1;
+	flareColor = "1 0 0 1";
 
 	AnimOffsets = true;
 	startOffset = "0 0 1.25";
@@ -314,16 +351,21 @@ function VisibleBillboard_Create(%client,%mountDB,%count)
 		warn("VisibleBillboard_Create: " @ %mountDB @ " is not a valid player datablock");
 		return;
 	}
+	%client.CreatingVisibleBillboard = true;
 
 	%client.visibleBillboardGroup = %group = new scriptGroup()
 	{
 		class = "VisibleBillboard";
 		client = %client;
 	};
+	%client.camera.setTransform("0 0 1000 0 0 0 0");
+	%client.setControlObject(%client.camera);
+	%client.camera.setcontrolObject(%client.dummyCamera);
 
 	%mount = new aiPlayer()
 	{
 		dataBlock = "FloatingBillboardPlayer";
+		position = "0 10 1000";
 	};
 	%mount.setDamageLevel(10000);
 	
@@ -331,25 +373,30 @@ function VisibleBillboard_Create(%client,%mountDB,%count)
 	%mount.setNetFlag(6,true);
 	%mount.ScopeToClient(%client);
 
-	%client.player.mountObject(%mount,8);
-
 	for(%i = 0; %i < %count; %i++)
 	{
-		%billboard = Billboard_Create("GhostRadarBillboard",%mountDB,true);
+		%billboard = Billboard_Create("LoadingBillboard",%mountDB,true);
 		Billboard_Ghost(%billboard,%client);
 		%billboard.light.attachToObject(%mount);
-
-		schedule(%i * 300 + 300, 0, "FinishvisibleBillboard", %billboard, %group);		
+		%group.add(%billboard);
 	}
 
 	return %group;
 }
 
-function FinishVisibleBillboard(%billboard,%group)
+function VisibleBillboard::FinishVisibleBillboards(%group)
 {
-	%group.add(%billboard);
-	%billboard.light.attachToObject(%billboard);
-	Billboard_ClearGhost(%billboard,%group.client);
+	%client = %group.client;
+	for(%i = 0; %i < %group.getCount(); %i++)
+	{
+		%billboard = %group.getObject(%i);
+
+		%billboard.light.setNetFlag(8,true);
+		%billboard.light.setDatablock(LoadedBillboard);
+		%billboard.light.setEnable(false);
+		%billboard.light.attachToObject(%billboard);
+		%billboard.light.setNetFlag(8,false);
+	}
 }
 
 function VisibleBillboard::Billboard(%group,%lightDB,%position,%tag)
@@ -379,8 +426,10 @@ function VisibleBillboard::Billboard(%group,%lightDB,%position,%tag)
 	%group.active++;
 
 	//set it's datablock and enable
+	%billboard.light.setNetFlag(8,true);
 	%billboard.light.setDatablock(%lightDB);
-	Billboard_Ghost(%billboard,%group.client);
+	%billboard.light.setEnable(true);
+	%billboard.light.setNetFlag(8,false);
 
 	%billboard.setTransform(%position);
 
@@ -405,7 +454,9 @@ function VisibleBillboard::ClearBillboards(%group,%tag)
 			%mount.unmountObject(%billboard);
 		}
 
-		Billboard_ClearGhost(%billboard,%group.client);
+		%billboard.light.setNetFlag(8,true);
+		%billboard.light.setEnable(false);
+		%billboard.light.setNetFlag(8,false);
 		//remove old tag
 		%billboard.tag = "";
 
@@ -419,6 +470,33 @@ function VisibleBillboard::ClearBillboards(%group,%tag)
 
 package billboards
 {
+	function Observer::OnTrigger(%data,%obj,%triggerNum,%triggerVal)
+	{
+		if(isObject(%obj))
+		{
+			%client = %obj.getControllingClient();
+		}
+		
+		if(%client.CreatingVisibleBillboard)
+		{
+			%client.centerPrint("");
+			%client.CreatingVisibleBillboard = false;
+
+			%client.visibleBillboardGroup.FinishVisibleBillboards();
+			%client.camera.setControlObject(0);
+
+			%player = %client.player;
+			if(isObject(%client.player))
+			{
+				%client.setControlObject(%client.player);
+			}
+		}
+		else
+		{
+			Parent::OnTrigger(%data,%obj,%triggerNum,%triggerVal);
+		}
+	}
+
     function Armor::onDisabled(%this, %obj, %state)
     {
         if(isObject(%obj.billboard))
@@ -438,22 +516,24 @@ package billboards
     }
 
 	//when the player is first spawned create their always billboards group
-	// function GameConnection::onClientEnterGame(%client)
-	// {	
-	// 	%r = Parent::onClientEnterGame(%client);
-	// 	schedule(5000,%client,"VisibleBillboard_Create",%client,"FloatingBillboardPlayer",30);	
-	// 	return %r;
-	// }
+	function GameConnection::onClientEnterGame(%client)
+	{	
+		%r = Parent::onClientEnterGame(%client);
+		%client.centerPrint("\c6Welcome To TTT! Yes that's me talking to you!<br>\c5Click when you're ready to join.\c6 Make sure to look me in the eyes while you do it.");
+		VisibleBillboard_Create(%client,"FloatingBillboardPlayer",30);
+		return %r;
+	}
 
-	// function GameConnection::onClientLeaveGame(%client)
-	// {
-	// 	if(isObject(%client.visibleBillboardGroup))
-	// 	{
-	// 		%client.visibleBillboardGroup.deleteall();
-	// 		%client.visibleBillboardGroup.delete();
-	// 	}
+	function GameConnection::onClientLeaveGame(%client)
+	{
+		if(isObject(%client.visibleBillboardGroup))
+		{
+			%client.visibleBillboardGroup.deleteall();
+			%client.visibleBillboardGroup.delete();
+		}
 		
-	// 	return Parent::onClientLeaveGame(%client);
-	// }
+		return Parent::onClientLeaveGame(%client);
+	}
 };
+deactivatePackage("billboards");
 activatePackage("billboards");

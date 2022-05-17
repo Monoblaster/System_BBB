@@ -13,7 +13,7 @@
 $Pref::Radar::NumBars = 100; // Number of bars
 $Pref::Radar::SearchRadius = 1000; // How far to look for players
 $Pref::Radar::Size = 13; // Font size
-$Pref::Radar::UpdateTime = 1;
+$Pref::Radar::UpdateTime = 20000;
 
 // =================================================
 // 2. Functions
@@ -56,7 +56,7 @@ $Radar::DisplayFont = "<font:consolas:15>";
 $Radar::DisplayBoldFont = "<font:consolas bold:20>";
 function Player::displayRadar(%player)
 {
-	%player.client.centerPrint("\c7refreshing in " @ mRound(((%player.lastRadarCheck + $Pref::Radar::UpdateTime) - getSimTime()) / 1000) @ "..." NL %left @ %string @ "<font:palatino linotype:25>" @ %right NL "\c4" @ %closestDist);
+	%player.client.centerPrint("\c7refreshing in " @ mCeil(((%player.lastRadarCheck + $Pref::Radar::UpdateTime) - getSimTime()) / 1000) @ "..." NL %left @ %string @ "<font:palatino linotype:25>" @ %right NL "\c4" @ %closestDist);
 }
 
 function Player::updateRadarPositions(%player)
@@ -80,6 +80,7 @@ function Player::updateRadarPositions(%player)
 		// if(%col.getClassName() $= "AIPlayer")
 		// 	continue;
 		%radarPos[%count] = %currObj.getPosition();
+		%radarRole[%count] = %currObj.client.role;
 		%count++;
 	}
 
@@ -89,9 +90,17 @@ function Player::updateRadarPositions(%player)
 	for(%i = 0; %i < %count; %i++)
 	{
 		%pos = %radarPos[%i];
+		%role = %radarRole[%i];
 		if(%pos !$= "")
 		{
-			%group.billboard("detectiveBillboard",%pos,"xray");
+			if(%role $= "Traitor")
+			{
+				%group.billboard("traitorRadarBillboard",%pos,"xray");
+			}
+			else
+			{
+				%group.billboard("normalRadarBillboard",%pos,"xray");
+			}
 		}
 	}
 }
