@@ -58,18 +58,6 @@ datablock ShapeBaseImageData(HealthStationHandImage)
   stateAllowImageChange[2] = true;
   stateScript[2] = "onFire";
 };
-function MiniGameSO::clearHealthStations(%this)
-{
-	if(!isObject(HSSimGroup))
-		return;
-	%count = HSSimGroup.getCount();
-	for(%i=0;%i<%count;%i++)
-	{
-		%bot = HSSimGroup.getObject(0);
-		HSSimGroup.remove(%bot);
-		%bot.delete();
-	}
-}
 
 function HealthStationHandImage::onFire(%this,%obj,%slot)
 {
@@ -92,28 +80,31 @@ function GameConnection::createStation(%client)
 	%minigame = getMiniGameFromObject(%client);
 	%bot = new AIPlayer()
 	{
-		datablock = HealthStation;
+		dataBlock = HealthStation;
 		position = %position;
 		minigame = %minigame;
 	};
+	%bot.setTransform(%player.getTransform());
 	HSSimGroup.add(%bot);
 	%bot.charge = 200;
 	%bot.recharge();
 	%bot.setCrouching(true);
 	%bot.centerPrintData = "<br><br><br>\c6Charge:<br>\c4" @ %bot.charge;
 }
-function player::HPStationHeal(%player,%bot)
+
+function player::HPStationHeal(%player,%bot,%auto)
 {	
-	if($sim::time - %bot.lastClicked[%player] < 1)
+	if($sim::time - %bot.lastClicked[%player] < 1 && ! %auto)
 		return;
 	
 	%bot.lastClicked[%player] = $sim::time;
 	%bot.lastClicked = $sim::time;
+	cancel(%player.HPStationHealSchedule);
 	
 
 	%maxHP = %player.getDataBlock().maxDamage;
 	%hp = %player.getDatablock().maxDamage - %player.getDamageLevel();
-	if(%bot.charge > 1 && %hp != %maxHP)
+	if(%bot.charge > 0 && %hp != %maxHP)
 	{
 		%bot.playAudio(0, beep_EKG_Sound);
 		%bot.charge -= 1;
@@ -124,37 +115,25 @@ function player::HPStationHeal(%player,%bot)
 		%client = %player.client;
 		%healthText = "\c2" @ %player.getDatablock().maxDamage - %player.getDamageLevel();
 		BBB_TimerLoop_ForceUpdate(%client, "bottomPrint", 2, %healthText);
+		%player.HPStationHealSchedule = %player.schedule(1000,"HPStationHeal",%bot, true);
+	}
+	else
+	{
+		%bot.playAudio(0, beep_TryAgain_Sound);
 	}
 }
+
 function AIPlayer::Recharge(%bot)
 {
-	%bot.schedule(3000,Recharge);
+	cancel(%bot.rechargeSchedule);
 	if(%bot.charge < 200 && $sim::time - %bot.lastClicked > 5)
 	{
 		%bot.charge ++;
 		%bot.centerPrintData = "<br><br><br>\c6Charge:<br>\c4" @ %bot.charge;
 	}
+	%bot.rechargeSchedule = %bot.schedule(3000,Recharge);
 }
-datablock TSShapeConstructor(Microwave)
-{
-	baseShape  = "./Microwave.dts";
-	sequence0  = "./Root.dsq root";
 
-	sequence1  = "./Root.dsq root";
-	sequence2  = "./Root.dsq root";
-	sequence3  = "./Root.dsq root";
-	sequence4  = "./Root.dsq root";
-
-	sequence5  = "./Root.dsq root";
-	sequence6  = "./Root.dsq root";
-	sequence7  = "./Root.dsq root";
-	sequence8  = "./Root.dsq root";
-
-	sequence12 = "./Root.dsq root";
-	sequence13 = "./Root.dsq root";
-	sequence14 = "./Root.dsq root";
-	sequence15 = "./Root.dsq root";
-};    
 datablock playerData(HealthStation : PlayerStandardArmor)
 {
 	shapeFile = "./Microwave.dts";
@@ -165,34 +144,49 @@ datablock playerData(HealthStation : PlayerStandardArmor)
 
 package HealthStation
 {
-	function player::activateStuff(%this)
+	function Armor::OnTrigger(%data,%obj,%tNum,%tVal)
 	{
-		%start = %this.getEyePoint();
-		%end = vectorAdd(%start, vectorScale(%this.getEyeVector(), 5));
-		%ray = containerRayCast(%start, %end, $Typemasks::PlayerObjectType, %this);
-		if(isObject(%hit = getWord(%ray, 0)))
+		if(%tNum == 0)
 		{
-			if(%hit.getClassName() $= "AIPlayer")
+			if(%tVal)
 			{
-				if(%hit.getDataBlock().getID() == nameToId(HealthStation))
-					%this.HPStationHeal(%hit);
+				%start = %obj.getEyePoint();
+				%end = vectorAdd(%start, vectorScale(%obj.getEyeVector(), 5));
+				%ray = containerRayCast(%start, %end, $Typemasks::PlayerObjectType, %obj);
+				if(isObject(%hit = getWord(%ray, 0)))
+				{
+					if(%hit.getClassName() $= "AIPlayer")
+					{
+						if(%hit.getDataBlock().getID() == nameToId(HealthStation))
+							%obj.HPStationHeal(%hit);
+					}
+				}
+			}
+			else
+			{
+				cancel(%obj.HPStationHealSchedule);
 			}
 		}
-		parent::activateStuff(%this);
+		return Parent::OnTrigger(%data,%obj,%tNum,%tVal);
+	}
+
+	function player::activateStuff(%this)
+	{
+		
+		return parent::activateStuff(%this);
 	}
 
 	function MiniGameSO::reset(%mini, %client)
 	{
-		parent::reset(%mini, %client);
-		if(!%mini.isBBB)
-			return;
-		%mini.clearHealthStations();
+		HSSimGroup.deleteAll();
+		return parent::reset(%mini, %client);
 	}	
 
 	function BBB_Minigame::CleanUp(%so)
 	{	
-		parent::CleanUp(%so);
-		%so.clearHealthStations();
+		HSSimGroup.deleteAll();
+		return parent::CleanUp(%so);
 	}
 };
+deactivatePackage(HealthStation);
 activatePackage(HealthStation);

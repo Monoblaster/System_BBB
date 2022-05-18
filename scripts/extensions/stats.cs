@@ -428,20 +428,27 @@ $c = -1;
 //#kill stats (DONE)
 //traitors killed
 registerStat("T Killed",0);
+registerLeaderboard("T Killed",true);
 //innocents killed
 registerStat("I Killed",0);
+registerLeaderboard("I Killed",true);
 //detectives killed
 registerStat("D Killed",0);
+registerLeaderboard("D Killed",true);
 //total kills
 registerStat("Kills",0);
+registerLeaderboard("Kills",true);
 //miskills
 registerStat("Miskills",0);
+registerLeaderboard("Miskills");
 //post round kills
 registerStat("PR Kills",0);
+registerLeaderboard("PR Kills",true);
 
 //#round stats (DONE)
 //total rounds played
 registerStat("Rounds",0);
+registerLeaderboard("Rounds",true);
 //traitor rounds played
 registerStat("T Rounds",0);
 //innocent rounds played
@@ -450,14 +457,19 @@ registerStat("I Rounds",0);
 registerStat("D Rounds",0);
 //total rounds won
 registerStat("Wins",0);
+registerLeaderboard("Wins",true);
 //traitor wins
 registerStat("T Wins",0);
+registerLeaderboard("T Wins",true);
 //innocent wins
 registerStat("I Wins",0);
+registerLeaderboard("I Wins",true);
 //detective wins
 registerStat("D Wins",0);
+registerLeaderboard("D Wins",true);
 //rounds survived
 registerStat("Survived",0);
+registerLeaderboard("Survived",true);
 
 //#favorites stats (need to save a lot of stats for these)
 //favorite traitor item
@@ -474,8 +486,10 @@ registerStat("Map","None",true,"");
 //challenge stats
 //melee kills
 registerStat("Melee Kills",0);
+registerLeaderboard("Melee Kills",true);
 //throwing knife kills
 registerStat("Throwing Knife Kills",0);
+registerLeaderboard("Throwing Knife Kills",true);
 
 //#generic stats
 //credits spent

@@ -223,7 +223,7 @@ function BBB_LookLoop()
 			%ray = containerRaycast(%start,%end,%targets,%obj);
 			%col = firstWord(%ray);
 
-			if(!isObject(%col) || %col.getClassName() !$= "Player")
+			if(!isObject(%col) || (%col.getClassName() !$= "Player" && %col.getClassName() !$= "AIPlayer"))
 				continue;
 			
 			if($tempdebug)
