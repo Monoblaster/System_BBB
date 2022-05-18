@@ -36,6 +36,11 @@ function RadarSilentLoop()
 				%obj.updateRadar();
 				%user = true;
 			}
+			else if(!%client.cleardXrayBillboardGroup)
+			{
+				%client.cleardXrayBillboardGroup = true;
+				%client.visibleBillboardGroup.ClearBillboards("xray");
+			}
 		}
 	}
 	if(%user)
@@ -56,7 +61,7 @@ $Radar::DisplayFont = "<font:consolas:15>";
 $Radar::DisplayBoldFont = "<font:consolas bold:20>";
 function Player::displayRadar(%player)
 {
-	%player.client.centerPrint("\c7refreshing in " @ mCeil(((%player.lastRadarCheck + $Pref::Radar::UpdateTime) - getSimTime()) / 1000) @ "..." NL %left @ %string @ "<font:palatino linotype:25>" @ %right NL "\c4" @ %closestDist);
+	%player.client.centerPrint("\c7refreshing in " @ mCeil(((%player.lastRadarCheck + $Pref::Radar::UpdateTime) - getSimTime()) / 1000) @ "..." NL %left @ %string @ "<font:palatino linotype:25>" @ %right NL "\c4" @ %closestDist,2);
 }
 
 function Player::updateRadarPositions(%player)
@@ -103,4 +108,6 @@ function Player::updateRadarPositions(%player)
 			}
 		}
 	}
+
+	%player.client.cleardXrayBillboardGroup = false;
 }

@@ -554,6 +554,7 @@ function SaveAllStats()
 		//save player data
 		%client.schedule(100,"SaveStatsAndUpdate");
 	}
+	LeaderboardGroup.schedule(1000,"Update");
 }
 
 function GameConnection::SaveStatsAndUpdate(%client)

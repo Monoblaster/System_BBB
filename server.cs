@@ -56,12 +56,6 @@ $BBB::UsingSMMBodies = false;
 $BBB::RoundMusic = ""; // HL1_-_Military_Precision";
 
 $Game::Item::PopTime = $BBB::Time::Base + $BBB::Time::PreRound + $BBB::Time::PostRound;
-
-$Pref::RBloodMod::LimbReddening = false;
-$Pref::BHole::FadeDelay = 250; // < i fucked up the defaults for these
-$Pref::BHole::OpacityR = 0.1;  // < ^
-$Pref::BHole::ColorShiftToBrick = true;
-$Pref::BHole::Restrictions = false;
 // =================================================
 // 2. Scripts
 // =================================================
@@ -77,6 +71,9 @@ $pattern = $BBB::Path @ "weapons/*.cs";
 for ( $file = findFirstFile( $pattern ) ; $file !$= "" ; $file = findNextFile( $pattern ) )
 	exec( $file );
 $pattern = "";
+
+//exec prefs to load after files have been executed
+schedule(1000,0,"exec","./prefs.cs");
 
 function BBB_RebuildItemTable()
 {

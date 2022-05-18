@@ -29,13 +29,13 @@ function LeaderboardGroup::Update(%group)
         %clientCount = %statGroup.getCount();
         for(%j = 0; %j < %clientCount; %j++)
         {
-            %client = %statGroup.getObject(%i);
+            %client = %statGroup.getObject(%j);
             %blid = %client.bl_id;
             %stat = %client.getStat(%statName);
 
             //check to see if this client has been added to the list already
             %row = %board.getRow(%blid);
-            if(%row >= 0)
+            if(%row !$= "")
             {
                 //the client is in this list set their value to their current value
                 %board.set(%row,%stat);
@@ -48,27 +48,51 @@ function LeaderboardGroup::Update(%group)
         }
 
         //all the values have been updated sort the list
-        %board.sort(!%board.ascending);
+        %board.sort(%board.ascending);
     }
 }
 
 $Leaderboard::MaxLines = 10;
-function serverCmdLeaderBoard(%client,%stat,%start)
+function serverCmdLeaderBoard(%client,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a11,%a12,%a13,%a14,%a15)
 {
-    if(!isObject(%cleint))
+    if(!isObject(%client))
     {
         return;
     }
 
-    %end = %start + $Leaderboard::MaxLines;
-    //grab this stat's leaderboard and display n spaces after %start
-    %leaderboard = LeaderboardGroup.getObject(LeaderboardGroup.num[%stat]);
-    %client.chatMessage("\c4" @ %leaderboard.name SPC "LeaderBoard:");
-    for(%i = %start; %i < %end; %i++)
+    if(%a0 $= "")
+	{
+		%client.chatMessage("\c5Welcome to leaderboards. \c3[stat] \c4[starting position]");
+		return;
+	}
+    else
     {
-        %name = $Stat::BLIDToName[%leaderboard.getTag(%i)];
-        %value = %leaderBoard.getValue(%i);
-        %client.chatMessage("\c6" @ %i + 1 @ "." SPC %name SPC %value);
+        %c = 0;
+        %stat = %a0;
+        while((%leaderboardNum = LeaderboardGroup.num[%stat]) $= "" && %c < 16)
+        {
+            %c++;
+            %stat = %stat SPC %a[%c];
+        }
+
+        if(%leaderboardNum  $= "")
+        {
+            %client.chatMessage("\c5Uknown Stat.");
+            return;
+        }
+
+        %start = %a[%c++];
+
+        %end = %start + $Leaderboard::MaxLines;
+        //grab this stat's leaderboard and display n spaces after %start
+        %leaderboard = LeaderboardGroup.getObject(%leaderboardNum);
+        %client.chatMessage("\c5" @ %leaderboard.name SPC "Leaderboard:");
+        for(%i = %start; %i < %end; %i++)
+        {
+            %name = $Stats::BLIDToName[%leaderboard.getTag(%i)];
+            %value = %leaderBoard.getValue(%i);
+            %client.chatMessage("\c6" @ %i + 1 @ "." SPC %name SPC %value);
+        }
     }
 }
 
