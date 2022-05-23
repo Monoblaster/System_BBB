@@ -782,14 +782,17 @@ function GameConnection::BBB_DisplayShop(%this, %type)
 function GameConnection::BBB_Give_Role(%client, %role)
 {
 	%client.role = %role;
+	%player = %client.player;
 	switch$(%role)
 	{
 	    case "Detective":
-			Billboard_Mount(Billboard_ClearGhost(Billboard_Create("detectiveBillboard","MountedBillboardPlayer"),%client),%client.player);
+			%player.rolebillboard = %billboard = Billboard_ClearGhost(Billboard_Create("detectiveBillboard","OverheadBillboardMount"),%client);
+			%player.mountObject(%billboard,8);
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c1D<font:Palatino Linotype:43>\c1ETECTIVE";
 			%client.credits = 3;
 	    case "Traitor":
-			Billboard_Mount(Billboard_ClearGhost(Billboard_Create("traitorBillboard","MountedBillboardPlayer",true),"ALL"),%client.player);
+			%player.rolebillboard = %billboard = Billboard_ClearGhost(Billboard_Create("traitorBillboard","OverheadBillboardMount",true),"ALL");
+			%player.mountObject(%billboard,8);
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c0T<font:Palatino Linotype:43>\c0RAITOR";
 			%client.credits = 3;
 		case "Innocent":
@@ -1453,7 +1456,7 @@ function BBB_Minigame::assignRoles(%so)
 				%checkTraitor = %so.member[%i];
 				if(%checkTraitor.role $= "Traitor" && %checkTraitor !$= %client)
 				{
-					Billboard_Ghost(%client.player.billboard,%checkTraitor);
+					Billboard_Ghost(%client.player.rolebillboard,%checkTraitor);
 				}
 			}	
 

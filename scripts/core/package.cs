@@ -277,6 +277,210 @@ activatePackage(BBB_fxDTSBrick);
 // =================================================
 // 4. GameConnection
 // =================================================
+//overwrite
+// All the corpse code is made by Jack Noir
+function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc)
+{
+	//if (%client.miniGame != $DefaultMiniGame)
+	//	return Parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
+	if(!%client.inBBB || $BBB::Round::Phase !$= "Round")
+	{
+		Parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
+		return;
+	}
+
+	if (%sourceObject.sourceObject.isBot)
+	{
+		%sourceClientIsBot = 1;
+		%sourceClient = %sourceObject.sourceObject;
+	}
+
+	%client.play2D(BBB_Death_Sound);
+
+	%role = %client.role;
+	//$BBB::Round::NumAlive[%role]--;
+	if(%role $= "Innocent" || %role $= "Detective")
+		$BBB::rTimeLeft += $BBB::Time::Bonus;
+
+	%player = %client.player;
+
+	if(isObject(%player))
+	{
+		if (isObject(%player.tempBrick))
+		{
+			%player.tempBrick.delete();
+			%player.tempBrick = 0;
+		}
+
+		%player.changeDatablock(BBB_Standard_Corpse_Armor); //Doing this before client is nullified is important for appearance stuff
+		%player.playDeathAnimation(); //...still call this because datablock switch fucks with anims
+
+		%player.BBB_ApplyOutfit($BBB::Outfit);
+		%player.displayName = "an Unidentified Body";
+		%player.setShapeName("Unidentified Body", 8564862);
+		%player.setShapeNameDistance(13);
+		%player.setShapeNameColor("1 1 0");
+		%player.isBody = true;
+		%player.client = 0;
+		%player.origClient = %client;
+
+		// BBB Corpse data
+		%player.name = %client.name;
+		%player.role = %client.role;
+		%player.deadTime = getSimTime();
+		%player.fingerPrints = %sourceObject;
+		
+		%s = "???";
+
+		if(%damageType == $DamageType::Suicide)
+			%s = "Suicide";
+		else if(%damageType == $DamageType::Fall)
+			%s = "Broken leg";
+		else
+		{
+			if(isObject(%itm = %sourceObject.sourceImage.R_InheritImage.Item) && %itm !$= BowItem)
+				%s = %itm.UIName;
+			else if(isObject(%itm = %sourceObject.sourceImage.Item) && %itm !$= BowItem)
+				%s = %itm.UIName;
+			else if(isObject(%so = sourceObject) && (%sourceObject.getClassName() $= "Player" || %sourceObject.getClassName() $= "AIPlayer")
+						|| isObject(%so = %sourceClient.player))
+			{
+				if(isObject(%itm = %so.getMountedImage(0).R_InheritImage.Item) && %itm !$= BowItem)
+					%s = %itm.UIName;
+				else if(isObject(%h = %so.meleeHand) && isObject(%itm = %h.getMountedImage(0).Item) && %itm !$= BowItem)
+					%s = %itm.UIName;
+				else if(isObject(%itm = %so.getMountedImage(0).Item) && %itm !$= BowItem)
+					%s = %itm.UIName;
+			}
+		}
+
+		%player.SOD = %s;//getWord(getTaggedString($DeathMessage_Murder[%damageType]), 1);
+		if(%player.deadTime - %player.lastMsgTime < 2000)
+			%player.lastWords = %player.lastMsg;
+		%player.unIDed = true;
+
+		if (!isObject(CorpseGroup))
+			new SimSet(CorpseGroup);
+
+		CorpseGroup.add(%player);
+	}
+	else
+		warn("WARNING: No player object in GameConnection::onDeath() for client '" @ %client @ "'");
+
+	if (isObject(%client.camera) || isObject(%player))
+	{ // this part of the code isn't accurate
+		if (%client.getControlObject() != %client.camera)
+		{
+			%client.camera.setMode("Corpse", %player);
+			%client.camera.setControlObject(0);
+			%client.setControlObject(%client.camera);
+		}
+	}
+
+	%client.player = 0;
+
+	%client.corpse = %player;
+	
+	%client.tpschecked = false;
+
+	if ($Damage::Direct[$damageType] && getSimTime() - %player.lastDirectDamageTime < 100 && %player.lastDirectDamageType !$= "")
+		%damageType = %player.lastDirectDamageType;
+
+	if (%damageType == $DamageType::Impact && isObject(%player.lastPusher) && getSimTime() - %player.lastPushTime <= 1000)
+		%sourceClient = %player.lastPusher;
+
+	%message = '%2 killed %1';
+
+	if (%sourceClient == %client || %sourceClient == 0)
+	{
+		%message = $DeathMessage_Suicide[%damageType];
+		%client.corpse.suicide = true;
+	}
+	else
+		%message = $DeathMessage_Murder[%damageType];
+
+	// removed mid-air kills code here
+	// removed mini-game kill points here
+
+	%clientName = %client.getPlayerName();
+
+	if (isObject(%sourceClient))
+		%sourceClientName = %sourceClient.getPlayerName();
+	else if (isObject(%sourceObject.sourceObject) && %sourceObject.sourceObject.getClassName() $= "AIPlayer")
+		%sourceClientName = %sourceObject.sourceObject.name;
+	else
+		%sourceClientName = "";
+
+	%client.print = "<just:left><font:Palatino Linotype:22><font:Palatino Linotype:45><color:808080>D<font:Palatino Linotype:43><color:808080>EAD";
+
+	%colr = "ffffff";
+	if(%sourceClient.role $= "Traitor")
+		%colr = "ff7744";
+	else if(%sourceClient.role $= "Innocent")
+		%colr = "44ff44";
+	else if(%sourceClient.role $= "Detective")
+		%colr = "4477ff";
+	
+	%client.chatMessage("<font:Palatino Linotype:22><color:494949>You were killed by <color:" @ %colr @ ">" @ %sourceClient.name @ ", a(n)" SPC %sourceClient.role @ "<color:494949>.");
+
+	//deathlogs//
+
+	if($BBB::Round::Phase $= "Round")
+	{
+		%dlmsg = "<color:" @ (%sourceclient.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %sourceclient.name SPC "(" @ %sourceclient.role @ ") \c6killed<color:" @ (%client.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" SPC %client.name SPC "(" @ %client.role @ ")\c6 at" SPC getStringFromTime($BBB::rTimeLeft);
+
+		if(!isObject(%sourceclient))
+			%dlmsg = "<color:" @ (%cl.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %client.name SPC "(" @  %client.role @ ")" SPC "died.";
+		
+		if(%sourceclient == %client)
+			%dlmsg = "<color:" @ (%cl.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %client.name SPC "(" @  %client.role @ ")" SPC "suicided.";
+
+		$DeathLog[$DeathLogCount] = %dlmsg;
+		$DeathLogCount++;
+		if(%sourceClient.killLogCount $= "")
+			%sourceClient.killLogCount = 0;
+		
+		%scr = %sourceClient.role;
+		%cr = %client.role;
+		if(%cr $= "Detective")
+			%cr = "Innocent";
+		if(%scr $= "Detective")
+			%scr = "Innocent";
+
+		if(%sourceClient.killLogCount $= "")
+			%sourceClient.killLogCount = 0;
+		%sourceClient.killLog[%sourceClient.killLogCount] = %dlmsg TAB (%scr $= %cr);
+		%sourceClient.killLogCount++;
+
+		if(%client.killLogCount $= "")
+			%client.killLogCount = 0;
+		%client.killLog[%client.killLogCount] = %dlmsg TAB (%scr $= %cr);
+		%client.killLogCount++;
+
+		for(%i = 0; %i < ClientGroup.getCount(); %i++)
+		{
+			%cc = ClientGroup.getObject(%i);
+			if(%cc.isAdmin)
+			{
+				if(%cc.getDamagePercent >= 1.0 || !%cc.inBBB)
+				{
+					chatMessage(%cc, '', %dlmsg);
+				}
+			}
+		}
+	}
+
+	//the end//
+
+	echo("\c4" SPC %sourceClientName SPC "(" @ %sourceClient.role @ ") killed" SPC (%clientName $= %sourceClientName ? "themselves" : %clientName @ "(" @ %client.role @ ")"));
+	// removed mini-game checks here
+	// removed death message print here
+	// removed %message and %sourceClientName arguments
+	messageClient(%client, 'MsgYourDeath', '', %clientName, '', %client.miniGame.respawnTime);
+	//commandToClient(%client, 'CenterPrint', "", 1);
+	BBB_Minigame.doWinCheck();
+}
+
 package BBB_GameConnection
 {
 	function GameConnection::unmountAllHats(%cl) {
@@ -337,209 +541,6 @@ package BBB_GameConnection
 			%client.icon = "\c2[<color:FF7744>S-ADMIN\c2]";
 		else if(%client.isAdmin)
 			%client.icon = "\c2[<color:FF7744>ADMIN\c2]";
-	}
-
-	// All the corpse code is made by Jack Noir
-	function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc)
-	{
-		//if (%client.miniGame != $DefaultMiniGame)
-		//	return Parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
-		if(!%client.inBBB || $BBB::Round::Phase !$= "Round")
-		{
-			Parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
-			return;
-		}
-
-		if (%sourceObject.sourceObject.isBot)
-		{
-			%sourceClientIsBot = 1;
-			%sourceClient = %sourceObject.sourceObject;
-		}
-
-		%client.play2D(BBB_Death_Sound);
-
-		%role = %client.role;
-		//$BBB::Round::NumAlive[%role]--;
-		if(%role $= "Innocent" || %role $= "Detective")
-			$BBB::rTimeLeft += $BBB::Time::Bonus;
-
-		%player = %client.player;
-
-		if(isObject(%player))
-		{
-			if (isObject(%player.tempBrick))
-			{
-				%player.tempBrick.delete();
-				%player.tempBrick = 0;
-			}
-
-			%player.changeDatablock(BBB_Standard_Corpse_Armor); //Doing this before client is nullified is important for appearance stuff
-			%player.playDeathAnimation(); //...still call this because datablock switch fucks with anims
-
-			%player.BBB_ApplyOutfit($BBB::Outfit);
-			%player.displayName = "an Unidentified Body";
-			%player.setShapeName("Unidentified Body", 8564862);
-			%player.setShapeNameDistance(13);
-			%player.setShapeNameColor("1 1 0");
-			%player.isBody = true;
-			%player.client = 0;
-			%player.origClient = %client;
-
-			// BBB Corpse data
-			%player.name = %client.name;
-			%player.role = %client.role;
-			%player.deadTime = getSimTime();
-			%player.fingerPrints = %sourceObject;
-			
-			%s = "???";
-
-			if(%damageType == $DamageType::Suicide)
-				%s = "Suicide";
-			else if(%damageType == $DamageType::Fall)
-				%s = "Broken leg";
-			else
-			{
-				if(isObject(%itm = %sourceObject.sourceImage.R_InheritImage.Item) && %itm !$= BowItem)
-					%s = %itm.UIName;
-				else if(isObject(%itm = %sourceObject.sourceImage.Item) && %itm !$= BowItem)
-					%s = %itm.UIName;
-				else if(isObject(%so = sourceObject) && (%sourceObject.getClassName() $= "Player" || %sourceObject.getClassName() $= "AIPlayer")
-							|| isObject(%so = %sourceClient.player))
-				{
-					if(isObject(%itm = %so.getMountedImage(0).R_InheritImage.Item) && %itm !$= BowItem)
-						%s = %itm.UIName;
-					else if(isObject(%h = %so.meleeHand) && isObject(%itm = %h.getMountedImage(0).Item) && %itm !$= BowItem)
-						%s = %itm.UIName;
-					else if(isObject(%itm = %so.getMountedImage(0).Item) && %itm !$= BowItem)
-						%s = %itm.UIName;
-				}
-			}
-
-			%player.SOD = %s;//getWord(getTaggedString($DeathMessage_Murder[%damageType]), 1);
-			if(%player.deadTime - %player.lastMsgTime < 2000)
-				%player.lastWords = %player.lastMsg;
-			%player.unIDed = true;
-
-			if (!isObject(CorpseGroup))
-				new SimSet(CorpseGroup);
-
-			CorpseGroup.add(%player);
-		}
-		else
-			warn("WARNING: No player object in GameConnection::onDeath() for client '" @ %client @ "'");
-
-		if (isObject(%client.camera) || isObject(%player))
-		{ // this part of the code isn't accurate
-			if (%client.getControlObject() != %client.camera)
-			{
-				%client.camera.setMode("Corpse", %player);
-				%client.camera.setControlObject(0);
-				%client.setControlObject(%client.camera);
-			}
-		}
-
-		%client.player = 0;
-
-		%client.corpse = %player;
-		
-		%client.tpschecked = false;
-
-		if ($Damage::Direct[$damageType] && getSimTime() - %player.lastDirectDamageTime < 100 && %player.lastDirectDamageType !$= "")
-			%damageType = %player.lastDirectDamageType;
-
-		if (%damageType == $DamageType::Impact && isObject(%player.lastPusher) && getSimTime() - %player.lastPushTime <= 1000)
-			%sourceClient = %player.lastPusher;
-
-		%message = '%2 killed %1';
-
-		if (%sourceClient == %client || %sourceClient == 0)
-		{
-			%message = $DeathMessage_Suicide[%damageType];
-			%client.corpse.suicide = true;
-		}
-		else
-			%message = $DeathMessage_Murder[%damageType];
-
-		// removed mid-air kills code here
-		// removed mini-game kill points here
-
-		%clientName = %client.getPlayerName();
-
-		if (isObject(%sourceClient))
-			%sourceClientName = %sourceClient.getPlayerName();
-		else if (isObject(%sourceObject.sourceObject) && %sourceObject.sourceObject.getClassName() $= "AIPlayer")
-			%sourceClientName = %sourceObject.sourceObject.name;
-		else
-			%sourceClientName = "";
-
-		%client.print = "<just:left><font:Palatino Linotype:22><font:Palatino Linotype:45><color:808080>D<font:Palatino Linotype:43><color:808080>EAD";
-
-		%colr = "ffffff";
-		if(%sourceClient.role $= "Traitor")
-			%colr = "ff7744";
-		else if(%sourceClient.role $= "Innocent")
-			%colr = "44ff44";
-		else if(%sourceClient.role $= "Detective")
-			%colr = "4477ff";
-		
-		%client.chatMessage("<font:Palatino Linotype:22><color:494949>You were killed by <color:" @ %colr @ ">" @ %sourceClient.name @ ", a(n)" SPC %sourceClient.role @ "<color:494949>.");
-
-		//deathlogs//
-
-		if($BBB::Round::Phase $= "Round")
-		{
-			%dlmsg = "<color:" @ (%sourceclient.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %sourceclient.name SPC "(" @ %sourceclient.role @ ") \c6killed<color:" @ (%client.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" SPC %client.name SPC "(" @ %client.role @ ")\c6 at" SPC getStringFromTime($BBB::rTimeLeft);
-
-			if(!isObject(%sourceclient))
-				%dlmsg = "<color:" @ (%cl.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %client.name SPC "(" @  %client.role @ ")" SPC "died.";
-			
-			if(%sourceclient == %client)
-				%dlmsg = "<color:" @ (%cl.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %client.name SPC "(" @  %client.role @ ")" SPC "suicided.";
-
-			$DeathLog[$DeathLogCount] = %dlmsg;
-			$DeathLogCount++;
-			if(%sourceClient.killLogCount $= "")
-				%sourceClient.killLogCount = 0;
-			
-			%scr = %sourceClient.role;
-			%cr = %client.role;
-			if(%cr $= "Detective")
-				%cr = "Innocent";
-			if(%scr $= "Detective")
-				%scr = "Innocent";
-
-			if(%sourceClient.killLogCount $= "")
-				%sourceClient.killLogCount = 0;
-			%sourceClient.killLog[%sourceClient.killLogCount] = %dlmsg TAB (%scr $= %cr);
-			%sourceClient.killLogCount++;
-
-			if(%client.killLogCount $= "")
-				%client.killLogCount = 0;
-			%client.killLog[%client.killLogCount] = %dlmsg TAB (%scr $= %cr);
-			%client.killLogCount++;
-
-			for(%i = 0; %i < ClientGroup.getCount(); %i++)
-			{
-				%cc = ClientGroup.getObject(%i);
-				if(%cc.isAdmin)
-				{
-					if(%cc.getDamagePercent >= 1.0 || !%cc.inBBB)
-					{
-						chatMessage(%cc, '', %dlmsg);
-					}
-				}
-			}
-		}
-
-		//the end//
-
-		echo("\c4" SPC %sourceClientName SPC "(" @ %sourceClient.role @ ") killed" SPC (%clientName $= %sourceClientName ? "themselves" : %clientName @ "(" @ %client.role @ ")"));
-		// removed mini-game checks here
-		// removed death message print here
-		// removed %message and %sourceClientName arguments
-		messageClient(%client, 'MsgYourDeath', '', %clientName, '', %client.miniGame.respawnTime);
-		//commandToClient(%client, 'CenterPrint', "", 1);
-		BBB_Minigame.doWinCheck();
 	}
 
 	// function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damageArea)
@@ -977,7 +978,6 @@ package BBB_ServerCMD
 					{
 						%type = "\c7[" @ %color @ %client.role @ "\c7] ";
 						%icon = %color;
-						talk(%msg);
 						chatMessageClient (%tarClient, %client,'','' , '%5\c4%2%7: %4', %client.clanPrefix, %client.getPlayerName(), %client.clanSuffix, %msg, %type, %client.icon, %chatColor, %a8, %a9, %a10);
 						//messageClient(%tarClient, "", "\c7[" @ %color @ %client.role @ "\c7] " @ %color @ %client.getPlayerName() @ %chatColor @ ": " @ %msg);
 						%tarClient.play2D(BBB_Chat_Sound);

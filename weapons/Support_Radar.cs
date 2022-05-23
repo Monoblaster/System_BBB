@@ -10,9 +10,6 @@
 // =================================================
 // 1. Preferences
 // =================================================
-$Pref::Radar::NumBars = 100; // Number of bars
-$Pref::Radar::SearchRadius = 1000; // How far to look for players
-$Pref::Radar::Size = 13; // Font size
 $Pref::Radar::UpdateTime = 20000;
 
 // =================================================
@@ -89,8 +86,8 @@ function Player::updateRadarPositions(%player)
 		%count++;
 	}
 
-	%group = %player.client.visibleBillboardGroup;
-	%group.ClearBillboards("xray");
+	%group = %player.client.AVBillboardGroup;
+	%group.Clear("xray");
 	//create new ghosts at our positions and move them there
 	for(%i = 0; %i < %count; %i++)
 	{
@@ -98,13 +95,13 @@ function Player::updateRadarPositions(%player)
 		%role = %radarRole[%i];
 		if(%pos !$= "")
 		{
-			if(%role $= "Traitor")
+			if(%role $= "Traitor" && %player.client.role $= "Traitor")
 			{
-				%group.billboard("traitorRadarBillboard",%pos,"xray");
+				%group.make("traitorRadarBillboard",%pos,"xray");
 			}
 			else
 			{
-				%group.billboard("normalRadarBillboard",%pos,"xray");
+				%group.make("normalRadarBillboard",%pos,"xray");
 			}
 		}
 	}

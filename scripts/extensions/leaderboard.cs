@@ -62,9 +62,21 @@ function serverCmdLeaderBoard(%client,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a
 
     if(%a0 $= "")
 	{
-		%client.chatMessage("\c5Welcome to leaderboards. \c3[stat] \c4[starting position]");
+		%client.chatMessage("\c5Welcome to leaderboards. \c3[stat name or \"stats\"] \c4[starting position]");
 		return;
 	}
+    else if(%a0 $= "STATS")
+    {
+        %group = LeaderboardGroup;
+        %count = %group.getcount();
+        for(%i = 0; %i < %count; %i++)
+		{
+            %leaderboard = %group.getObject(%i);
+            %name = %leaderboard.name;
+			%client.chatMessage("<font:consolas:20>\c6" @ (strLen(%i + 1) <= 1 ? " " @ (%i + 1) : %i + 1)  @ " | " @ %name);
+		}
+		return;
+    }
     else
     {
         %c = 0;
@@ -96,4 +108,18 @@ function serverCmdLeaderBoard(%client,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a
     }
 }
 
-//guh imagine wiriting a leaderboard script in only 73 lines
+//guh imagine wiriting a leaderboard script in only 109 lines
+registerLeaderboard("T Killed",true);
+registerLeaderboard("I Killed",true);
+registerLeaderboard("D Killed",true);
+registerLeaderboard("Kills",true);
+registerLeaderboard("Miskills");
+registerLeaderboard("PR Kills",true);
+registerLeaderboard("Rounds",true);
+registerLeaderboard("Wins",true);
+registerLeaderboard("T Wins",true);
+registerLeaderboard("I Wins",true);
+registerLeaderboard("D Wins",true);
+registerLeaderboard("Survived",true);
+registerLeaderboard("Melee Kills",true);
+registerLeaderboard("Throwing Knife Kills",true);

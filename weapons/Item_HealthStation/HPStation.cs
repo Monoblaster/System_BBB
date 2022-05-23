@@ -61,16 +61,16 @@ datablock ShapeBaseImageData(HealthStationHandImage)
 
 function HealthStationHandImage::onFire(%this,%obj,%slot)
 {
-  %client = %obj.client;
-  %currSlot = %obj.currTool;
- 	if(isObject(%obj.client))
+	%client = %obj.client;
+	%currSlot = %obj.currTool;
+	%obj.unMountImage(%slot);
+	if(isObject(%obj.client))
 	{
 		%client.createStation();
-		messageClient(%obj.client,'MsgItemPickup','',%currSlot,0);
-		serverCmdUnUseTool(%obj.client);
+		messageClient(%client,'MsgItemPickup','',%currSlot,0);
+		serverCmdUnUseTool(%client);
 	}
-	else
-		%obj.unMountImage(%slot);
+		
 }
 
 function GameConnection::createStation(%client)
@@ -115,7 +115,7 @@ function player::HPStationHeal(%player,%bot,%auto)
 		%client = %player.client;
 		%healthText = "\c2" @ %player.getDatablock().maxDamage - %player.getDamageLevel();
 		BBB_TimerLoop_ForceUpdate(%client, "bottomPrint", 2, %healthText);
-		%player.HPStationHealSchedule = %player.schedule(1000,"HPStationHeal",%bot, true);
+		%player.HPStationHealSchedule = %player.schedule(250,"HPStationHeal",%bot, true);
 	}
 	else
 	{

@@ -1,44 +1,34 @@
-datablock PlayerData(FloatingBillboardPlayer)
+datablock CameraData(BillboardLoadingCamera)
+{
+	mode = "Observer";
+};
+function BillboardLoadingCamera::OnTrigger(%data,%camera,%triggerNum,%triggerVal)
+{
+	%group = %camera.loading;
+	
+	if(isObject(%group))
+	{
+		%camera2 = %camera.getControllingObject();
+		%client = %camera.getControllingClient();
+
+		%group.FinishLoad();
+
+		%client.setControlObject(%client.player);
+
+		%camera2.delete();
+		%camera.delete();
+	}
+}
+
+datablock PlayerData(BillboardMount)
 {
     shapeFile = "base/data/shapes/empty.dts";
 	boundingBox = vectorScale("20 20 20", 4);
 };
 
-datablock PlayerData(MountedBillboardPlayer)
+datablock PlayerData(OverheadBillboardMount : BillboardMount)
 {
     shapeFile = "./billboardMount.dts";
-	boundingBox = vectorScale("20 20 20", 4);
-};
-
-//custom billboards
-datablock fxLightData(detectiveBillboard)
-{
-	LightOn = false;
-
-	flareOn = true;
-	flarebitmap = "./detective.png";
-	ConstantSize = 0.5;
-    ConstantSizeOn = true;
-    FadeTime = 0.1;
-
-	LinkFlare = false;
-	blendMode = 1;
-	flareColor = "0 0 1 1";
-};
-
-datablock fxLightData(traitorBillboard)
-{
-	LightOn = false;
-
-	flareOn = true;
-	flarebitmap = "./traitor.png";
-	ConstantSize = 0.5;
-    ConstantSizeOn = true;
-    FadeTime = 0.1;
-
-	LinkFlare = false;
-	blendMode = 1;
-	flareColor = "1 0 0 1";
 };
 
 datablock fxLightData(LoadingBillboard)
@@ -46,7 +36,7 @@ datablock fxLightData(LoadingBillboard)
 	LightOn = false;
 
 	flareOn = true;
-	flarebitmap = "./radar.png";
+	flarebitmap = "base/data/shapes/blank.png";
 	ConstantSize = 1;
     ConstantSizeOn = true;
     FadeTime = 0.000001;
@@ -65,7 +55,7 @@ datablock fxLightData(LoadedBillboard)
 	LightOn = false;
 
 	flareOn = true;
-	flarebitmap = "./radar.png";
+	flarebitmap = "base/data/shapes/blank.png";
 	ConstantSize = 1;
     ConstantSizeOn = true;
     FadeTime = inf;
@@ -77,44 +67,6 @@ datablock fxLightData(LoadedBillboard)
 	AnimOffsets = true;
 	startOffset = "0 0 0";
 	endOffset = "0 0 0";
-};
-
-datablock fxLightData(normalRadarBillboard)
-{
-	LightOn = false;
-
-	flareOn = true;
-	flarebitmap = "./radar.png";
-	ConstantSize = 1.35;
-    ConstantSizeOn = true;
-    FadeTime = inf;
-
-	LinkFlare = false;
-	blendMode = 1;
-	flareColor = "0 1 0 1";
-
-	AnimOffsets = true;
-	startOffset = "0 0 1.25";
-	endOffset = "0 0 1.25";
-};
-
-datablock fxLightData(traitorRadarBillboard)
-{
-	LightOn = false;
-
-	flareOn = true;
-	flarebitmap = "./radar.png";
-	ConstantSize = 1.35;
-    ConstantSizeOn = true;
-    FadeTime = inf;
-
-	LinkFlare = false;
-	blendMode = 1;
-	flareColor = "1 0 0 1";
-
-	AnimOffsets = true;
-	startOffset = "0 0 1.25";
-	endOffset = "0 0 1.25";
 };
 
 function Billboard_Create(%lightDB,%mountDB,%dontGhost)
@@ -143,7 +95,7 @@ function Billboard_Create(%lightDB,%mountDB,%dontGhost)
 		return;
 	}
 
-	%billboard = new fxLight()
+	%light = new fxLight()
 	{
 		dataBlock = %lightDB;
 	};
@@ -158,22 +110,22 @@ function Billboard_Create(%lightDB,%mountDB,%dontGhost)
 	%mount.setDamageLevel(10000);
 	%mount.setTransform("0 0 0");
 
-	%mount.light = %billboard;
-	%billboard.attachToObject(%mount);
+	%mount.light = %light;
+	%light.attachToObject(%mount);
 	
 
-	%billboard.setNetFlag(6,true);
+	%light.setNetFlag(6,true);
 	%mount.setNetFlag(6,true);
 	if(!%dontGhost)
 	{
 		//make sure it scopes just because it has to manually be done with these flags
-		%billboard.setScopeAlways();
+		%light.setScopeAlways();
 		%mount.setScopeAlways();
 	}
 	else
 	{
 		//disable ghosting automaticaly
-		%billboard.setNetFlag(8,false);
+		%light.setNetFlag(8,false);
 		%mount.setNetFlag(8,false);
 	}
 
@@ -268,58 +220,6 @@ function Billboard_ClearGhost(%billboard,%client)
 	return %billboard;
 }
 
-function Billboard_Mount(%billboard,%player)
-{	
-	if(!isObject(%billboard) || !isObject(%billboard.light))
-	{
-		warn("Billboard_Mount: " @ %billboard @ " is not a valid billboard");
-		return;
-	}
-
-	if(%billboard.getClassName() !$= "aiPlayer" && %billboard.light.getClassName() $= "fxLight")
-	{
-		warn("Billboard_Mount: " @ %billboard @ " is not a valid billboard");
-		return;
-	}
-
-	if(isObject(%player.billboard))
-	{
-		warn("Billboard_Mount: Billboard already mounted to " @ %player);
-		return;
-	}
-
-	%player.MountObject(%billboard,8);
-	%player.billboard = %billboard;
-
-	return %billboard;
-}
-
-function Billboard_Ummount(%player)
-{	
-	if(!isObject(%player.billboard))
-	{
-		warn("Billboard_Ummount: Billboard is not already mounted to " @ %player);
-		return;
-	}
-
-	%billboard = %player.billboard;
-	if(!isObject(%billboard) || !isObject(%billboard.light))
-	{
-		warn("Billboard_Ummount: " @ %billboard @ " is not a valid billboard");
-		return;
-	}
-
-	if(%billboard.getClassName() !$= "aiPlayer" && %billboard.light.getClassName() $= "fxLight")
-	{
-		warn("Billboard_Ummount: " @ %billboard @ " is not a valid billboard");
-		return;
-	}
-    
-	%player.unMountObject(8);
-
-	return %billboard;
-}
-
 function Billboard_Delete(%billboard)
 {	
 	if(!isObject(%billboard) || !isObject(%billboard.light))
@@ -338,55 +238,75 @@ function Billboard_Delete(%billboard)
 	%billboard.delete();
 }
 
-function VisibleBillboard_Create(%client,%mountDB,%count)
+function AVBillboards_Create(%mountDB,%count)
 {
 	if(!isObject(%mountDB))
 	{
-		warn("VisibleBillboard_Create: " @ %mountDB @ " is not a valid player datablock");
+		warn("AVBillboards_Create: " @ %mountDB @ " is not a valid player datablock");
 		return;
 	}
 
 	if(%mountDB.getClassName() !$= "PlayerData")
 	{
-		warn("VisibleBillboard_Create: " @ %mountDB @ " is not a valid player datablock");
+		warn("AVBillboards_Create: " @ %mountDB @ " is not a valid player datablock");
 		return;
 	}
-	%client.CreatingVisibleBillboard = true;
 
-	%client.visibleBillboardGroup = %group = new scriptGroup()
+	%group = new scriptGroup()
 	{
-		class = "VisibleBillboard";
-		client = %client;
+		class = "AVBillboards";
 	};
-	%client.camera.setTransform("0 0 1000 0 0 0 0");
-	%client.setControlObject(%client.camera);
-	%client.camera.setcontrolObject(%client.dummyCamera);
-
-	%mount = new aiPlayer()
-	{
-		dataBlock = "FloatingBillboardPlayer";
-		position = "0 10 1000";
-	};
-	%mount.setDamageLevel(10000);
-	
-	%mount.setNetFlag(8,false);
-	%mount.setNetFlag(6,true);
-	%mount.ScopeToClient(%client);
 
 	for(%i = 0; %i < %count; %i++)
 	{
 		%billboard = Billboard_Create("LoadingBillboard",%mountDB,true);
-		Billboard_Ghost(%billboard,%client);
-		%billboard.light.attachToObject(%mount);
 		%group.add(%billboard);
 	}
 
 	return %group;
 }
 
-function VisibleBillboard::FinishVisibleBillboards(%group)
+function AVBillboards::Load(%group,%client,%pos)
 {
-	%client = %group.client;
+	if(%group.loadedClient !$= "")
+	{
+		warn("AVBillboards::Load: " @ %grooup @ " already loaded to client " @ %group.loadedClient);
+		return;
+	}
+
+	%camera = new Camera(){dataBlock = BillboardLoadingCamera;};
+	%dummycamera = new Camera(){dataBlock = BillboardLoadingCamera; loading = %group;};
+	%camera.setTransform(%pos SPC "0 0 0 0");
+	%client.setControlObject(%camera);
+	%camera.setcontrolObject(%dummycamera);
+
+	
+	%loadingMount = new aiPlayer()
+	{
+		dataBlock = "BillboardMount";
+		position = vectorAdd(%pos,"0 10 0");
+	};
+	talk(%loadingMount);
+
+	%loadingMount.setDamageLevel(10000);
+	
+	%loadingMount.setNetFlag(8,false);
+	%loadingMount.setNetFlag(6,true);
+	%loadingMount.ScopeToClient(%client);
+
+	%count = %group.getCount();
+	for(%i = 0; %i < %count; %i++)
+	{
+		%billboard = %group.getObject(%i);
+		billboard_ghost(%billboard,%client);
+		%billboard.light.attachToObject(%loadingMount);
+	}
+
+	%group.loadedClient = %client;
+}
+
+function AVBillboards::FinishLoad(%group)
+{
 	for(%i = 0; %i < %group.getCount(); %i++)
 	{
 		%billboard = %group.getObject(%i);
@@ -399,24 +319,24 @@ function VisibleBillboard::FinishVisibleBillboards(%group)
 	}
 }
 
-function VisibleBillboard::Billboard(%group,%lightDB,%position,%tag)
+function AVBillboards::Make(%group,%lightDB,%position,%tag)
 {
 	if(!isObject(%lightDB))
 	{
-		warn("VisibleBillboard::Billboard: " @ %lightDB @ " is not a valid fxLight datablock");
+		warn("AVBillboards::Make: " @ %lightDB @ " is not a valid fxLight datablock");
 		return;
 	}
 
 	if(%lightDB.getClassName() !$= "fxLightData")
 	{
-		warn("VisibleBillboard::Billboard: " @ %lightDB @ " is not a valid fxLight datablock");
+		warn("AVBillboards::Make: " @ %lightDB @ " is not a valid fxLight datablock");
 		return;
 	}
 
 	%active = %group.active;
 	if(%active >= %group.getCount())
 	{
-		warn("VisibleBillboard::Billboard: " @ %group @ " group over count");
+		warn("AVBillboards::Make: " @ %group @ " group over count");
 		return;
 	}
 	
@@ -436,7 +356,7 @@ function VisibleBillboard::Billboard(%group,%lightDB,%position,%tag)
 	return %billboard;
 }
 
-function VisibleBillboard::ClearBillboards(%group,%tag)
+function AVBillboards::Clear(%group,%tag)
 {
 	%count = %group.getCount();
 	for(%i = %count - 1; %i >= 0; %i--)
@@ -460,7 +380,7 @@ function VisibleBillboard::ClearBillboards(%group,%tag)
 		//remove old tag
 		%billboard.tag = "";
 
-		//push to back so only active billboards are in fornt
+		//push to back so only active billboards are in front
 		%group.pushToBack(%billboard);
 		%group.active--;
 	}
@@ -468,72 +388,8 @@ function VisibleBillboard::ClearBillboards(%group,%tag)
 	return %group;
 }
 
-package billboards
+function AVBillboards::Delete(%group)
 {
-	function Observer::OnTrigger(%data,%obj,%triggerNum,%triggerVal)
-	{
-		if(isObject(%obj))
-		{
-			%client = %obj.getControllingClient();
-		}
-		
-		if(%client.CreatingVisibleBillboard)
-		{
-			%client.centerPrint("");
-			%client.CreatingVisibleBillboard = false;
-
-			%client.visibleBillboardGroup.FinishVisibleBillboards();
-			%client.camera.setControlObject(0);
-
-			%player = %client.player;
-			if(isObject(%client.player))
-			{
-				%client.setControlObject(%client.player);
-			}
-		}
-		else
-		{
-			Parent::OnTrigger(%data,%obj,%triggerNum,%triggerVal);
-		}
-	}
-
-    function Armor::onDisabled(%this, %obj, %state)
-    {
-        if(isObject(%obj.billboard))
-        {
-            Billboard_Delete(%obj.billboard);
-        }
-        return Parent::onDisabled(%this, %obj, %state);
-    }
-
-    function Player::Delete(%this)
-    {
-        if(isObject(%this.billboard))
-        {
-            Billboard_Delete(%this.billboard);
-        }
-        Parent::Delete(%this);
-    }
-
-	//when the player is first spawned create their always billboards group
-	function GameConnection::onClientEnterGame(%client)
-	{	
-		%r = Parent::onClientEnterGame(%client);
-		%client.centerPrint("\c6Welcome To TTT! Yes that's me talking to you!<br>\c5Click when you're ready to join.\c6 Make sure to look me in the eyes while you do it.");
-		VisibleBillboard_Create(%client,"FloatingBillboardPlayer",30);
-		return %r;
-	}
-
-	function GameConnection::onClientLeaveGame(%client)
-	{
-		if(isObject(%client.visibleBillboardGroup))
-		{
-			%client.visibleBillboardGroup.deleteall();
-			%client.visibleBillboardGroup.delete();
-		}
-		
-		return Parent::onClientLeaveGame(%client);
-	}
-};
-deactivatePackage("billboards");
-activatePackage("billboards");
+	%group.deleteAll();
+	Parent::delete(%group);
+}

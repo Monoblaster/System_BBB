@@ -147,36 +147,35 @@ function GameConnection::AddStat(%client,%field,%value)
 	return %client;
 }
 
-function GameConnection::AddStatArray(%client,%array,%key,%value)
+function GameConnection::AddStatArray(%client,%stat,%key,%value)
 {
-	%array = getSafeVariableName(%array SPC "Array");
+	%array = getSafeVariableName(%stat SPC "Array");
 	%c = 0;
-	while((%value = %client.stat_[%array @ %c]) !$= "")
+	while((%field = %client.stat_[%array @ %c]) !$= "")
 	{
-		%curr = getField(%value,0);
+		%curr = getField(%field,0);
 		if(%curr $= %key)
 		{
-			%ammount = getField(%value,1);
+			%ammount = getField(%field,1);
 			break;
 		}
 		%c++;
 	}
-	if(%value $= "")
+	if(%field $= "")
 	{
 		%curr = %key;
 		%ammount = 0;
 	}
-
 	%client.stat_[%array @ %c] = %curr TAB %ammount + %value;
 
 	%c = 0;
 	%mostKey = "";
 	%mostammount = 0;
-	while((%value = %sourceclient.stat_[%array @ %c]) !$= "")
+	while((%field = %client.stat_[%array @ %c]) !$= "")
 	{
-		%curr = getField(%value,0);
-		%ammount = getField(%value,1);
-		if(%ammount > %mostammount)
+		%curr = getField(%field,0);
+		%ammount = getField(%field,1);
+		if(%ammount >= %mostammount)
 		{
 			%mostKey = %curr;
 			%mostAmmount = %ammount;
@@ -184,9 +183,9 @@ function GameConnection::AddStatArray(%client,%array,%key,%value)
 		%c++;
 	}
 
-	if(%mostKey!$= "")
+	if(%mostKey !$= "")
 	{
-		%sourceclient.stat_[getSafeVariableName(%array)] = %mostKey;
+		%client.stat_[getSafeVariableName(%stat)] = %mostKey;
 	}
 }
 
@@ -293,20 +292,31 @@ function serverCmdStats(%client,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a1
 {	
 	if(%a0 $= "")
 	{
-		%client.chatMessage("\c5Welcome to stats. \c3[Name, BLID blid, or me] \c4[stat]");
+		%client.chatMessage("\c5Welcome to stats. \c3[full player name, \"BLID\" blid, \"me\", or \"stats\"] \c4[stat]");
 		return;
 	}
 
-	if(%a0 $= "ME")
+	if(%a0 $= "STATS")
+	{
+		%c = 0;
+		while((%name = $Stats::Stat[%c]) !$= "")
+		{
+			%c++;
+			%client.chatMessage("<font:consolas:20>\c6" @ (strLen(%c) <= 1 ? " " @ %c : %c) @ " | " @ %name);
+			
+		}
+		return;
+	}
+	else if(%a0 $= "ME")
 	{
 		%blid = %client.bl_id;
-		%stat = %a1 @ %a2 @ %a3 @ %a4 @ %a5;
+		%stat = %a1 SPC %a2 SPC %a3 SPC %a4 SPC %a5;
 	}
 	else if(%a0 $= "BLID")
 	{
 		//we are using a blid search ez
 		%blid = %a1;
-		%stat = %a2 @ %a3 @ %a4 @ %a5 @ %a6;
+		%stat = %a2 SPC %a3 SPC %a4 SPC %a5 SPC %a6;
 	}
 	else
 	{
@@ -320,8 +330,10 @@ function serverCmdStats(%client,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a1
 		}
 
 		//stat string out of remaining
-		%stat = %a[%c++] @ %a[%c++] @ %a[%c++] @ %a[%c++] @ %a[%c++];
+		%stat = %a[%c++] SPC %a[%c++] SPC %a[%c++] SPC %a[%c++] SPC %a[%c++];
 	}
+
+	%stat = trim(%stat);
 
 	//does this blid have stats?
 	%searchedClient = $Stats::BLIDToStats[%blid];
@@ -338,6 +350,10 @@ function serverCmdStats(%client,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a1
 		while((%name = $Stats::GeneralStatsPage[%c]) !$= "")
 		{
 			%value = %searchedClient.getStat(%name);
+			if(%value.uiName !$= "" && %value == 0)
+			{
+				%value = %value.uiName;
+			}
 			%stat[%c] = %value TAB %name;
 			%found++;
 			%c++;
@@ -353,7 +369,7 @@ function serverCmdStats(%client,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a1
 			%name = $Stats::Stat[%stat - 1];
 
 			%value = %searchedClient.getStat(%name);
-			if(%value.uiName !$= "")
+			if(%value.uiName !$= "" && %value == 0)
 			{
 				%value = %value.uiName;
 			}
@@ -367,7 +383,7 @@ function serverCmdStats(%client,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a1
 				if(striPos(%name,%stat) == 0)
 				{
 					%value = %searchedClient.getStat(%name);
-					if(%value.uiName !$= "")
+					if(%value.uiName !$= "" && %value == 0)
 					{
 						%value = %value.uiName;
 					}
@@ -414,13 +430,8 @@ function serverCmdStats(%client,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a1
 	}
 	else
 	{
-		%c = 0;
-		while((%name = $Stats::Stat[%c]) !$= "")
-		{
-			%client.chatMessage("<font:consolas:20>\c6" @ (strLen(%c) <= 1 ? " " @ %c : %c)  @ " | " @ %name);
-			%c++;
-		}
-		%client.chatMessage("\c5Uknown stat. Page Up to view the availible stats");
+		
+		%client.chatMessage("\c5Uknown stat. Use \"/stats stats\" to see availible stats.");
 	}
 }
 
@@ -428,27 +439,20 @@ $c = -1;
 //#kill stats (DONE)
 //traitors killed
 registerStat("T Killed",0);
-registerLeaderboard("T Killed",true);
 //innocents killed
 registerStat("I Killed",0);
-registerLeaderboard("I Killed",true);
 //detectives killed
 registerStat("D Killed",0);
-registerLeaderboard("D Killed",true);
 //total kills
 registerStat("Kills",0);
-registerLeaderboard("Kills",true);
 //miskills
 registerStat("Miskills",0);
-registerLeaderboard("Miskills");
 //post round kills
 registerStat("PR Kills",0);
-registerLeaderboard("PR Kills",true);
 
 //#round stats (DONE)
 //total rounds played
 registerStat("Rounds",0);
-registerLeaderboard("Rounds",true);
 //traitor rounds played
 registerStat("T Rounds",0);
 //innocent rounds played
@@ -457,19 +461,14 @@ registerStat("I Rounds",0);
 registerStat("D Rounds",0);
 //total rounds won
 registerStat("Wins",0);
-registerLeaderboard("Wins",true);
 //traitor wins
 registerStat("T Wins",0);
-registerLeaderboard("T Wins",true);
 //innocent wins
 registerStat("I Wins",0);
-registerLeaderboard("I Wins",true);
 //detective wins
 registerStat("D Wins",0);
-registerLeaderboard("D Wins",true);
 //rounds survived
 registerStat("Survived",0);
-registerLeaderboard("Survived",true);
 
 //#favorites stats (need to save a lot of stats for these)
 //favorite traitor item
@@ -486,10 +485,8 @@ registerStat("Map","None",true,"");
 //challenge stats
 //melee kills
 registerStat("Melee Kills",0);
-registerLeaderboard("Melee Kills",true);
 //throwing knife kills
 registerStat("Throwing Knife Kills",0);
-registerLeaderboard("Throwing Knife Kills",true);
 
 //#generic stats
 //credits spent
@@ -624,7 +621,7 @@ package StatSaver
 					%sourceClient.AddStat("Miskills",1);
 				}
 
-				%sourceClient.AddStat(GetSubStr(%role,0,1) SPC "Kills",1);
+				%sourceClient.AddStat(GetSubStr(%role,0,1) SPC "Killed",1);
 			}
 			else
 			{
@@ -648,6 +645,8 @@ package StatSaver
 			%client.AddStat("Rounds",1);
 			%role = %client.role;
 
+			%client.AddStat(GetSubStr(%role,0,1) SPC "Rounds",1);
+
 			//did they win?
 			%win = false;
 			if(%type $= "IWin" && (%role $= "Innocent" || %role $= "Detective"))
@@ -660,9 +659,9 @@ package StatSaver
 			}
 
 			//increment rounds played for their role
-			%client.AddStat("Wins",1);
 			if(%win)
 			{
+				%client.AddStat("Wins",1);
 				%client.AddStat(GetSubStr(%role,0,1) SPC "Wins",1);
 				%client.stat_RoundsWon++;
 			}

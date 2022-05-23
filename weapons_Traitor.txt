@@ -6,6 +6,8 @@ Syringe
 [T] Laser Tripmine
 [T] Proxy Mine
 [T] Blast Mine
+[T] Incendiary Mine
+[T] Electric Mine
 [T] Claymore
 Disguiser
 Throwing Knife
