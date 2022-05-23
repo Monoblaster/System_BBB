@@ -1055,11 +1055,25 @@ function Player::findCorpseRayCast(%obj, %long)
 	return 0;
 }
 
+datablock PlayerData(EmptyPlayer)
+{
+	shapeFile = "base/data/shapes/empty.dts";
+};
+
 function Player::grabCorpse(%obj, %corpse)
 {
 	%obj.unMountImage(0);
 	fixArmReady(%obj);
-	%obj.mountObject(%corpse, 0);
+	if(!isObject(%obj.corpseHolder))
+	{
+		%obj.corpseHolder = new AIPlayer()
+		{
+			dataBlock = "EmptyPlayer";
+		};
+		%obj.mountObject(%obj.corpseHolder,0);
+	}
+	%corpseHolder = %obj.corpseHolder;
+	%corpseHolder.mountObject(%corpse, 0);
 	%obj.playThread(2, "ArmReadyBoth");
 	%obj.heldCorpse = %corpse;
 	%corpse.holder = %obj;

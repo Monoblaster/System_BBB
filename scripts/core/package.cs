@@ -18,23 +18,89 @@
 // =================================================
 // 1. Namespaceless
 // =================================================
+function SimObject::onCameraEnterOrbit(%obj, %camera) {}
+function SimObject::onCameraLeaveOrbit(%obj, %camera) {}
+
+function Projectile::FuseExplode(%proj)
+{
+	%db = %proj.getDatablock();
+	%vel = %proj.getVelocity();
+	%pos = %proj.getPosition();
+	%sObj = %proj.sourceObject;
+	%sSlot = %proj.sourceSlot;
+	%cli = %proj.client;
+
+	%proj.delete();
+
+	if(vectorLen(%vel) == 0)
+		%vel = "0 0 0.1";
+	
+	%p = new Projectile()
+	{
+		dataBlock = %db;
+		initialVelocity = %vel;
+		initialPosition = %pos;
+		sourceObject = %sObj;
+		sourceSlot = %sSlot;
+		client = %cli;
+		sourceImage = %proj.sourceImage;
+		sourceItem = %proj.sourceItem;
+	};
+	
+	MissionCleanup.add(%p);
+
+	%p.explode();
+}
+
 package BBB_Namespaceless
 {
-	function SimObject::onCameraEnterOrbit(%obj, %camera) {}
-	function SimObject::onCameraLeaveOrbit(%obj, %camera) {}
-	function Projectile::onAdd(%obj)
+	function Player::WeaponAmmoUse(%player)
 	{
-		if(isObject(%obj))
-		{
-			if(isObject(%source = %obj.sourceObject) && (%source.getClassName() $= "Player" || %source.getClassName() $= "AIPlayer")
-			|| isObject(%source = %obj.sourceClient.player) && (%source.getClassName() $= "Player" || %source.getClassName() $= "AIPlayer"))
-				%obj.sourceImage = %source.getMountedImage(0);
-		}
+		%image = %player.getMountedImage(0);
+		%player.lastBBBUsedImage = %image;
+		%item = %player.tool[%player.currTool];
+		 %player.lastBBBUsedItem = %item;
+		parent::WeaponAmmoUse(%player);
+	}
 
-		Parent::onAdd(%obj);
+	function Projectile::onAdd(%projectile)
+	{
+		%return = Parent::onAdd(%projectile);
+		if(isObject(%projectile))
+		{
+			%player = %projectile.sourceObject;
+
+
+			if(isObject(%player))
+			{
+				if(%projectile.sourceImage $= "")
+				{
+					%image = %player.getMountedImage(0);
+					if(!isObject(%image))
+					{
+						%image = %player.lastBBBUsedImage;
+					}
+					%projectile.sourceImage = %image;
+				}
+
+				if(%projectile.sourceItem $= "")
+				{
+					%item = %player.tool[%player.currTool];
+	
+					if(!isObject(%item))
+					{
+						%item = %player.lastBBBUsedItem;
+					}
+
+					%projectile.sourceItem = %item;
+				}
+			}
+		}
+		return %r;
 	}
 };
 activatePackage(BBB_Namespaceless);
+//overwrite so grenades inherit sourceimage
 // =================================================
 // 2. Armor
 // =================================================
@@ -336,23 +402,18 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 			%s = "Suicide";
 		else if(%damageType == $DamageType::Fall)
 			%s = "Broken leg";
-		else
+		else if(%item = %sourceObject.sourceItem)
 		{
-			if(isObject(%itm = %sourceObject.sourceImage.R_InheritImage.Item) && %itm !$= BowItem)
-				%s = %itm.UIName;
-			else if(isObject(%itm = %sourceObject.sourceImage.Item) && %itm !$= BowItem)
-				%s = %itm.UIName;
-			else if(isObject(%so = sourceObject) && (%sourceObject.getClassName() $= "Player" || %sourceObject.getClassName() $= "AIPlayer")
-						|| isObject(%so = %sourceClient.player))
-			{
-				if(isObject(%itm = %so.getMountedImage(0).R_InheritImage.Item) && %itm !$= BowItem)
-					%s = %itm.UIName;
-				else if(isObject(%h = %so.meleeHand) && isObject(%itm = %h.getMountedImage(0).Item) && %itm !$= BowItem)
-					%s = %itm.UIName;
-				else if(isObject(%itm = %so.getMountedImage(0).Item) && %itm !$= BowItem)
-					%s = %itm.UIName;
-			}
+			%s = %item.uiname;	
 		}
+		else if(%sourceObject.getClassName() $= "GameConnection")
+		{
+			%sourceplayer = %sourceObject.player;
+			%item = %sourceplayer.tool[%sourceplayer.currTool];
+			%s = %item.uiname;
+		}
+
+		talk(%sourceObject.getClassName());
 
 		%player.SOD = %s;//getWord(getTaggedString($DeathMessage_Murder[%damageType]), 1);
 		if(%player.deadTime - %player.lastMsgTime < 2000)
@@ -427,7 +488,8 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 
 	if($BBB::Round::Phase $= "Round")
 	{
-		%dlmsg = "<color:" @ (%sourceclient.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %sourceclient.name SPC "(" @ %sourceclient.role @ ") \c6killed<color:" @ (%client.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" SPC %client.name SPC "(" @ %client.role @ ")\c6 at" SPC getStringFromTime($BBB::rTimeLeft);
+		%dlmsg = "<color:" @ (%sourceclient.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %sourceclient.name SPC "(" @ %sourceclient.role 
+		@ ") \c6killed<color:" @ (%client.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" SPC %client.name SPC "(" @ %client.role @ ")\c6 at" SPC getStringFromTime($BBB::rTimeLeft);
 
 		if(!isObject(%sourceclient))
 			%dlmsg = "<color:" @ (%cl.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %client.name SPC "(" @  %client.role @ ")" SPC "died.";
