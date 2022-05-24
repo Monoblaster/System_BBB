@@ -73,7 +73,7 @@ for ( $file = findFirstFile( $pattern ) ; $file !$= "" ; $file = findNextFile( $
 $pattern = "";
 
 //exec prefs to load after files have been executed
-schedule(1000,0,"exec","add-ons/system_bbb/prefs.cs");
+schedule(10000,0,"exec","add-ons/system_bbb/prefs.cs");
 
 function BBB_RebuildItemTable()
 {

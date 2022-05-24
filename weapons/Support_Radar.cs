@@ -11,6 +11,7 @@
 // 1. Preferences
 // =================================================
 $Pref::Radar::UpdateTime = 20000;
+$Pref::Radar::SearchRadius = 100;
 
 // =================================================
 // 2. Functions
@@ -36,7 +37,7 @@ function RadarSilentLoop()
 			else if(!%client.cleardXrayBillboardGroup)
 			{
 				%client.cleardXrayBillboardGroup = true;
-				%client.visibleBillboardGroup.ClearBillboards("xray");
+				%client.AVBillboardGroup.Clear("xray");
 			}
 		}
 	}
@@ -63,6 +64,7 @@ function Player::displayRadar(%player)
 
 function Player::updateRadarPositions(%player)
 {
+	%player.client.cleardXrayBillboardGroup = false;
 	
 	if((getSimTime() - %player.lastRadarCheck) < $Pref::Radar::UpdateTime && %player.lastRadarCheck !$= "")
 	{
@@ -105,6 +107,4 @@ function Player::updateRadarPositions(%player)
 			}
 		}
 	}
-
-	%player.client.cleardXrayBillboardGroup = false;
 }

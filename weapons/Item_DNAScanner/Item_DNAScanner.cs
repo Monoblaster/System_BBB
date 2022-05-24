@@ -109,101 +109,122 @@ datablock ShapeBaseImageData(DNAScannerImage)
 
 function DNAScannerImage::onFire(%this,%obj,%slot)
 {
-	if(%obj.getDamagePercent() < 1.0)
-		%obj.playThread(2, shiftAway);	
-		
-	%corpse = %obj.findCorpseRayCast();
-	if(isObject(%corpse))
+	if(%obj.DNA)
 	{
-		%found = false;
-		for(%i = 0; %i < getFieldCount(%corpse.fingerPrints); %i++)
+		if(%obj.hasDNAScanner)
 		{
-			%field = getField(%corpse.fingerPrints, %i);
-			if(strstr(%obj.DNA, %field) < 0)
-			{
-				%obj.DNA = %obj.DNA @ "	" @ %field;
-				%found = true;
-			}
+			%obj.client.play2D(XrayOffSound);
+			%obj.hasDNAScanner = false;
+			%obj.hasRadar = false;
+			commandToClient(%obj.client, 'clearCenterPrint');
 		}
-		if(%found)
-			messageClient(%obj.client, 'BBB_Chat_Sound', "\c6You found DNA. Type \c4/scanner \c6to toggle the visual tracker.");
-	}
-	
-}
-
-function serverCmdClearDNA(%client)
-{
-	%client.player.DNA = "";
-}
-
-function serverCmdScanner(%client)
-{
-	%player = %client.player;
-	
-	if(%player.hasDNAScanner)
-	{
-		%client.play2D(XrayOffSound);
-		%player.hasDNAScanner = false;
-		%player.hasRadar = false;
-		commandToClient(%client, 'clearCenterPrint');
+		else
+		{
+			%obj.client.play2D(XrayOnSound);
+			%obj.hasDNAScanner = true;
+			%obj.hasRadar = true;
+			commandToClient(%obj.clien, 'clearCenterPrint');
+			RadarSilentLoop();
+		}
 	}
 	else
 	{
-		%client.play2D(XrayOnSound);
-		%player.hasDNAScanner = true;
-		%player.hasRadar = true;
-		commandToClient(%client, 'clearCenterPrint');
-		RadarSilentLoop();
+		if(%obj.getDamagePercent() < 1.0)
+			%obj.playThread(2, shiftAway);	
+		
+		%corpse = %obj.findCorpseRayCast();
+		if(isObject(%corpse))
+		{
+			%found = false;
+			for(%i = 0; %i < getFieldCount(%corpse.fingerPrints); %i++)
+			{
+				%field = getField(%corpse.fingerPrints, %i);
+				if(strstr(%obj.DNA, %field) < 0)
+				{
+					%obj.DNA = %obj.DNA @ "	" @ %field;
+					%found = true;
+				}
+			}
+
+			if(%found)
+			{
+				%obj.client.play2D(XrayOnSound);
+				%obj.hasDNAScanner = true;
+				%obj.hasRadar = true;
+				commandToClient(%obj.clien, 'clearCenterPrint');
+				RadarSilentLoop();
+			}
+		}
 	}
 }
 
-if($Pref::Radar::SearchRadius $= "") $Pref::Radar::SearchRadius = 40;
-
 package DNA_Scanner
 {
+	function Armor::onTrigger(%this, %obj, %trigger, %state)
+	{
+		%image = %obj.getMountedImage(0).getName();
+		if(%image $= "DNAScannerImage")
+		{
+			if(%trigger == 4 && %state = true && %obj.dna)
+			{
+				%obj.client.play2D(XrayOffSound);
+				%obj.hasDNAScanner = false;
+				%obj.hasRadar = false;
+				commandToClient(%obj.client, 'clearCenterPrint');
+				%obj.client.centerprint("\c6DNA Ejected",2);
+
+				%obj.DNA = "";
+			}
+		}
+		else
+		{
+			parent::onTrigger(%this, %obj, %trigger, %state);
+		}
+	}
 	
 	function Player::updateRadarPositions(%obj)
 	{
+		%obj.client.cleardXrayBillboardGroup = false;
 		if(!%obj.hasDNAScanner)
 		{
 			return parent::updateRadarPositions(%obj);
 		}
 			
-		if((getSimTime() - %player.lastRadarCheck) < $Pref::Radar::UpdateTime && %player.lastRadarCheck !$= "")
+		if((getSimTime() - %obj.lastRadarCheck) < $Pref::Radar::UpdateTime && %obj.lastRadarCheck !$= "")
 		{
 			return;
 		}
-		%player.lastRadarCheck = getSimTime();
+		%obj.lastRadarCheck = getSimTime();
 		
 		// get pos
-		initContainerRadiusSearch(%player.getPosition(), $Pref::Radar::SearchRadius, $TypeMasks::PlayerObjectType);		
+		initContainerRadiusSearch(%obj.getPosition(), $Pref::Radar::SearchRadius, $TypeMasks::PlayerObjectType);		
 		%count = 0;
 		while(isObject(%currObj = containerSearchNext()))
 		{
-			if(strstr(%currObj, %obj.DNA) < 0)
+			if(strstr(%obj.DNA, %currObj) < 0)
 			{
 				continue;
 			}
 
-			if(%currObj == %player)
+			if(%currObj == %obj)
 			{
 				continue;
 			}
-			// if(%col.getClassName() $= "AIPlayer")
+			// if(%col.getClassName() $= "AIobj")
 			// 	continue;
 			%radarPos[%count] = %currObj.getPosition();
 			%count++;
 		}
 
-		%group = %player.client.visibleBillboardGroup;
-		%group.ClearBillboards("xray");
+		%group = %obj.client.AVBillboardGroup;
+		%group.Clear("xray");
 		//create new ghosts at our positions and move them there
 		for(%i = 0; %i < %count; %i++)
 		{
 			%pos = %radarPos[%i];
 			if(%pos !$= "")
 			{
-				%group.billboard("normalRadarBillboard",%pos,"xray");
+				%group.make("normalRadarBillboard",%pos,"xray");
 			}
 		}
 	}

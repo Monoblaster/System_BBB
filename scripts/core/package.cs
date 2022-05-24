@@ -394,7 +394,11 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 		%player.name = %client.name;
 		%player.role = %client.role;
 		%player.deadTime = getSimTime();
-		%player.fingerPrints = %sourceObject;
+		%player.fingerPrints = %sourceClient.player;
+		if(%player.fingerPrints $= "")
+		{
+			%player.fingerPrints = %sourceClient.corpse;
+		}
 		
 		%s = "???";
 
@@ -412,8 +416,6 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 			%item = %sourceplayer.tool[%sourceplayer.currTool];
 			%s = %item.uiname;
 		}
-
-		talk(%sourceObject.getClassName());
 
 		%player.SOD = %s;//getWord(getTaggedString($DeathMessage_Murder[%damageType]), 1);
 		if(%player.deadTime - %player.lastMsgTime < 2000)
