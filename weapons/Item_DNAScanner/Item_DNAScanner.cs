@@ -162,7 +162,12 @@ package DNA_Scanner
 {
 	function Armor::onTrigger(%this, %obj, %trigger, %state)
 	{
-		%image = %obj.getMountedImage(0).getName();
+		%image = %obj.getMountedImage(0);
+		if(isObject(%image))
+		{
+			%image = %image.getName();
+		}
+
 		if(%image $= "DNAScannerImage")
 		{
 			if(%trigger == 4 && %state = true && %obj.dna)

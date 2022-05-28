@@ -54,6 +54,20 @@ function Projectile::FuseExplode(%proj)
 
 package BBB_Namespaceless
 {
+	//only pop items when we want them to
+	function Item::schedulePop(%obj)
+	{
+		
+		if($BBB::ItemPop)
+		{
+			Parent::schedulePop(%obj)
+		}
+		else
+		{
+			%obj.schedule($Game::Item::PopTime,"schedulePop");
+		}
+	}
+
 	function Player::WeaponAmmoUse(%player)
 	{
 		%image = %player.getMountedImage(0);
@@ -73,26 +87,29 @@ package BBB_Namespaceless
 
 			if(isObject(%player))
 			{
-				if(%projectile.sourceImage $= "")
+				if(%player.getClassName() $= "Player")
 				{
-					%image = %player.getMountedImage(0);
-					if(!isObject(%image))
+					if(%projectile.sourceImage $= "")
 					{
-						%image = %player.lastBBBUsedImage;
-					}
-					%projectile.sourceImage = %image;
-				}
-
-				if(%projectile.sourceItem $= "")
-				{
-					%item = %player.tool[%player.currTool];
-	
-					if(!isObject(%item))
-					{
-						%item = %player.lastBBBUsedItem;
+						%image = %player.getMountedImage(0);
+						if(!isObject(%image))
+						{
+							%image = %player.lastBBBUsedImage;
+						}
+						%projectile.sourceImage = %image;
 					}
 
-					%projectile.sourceItem = %item;
+					if(%projectile.sourceItem $= "")
+					{
+						%item = %player.tool[%player.currTool];
+		
+						if(!isObject(%item))
+						{
+							%item = %player.lastBBBUsedItem;
+						}
+
+						%projectile.sourceItem = %item;
+					}
 				}
 			}
 		}
@@ -351,8 +368,8 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 	//	return Parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
 	if(!%client.inBBB || $BBB::Round::Phase !$= "Round")
 	{
-		Parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
-		return;
+		%client.setcontrolObject(%client.camera);
+		return Parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
 	}
 
 	if (%sourceObject.sourceObject.isBot)
@@ -426,6 +443,13 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 			new SimSet(CorpseGroup);
 
 		CorpseGroup.add(%player);
+
+		//drop the player's items
+		%count = %player.getDatablock().maxTools;
+		for(%i = 0; %i < %count; %i++)
+		{
+			ServerCmdDropTool(%client, %i);
+		}
 	}
 	else
 		warn("WARNING: No player object in GameConnection::onDeath() for client '" @ %client @ "'");

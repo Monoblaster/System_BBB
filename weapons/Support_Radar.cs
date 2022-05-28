@@ -81,8 +81,12 @@ function Player::updateRadarPositions(%player)
 		{
 			continue;
 		}
-		// if(%col.getClassName() $= "AIPlayer")
-		// 	continue;
+
+		if(%currObj.getClassName() $= "AIPlayer")
+		{
+			continue;
+		}
+
 		%radarPos[%count] = %currObj.getPosition();
 		%radarRole[%count] = %currObj.client.role;
 		%count++;

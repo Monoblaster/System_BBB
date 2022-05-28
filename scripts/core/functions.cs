@@ -329,46 +329,17 @@ function BBB_SpawnItems()
 	{
 		%brick = BrickGroup_888888.getObject(%i);
 
-		// for(%j = %bg.getCount() - 1; %j >= 0; %j--)
-		// {
-			// %brick = %bg.getObject(%j);
-			%name = %brick.getName();
-			switch$ (%name)
+		%name = %brick.getName();
+
+		%field = $BBB::Weapons[%name]
+		if(%field  !$= "")
+		{
+			%item = getField(%field, getRandom(0, getFieldCount(%field) - 1));
+			if(isObject(%item))
 			{
-				case "_Primary":
-					%itemCount = getFieldCount($BBB::Weapons_["Primary"]);
-					%randNum = getRandom(0, %itemCount - 1);
-					%item = getField($BBB::Weapons_["Primary"], %randNum);
-					if(isObject(%item))
-						%brick.setItem(%item);
-				case "_Secondary":
-					%itemCount = getFieldCount($BBB::Weapons_["Secondary"]);
-					%randNum = getRandom(0, %itemCount - 1);
-					%item = getField($BBB::Weapons_["Secondary"], %randNum);
-					if(isObject(%item))
-						%brick.setItem(%item);
-				case "_Grenade":
-					%itemCount = getFieldCount($BBB::Weapons_["Grenade"]);
-					%randNum = getRandom(0, %itemCount - 1);
-					%item = getField($BBB::Weapons_["Grenade"], %randNum);
-					if(isObject(%item))
-						%brick.setItem(%item);
-				case "_Other":
-					%itemCount = getFieldCount($BBB::Weapons_["Other"]);
-					%randNum = getRandom(0, %itemCount - 1);
-					%item = getField($BBB::Weapons_["Other"], %randNum);
-					if(isObject(%item))
-						%brick.setItem(%item);
-				case "_Melee":
-					%itemCount = getFieldCount($BBB::Weapons_["Melee"]);
-					%randNum = getRandom(0, %itemCount - 1);
-					%item = getField($BBB::Weapons_["Melee"], %randNum);
-					if(isObject(%item))
-						%brick.setItem(%item);
-				default:
-					continue;
+				%brick.setItem(%item);
 			}
-		// }
+		}	
 	}
 }
 
@@ -1023,7 +994,7 @@ function Player::findCorpseRayCast(%obj, %long)
 	%safe = 0;
 
 	%maxdist = 1; //how fatass our fat raycast is
-	initContainerRadiusSearch(%center, %length + %maxdist, $TypeMasks::CorpseObjectType | $TypeMasks::PlayerObjectType); //Scale radius search so it searches the entirety of raycast
+	initContainerRadiusSearch(%center, %length + %maxdist, $TypeMasks::CorpseObjectType); //Scale radius search so it searches the entirety of raycast
 	while (isObject(%col = containerSearchNext()))
 	{
 		%safe++;
@@ -1672,6 +1643,9 @@ function BBB_Minigame::roundEnd(%so, %type)
 	}
 	$BBB::Round::Phase = "PostRound";
 
+	//item popping time baby!
+	$BBB::ItemPop = true;
+
 	announceDeathLogs();
 	clearDeathLogs();
 
@@ -1698,6 +1672,9 @@ function BBB_Minigame::roundSetup(%so)
 
 	$BBB::Round::Active = true;
 	$BBB::Round::Phase = "PreRound";
+
+	//no more item popping past this point
+	$BBB::ItemPop = false;
 
 	%so.spawnAllPlayers(true);
 	for(%i = 0; %i < %so.numMembers; %i++)

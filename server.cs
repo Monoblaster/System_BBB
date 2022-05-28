@@ -28,25 +28,25 @@ $BBB::Time::PostRound	= "12000";
 $BBB::Time::Shock		= "1500"; // The time between the round ends and the winner is shown. Should be lower than Time::PostRound.
 
 $BBB::Time::MapVote		= "30000"; // Map vote time
-$BBB::Time::Bonus		= "30000"; // Bonus time for every time an innocent is killed.
+$BBB::Time::Bonus		= "10000"; // Bonus time for every time an innocent is killed.
 
 // Ratios
 $BBB::Detective::MinPlayers = 8; // 1 Detective for X players. ex. if there are 16 players, there are 2 detectives.
 $BBB::Traitor::MinPlayers = 4; // 1 traitor per x players
 
 // Weapons
-$BBB::Weapons_Primary = "GunItem"; //primary
+// $BBB::Weapons_Primary = "GunItem"; //primary
 
-$BBB::Weapons_Secondary = "R_MW92fsItem" TAB "R_92fsItem" TAB "R_SubmachineGunOPFORItem" TAB "R_PistolMagnumItem" TAB "R_PistolHeavyItem" TAB "R_PistolItem" TAB "R_PistolSopmodItem"; //secondary
+// $BBB::Weapons_Secondary = "R_MW92fsItem" TAB "R_92fsItem" TAB "R_SubmachineGunOPFORItem" TAB "R_PistolMagnumItem" TAB "R_PistolHeavyItem" TAB "R_PistolItem" TAB "R_PistolSopmodItem"; //secondary
 
-$BBB::Weapons_Grenade = "grenade_smokeItem" TAB "grenade_concussionItem" TAB "grenade_electroItem" TAB "grenade_flashbangItem" TAB "grenade_nailbombItem" TAB "grenade_fragmentItem" TAB "grenade_stickItem" TAB "grenade_riotItem" TAB "grenade_decoyItem";//"SmokeGrenadeItem"; //tiertary
+// $BBB::Weapons_Grenade = "grenade_smokeItem" TAB "grenade_concussionItem" TAB "grenade_electroItem" TAB "grenade_flashbangItem" TAB "grenade_nailbombItem" TAB "grenade_fragmentItem" TAB "grenade_stickItem" TAB "grenade_riotItem" TAB "grenade_decoyItem";//"SmokeGrenadeItem"; //tiertary
 
-$BBB::Weapons_Other = "meatcleaverItem" TAB "pipeWrenchItem" TAB "fryingpanItem" TAB "baseballBatItem" TAB "macheteItem" TAB "sledgeHammerItem" TAB "hockeystickItem" TAB "shovelItem" TAB "pitchforkItem" TAB "spikeBatItem" TAB "crowbarItem" TAB "axeItem" TAB "tireironItem" TAB "leadpipeItem" TAB "R_AmmoResupplyItem" TAB "R_AmmoPackItem" TAB "R_AmmoResupplyItem" TAB "R_AmmoPackItem" TAB "R_AmmoPackItem";
+// $BBB::Weapons_Other = "meatcleaverItem" TAB "pipeWrenchItem" TAB "fryingpanItem" TAB "baseballBatItem" TAB "macheteItem" TAB "sledgeHammerItem" TAB "hockeystickItem" TAB "shovelItem" TAB "pitchforkItem" TAB "spikeBatItem" TAB "crowbarItem" TAB "axeItem" TAB "tireironItem" TAB "leadpipeItem" TAB "R_AmmoResupplyItem" TAB "R_AmmoPackItem" TAB "R_AmmoResupplyItem" TAB "R_AmmoPackItem" TAB "R_AmmoPackItem";
 
-// Shop Weapons
-//healthStationHandItem
-$BBB::Weapons_Detective = "XrayItem" TAB "medi_stimpackItem" TAB "R_ShieldPistolItem" TAB "DNAScannerItem"; 
-$BBB::Weapons_Traitor = "XrayItem" TAB "DisguiserItem" TAB "grenade_mollyItem" TAB "HL1TripmineItem" TAB "ThrowingKnifeItem" TAB "silencedGunItem" TAB "FlareItem" TAB "grenade_remoteItem" TAB "grenade_clusterItem" TAB "grenade_dynamiteItem";
+// // Shop Weapons
+// //healthStationHandItem
+// $BBB::Weapons_Detective = "XrayItem" TAB "medi_stimpackItem" TAB "R_ShieldPistolItem" TAB "DNAScannerItem"; 
+// $BBB::Weapons_Traitor = "XrayItem" TAB "DisguiserItem" TAB "grenade_mollyItem" TAB "HL1TripmineItem" TAB "ThrowingKnifeItem" TAB "silencedGunItem" TAB "FlareItem" TAB "grenade_remoteItem" TAB "grenade_clusterItem" TAB "grenade_dynamiteItem";
 
 $BBB::FirstShopSlot = 5;
 
@@ -55,7 +55,7 @@ $BBB::Announce::BodyFound = true; // Announce to the server when a body is found
 $BBB::UsingSMMBodies = false;
 $BBB::RoundMusic = ""; // HL1_-_Military_Precision";
 
-$Game::Item::PopTime = $BBB::Time::Base + $BBB::Time::PreRound + $BBB::Time::PostRound;
+$Game::Item::PopTime = 2000;
 // =================================================
 // 2. Scripts
 // =================================================
