@@ -24,7 +24,7 @@ if(!isObject(BBB_Standard_Armor))
 		jetEnergyDrain	= 0;
 		maxDamage		= 100;
 		maxEnergy		= 100;
-		maxTools			= 7;
+		maxTools			= 8;
 		maxWeapons		= 7;
 		minJetEnergy	= 0;
 		paintable		= true;

@@ -60,7 +60,7 @@ package BBB_Namespaceless
 		
 		if($BBB::ItemPop)
 		{
-			Parent::schedulePop(%obj)
+			Parent::schedulePop(%obj);
 		}
 		else
 		{
@@ -445,6 +445,8 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 		CorpseGroup.add(%player);
 
 		//drop the player's items
+		//make sure the shop isn't open
+		Inventory_Pop(%player);
 		%count = %player.getDatablock().maxTools;
 		for(%i = 0; %i < %count; %i++)
 		{

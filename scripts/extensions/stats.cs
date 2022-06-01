@@ -694,8 +694,13 @@ package StatSaver
 	function serverCmdBuy(%client, %search)
 	{
 		parent::serverCmdBuy(%client, %search);
-		%image = %client.player.lastBoughtItem.getName();
-		%role = %client.role;
+		%item = %client.player.lastBoughtItem;
+		if(isObject(%item))
+		{
+			%image = %item.getName();
+			%role = %client.role;
+		}
+		
 
 		if(%image $= "")
 		{

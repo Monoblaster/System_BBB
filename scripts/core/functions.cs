@@ -331,7 +331,7 @@ function BBB_SpawnItems()
 
 		%name = %brick.getName();
 
-		%field = $BBB::Weapons[%name]
+		%field = $BBB::Weapons[%name];
 		if(%field  !$= "")
 		{
 			%item = getField(%field, getRandom(0, getFieldCount(%field) - 1));
@@ -868,7 +868,7 @@ function Player::BBB_GiveItem(%obj, %itemToGive)
 	// Check if slot is active
 	if(%obj.tool[%slot] != 0 && !%itemToGive.ammoDrop)
 		commandToClient(%client, 'CenterPrint', "\c5Your \c3" @ %name SPC "\c5slot is full!", 0.5);
-	else // Give the item
+	else if(%slot != 7) // Give the item
 	{
 		%image = %itemToGive.getDatablock();
 		%obj.tool[%slot] = %image; //.getID()
@@ -1783,6 +1783,7 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 // =================================================
 function serverCmdBuy(%client, %search)
 {
+	%player = %client.player;
 	%player.lastBoughtItem = "";
 
 	%role = %client.role;
@@ -1796,38 +1797,36 @@ function serverCmdBuy(%client, %search)
 	}
 	if(%search $= "")
 		return;
-	%player = %client.player;
+	
 	if(%search > 0 || %search $= "0")
 		%doNumSearch = true;
 
 	if(%doNumSearch)
 	{
-		if(isObject($BBB::Shop_[%role, %search]))
+		%image = $BBB::Shop_[%role, %search];
+		if(isObject(%image))
 		{
+			if(%image.singleBuy && %player.bought[%image])
+			{
+				messageClient(%client,'', "\c6This item is out of stock.");
+				%client.play2D(BBB_Chat_Sound);
+				return;
+			}
+
 			for(%i = $BBB::FirstShopSlot-1; %i < %player.getDatablock().maxTools; %i++)
 			{
-			  %image = $BBB::Shop_[%role, %search];
-
-			  if(!isObject(%image))
-				break;
-			  if(%image.singleBuy && %player.bought[%image])
-			  {
-				 messageClient(%client,'', "\c6This item is out of stock.");
-				 %client.play2D(BBB_Chat_Sound);
-				 return;
-			  }
-			  %tool = %player.tool[%i];
-			  if(%tool == 0)
-			  {
-				 %player.tool[%i] = %image; //.getID()
-				 %player.weaponCount++;
-				 messageClient(%client,'MsgItemPickup','',%i,%image); //%image.getID());
-				 %player.bought[%image] = true;
-				 %player.lastBoughtItem = %image;
-				 %itemGiven = true;
-				 %client.credits--;
-				 break;
-			  }
+				%tool = %player.tool[%i];
+				if(!isObject(%tool))
+				{
+					%player.tool[%i] = %image; //.getID()
+					%player.weaponCount++;
+					messageClient(%client,'MsgItemPickup','',%i,%image); //%image.getID());
+					%player.bought[%image] = true;
+					%player.lastBoughtItem = %image;
+					%itemGiven = true;
+					%client.credits--;
+					break;
+				}
 			}
 		}
 	}
@@ -1840,32 +1839,31 @@ function serverCmdBuy(%client, %search)
 			%needle = strLwr(%search);
 			if(strstr(%haystack, %needle) >= 0)
 			{
-
-				for(%i = $BBB::FirstShopSlot-1; %i < %player.getDatablock().maxTools; %i++)
+				%image = $BBB::Shop_[%role, %j];
+				if(isObject(%image))
 				{
-				  %image = $BBB::Shop_[%role, %j];
+					if(%image.singleBuy && %player.bought[%image])
+					{
+						messageClient(%client,'', "\c6This item is out of stock.");
+						%client.play2D(BBB_Chat_Sound);
+						return;
+					}
 
-				  if(!isObject(%image))
-					break;
-
-				  %tool = %player.tool[%i];
-				  if(%image.singleBuy && %player.bought[%image])
-				  {
-					 messageClient(%client,'', "\c6This item is out of stock.");
-					 %client.play2D(BBB_Chat_Sound);
-					 return;
-				  }
-				  if(%tool == 0)
-				  {
-					 %player.tool[%i] = %image; //.getID()
-					 %player.weaponCount++;
-					 messageClient(%client,'MsgItemPickup','',%i,%image); //%image.getID());
-					 %player.bought[%image] = true;
-					 %player.lastBoughtItem = %image;
-					 %itemGiven = true;
-					 %client.credits--;
-					 break;
-				  }
+					for(%i = $BBB::FirstShopSlot-1; %i < %player.getDatablock().maxTools; %i++)
+					{
+						%tool = %player.tool[%i];
+						if(!isObject(%tool))
+						{
+							%player.tool[%i] = %image; //.getID()
+							%player.weaponCount++;
+							messageClient(%client,'MsgItemPickup','',%i,%image); //%image.getID());
+							%player.bought[%image] = true;
+							%player.lastBoughtItem = %image;
+							%itemGiven = true;
+							%client.credits--;
+							break;
+						}
+					}
 				}
 			}
 		}
