@@ -37,3 +37,12 @@ B&E: M1928 Thompson
 B&E: UMP .45
 B&E: Uzi
 B&E: L85A2
+B&E: 870 Express
+B&E: FN FAL
+B&E: M40
+B&E: Mosin Nagant
+B&E: Mossberg 500
+B&E: Mossberg 500 Tac.
+B&E: MP5SD
+B&E: PP-19 Bizon
+B&E: Winchester 1873

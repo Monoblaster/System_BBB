@@ -9,3 +9,5 @@ B&E: USP .45
 B&E: TT-33
 B&E: TEC-9
 B&E: Luger
+B&E: That Gun
+B&E: Walther PPK

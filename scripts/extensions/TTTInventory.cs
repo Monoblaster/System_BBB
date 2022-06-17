@@ -318,26 +318,16 @@ package TTTInventory
         return %r;
     }
 
-    function ServerCmdUseTool(%client, %slot)
+    function ItemData::onUse (%this, %player, %invPosition)
     {
-        %player = %client.player;
-        %temp = %player.realCurrTool;
-        %player.realCurrTool = %slot;
-        Parent::ServerCmdUseTool(%client, %slot);
-        %player.realCurrTool = %temp;
-        
-        if(isObject(%player))
-        {
-            if(isObject(%player.tool[%slot]))
-            {
-                if(%player.tool[%slot].image.getid() == %player.getMountedImage(0))
-                {
-                    %player.realCurrTool = %slot;
-                }
-            }
-        }
+        %player.realCurrTool = %invPosition;
+        parent::onUse (%this, %player, %invPosition);
+    }
 
-        
+    function Weapon::onUse (%this, %player, %invPosition)
+    {
+        %player.realCurrTool = %invPosition;
+        parent::onUse (%this, %player, %invPosition);
     }
 
     function ServerCmdUnUseTool(%client)
@@ -446,3 +436,108 @@ package WeaponDroping
     return Parent::servercmdDropTool(%client,%slot);
 	}
 };
+
+
+//corpse inventory
+function Player::GetCorpseInventory(%player)
+{
+    %inv = Inventory_Create("CorpseInventory" @ %player);
+    %space = %inv.add(InventorySpace_Create("Space",7,$TTTInventory::EmptyItem,7,"corpseInventory_Prompt","","","corpseInventory_Drop"));
+    
+    //add the items to the inventory
+    for(%i = 0; %i < 7; %i++)
+    {
+        %tool = %player.tool[%i];
+    
+        %space.setSlot(%i,%tool,true);
+    }
+
+    return %inv;
+}
+
+function corpseInventory_Drop(%client,%space,%slot)
+{
+    %obj = %client.player;
+    if(!isObject(%obj))
+    {
+        return;
+    }
+
+    //god i hat how this gamemode's code is structured
+    %currItem = %space.getValue(%slot);
+    if(!isObject(%currItem))
+    {
+        return;
+    }
+
+    %itemname = %currItem.getName();
+
+    for(%a = 0; %a <= 3; %a++)
+	{
+		switch(%a)
+		{
+			case 0:
+				%name = "Primary";
+			case 1:
+				%name = "Secondary";
+			case 2:
+				%name = "Other";
+			case 3:
+				%name = "Grenade";
+		}
+
+		%fieldCount = getFieldCount($BBB::Weapons_[%name]);
+		for(%b = 0; %b < %fieldCount; %b++)
+		{
+			%field = getField($BBB::Weapons_[%name], %b);
+			if(%field $= %itemName)
+			{
+				%found = true;
+				%foundSlot = %a;
+				break;
+			}
+
+		}
+		if(%found)
+			break;
+	}
+
+	if(%foundSlot $= "")
+	{
+		%name = "";
+		//look for a not used slot
+		for(%i = 4; %i < 7; %i++)
+		{
+			if(!isObject(%obj.tool[%i]))
+			{
+				%foundSlot = %i;
+				break;
+			}
+		}
+	}
+
+    if(%foundSlot $= "")
+	{
+        %foundSlot = 6;
+    }
+
+    //swap the found slot on the player and the curr slot on the corpse
+    %playerItem = %obj.tool[%foundSlot];
+
+    %space.setSlot(%slot,%playerItem);
+    %client.tttInventory.getValue(0).setSlot(%foundSlot,%currItem);
+    %obj.tool[%foundSlot] = %currItem.getId();
+}
+
+function corpseInventory_Prompt(%client,%space,%slot,%select)
+{
+    if(%select)
+    {
+        %name = %space.getValue(%slot).uiName;
+        %client.centerPrint("\c6" @ %name @ "<br>\c5Drop this item take it.");
+    }
+    else
+    {
+        %client.centerPrint("");
+    }
+}

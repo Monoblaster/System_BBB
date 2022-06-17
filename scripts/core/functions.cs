@@ -760,12 +760,12 @@ function GameConnection::BBB_Give_Role(%client, %role)
 			%player.rolebillboard = %billboard = Billboard_ClearGhost(Billboard_Create("detectiveBillboard","OverheadBillboardMount"),%client);
 			%player.mountObject(%billboard,8);
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c1D<font:Palatino Linotype:43>\c1ETECTIVE";
-			%client.credits = 3;
+			%client.credits = $BBB::Detective::StartingCredits;
 	    case "Traitor":
 			%player.rolebillboard = %billboard = Billboard_ClearGhost(Billboard_Create("traitorBillboard","OverheadBillboardMount",true),"ALL");
 			%player.mountObject(%billboard,8);
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c0T<font:Palatino Linotype:43>\c0RAITOR";
-			%client.credits = 3;
+			%client.credits = $BBB::Traitor::StartingCredits;
 		case "Innocent":
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c2I<font:Palatino Linotype:43>\c2NNOCENT";
 			%client.credits = 0;
@@ -863,10 +863,21 @@ function Player::BBB_GiveItem(%obj, %itemToGive)
 			break;
 	}
 	if(%slot $= "")
-		return 0;
+	{
+		%name = "";
+		//look for a not used slot
+		for(%i = 4; %i < 7; %i++)
+		{
+			if(!isObject(%obj.tool[%i]))
+			{
+				%slot = %i;
+				break;
+			}
+		}
+	}
 
 	// Check if slot is active
-	if(%obj.tool[%slot] != 0 && !%itemToGive.ammoDrop)
+	if(%obj.tool[%slot] != 0 && !%itemToGive.ammoDrop && %name !$= "")
 		commandToClient(%client, 'CenterPrint', "\c5Your \c3" @ %name SPC "\c5slot is full!", 0.5);
 	else if(%slot != 7) // Give the item
 	{
@@ -974,6 +985,8 @@ function Player::dropCorpse(%obj)
 	%corpse.dismount();
 	%corpse.setTransform(%pos);
 	%corpse.setVelocity(%obj.getVelocity());
+
+	inventory_pop(%obj);
 	return 1;
 }
 
@@ -1035,6 +1048,7 @@ function Player::grabCorpse(%obj, %corpse)
 {
 	%obj.unMountImage(0);
 	fixArmReady(%obj);
+
 	if(!isObject(%obj.corpseHolder))
 	{
 		%obj.corpseHolder = new AIPlayer()
@@ -1043,16 +1057,28 @@ function Player::grabCorpse(%obj, %corpse)
 		};
 		%obj.mountObject(%obj.corpseHolder,0);
 	}
+
 	%corpseHolder = %obj.corpseHolder;
 	%corpseHolder.mountObject(%corpse, 0);
+
 	%obj.playThread(2, "ArmReadyBoth");
 	%obj.heldCorpse = %corpse;
+
 	%corpse.holder = %obj;
 	%corpse.setTransform("0 0 -100 0 0 -1 -1.5709");
 
 	// DNA
 	if(strstr(%corpse.fingerPrints, %obj) < 0)
 		%corpse.fingerPrints = %corpse.fingerPrints @ "	" @ %obj;
+
+	//make an inventory for the corpse if it doesn't exist already
+	if(!isObject(%corpse.corpseInventory))
+	{
+		%corpse.corpseInventory = %corpse.GetCorpseInventory();
+	}
+
+	//open the player's inventory as a menu
+	inventory_push(%obj,%corpse.corpseInventory);
 }
 
 
@@ -1075,6 +1101,8 @@ function Player::throwCorpse(%obj)
 	%corpse.dismount();
 	%corpse.setTransform(%pos);
 	%corpse.setVelocity(%velocity);
+
+	inventory_pop(%obj);
 	return 1;
 }
 
@@ -1358,52 +1386,38 @@ function BBB_Minigame::assignRandomOutfit(%so)
 
 function BBB_Minigame::assignRoles(%so)
 {
-	%playerCount = %so.numMembers;
-
-	%numTraitors = mFloor(%playerCount / $BBB::Traitor::MinPlayers);
-	if(!%numTraitors)
-		%numTraitors++; // Gotta have at least one.
-
-	%numDetectives = mFloor(%playerCount / $BBB::Detective::MinPlayers);
-
 	// Shuffle Loop
 	// =============================================
+	%playerCount = 0;
 	for(%i = 0; %i < %so.numMembers; %i++)
 	{
 		%client = %so.member[%i];
 		if(isObject(%client.player))
+		{
 			%so.players[%i] = %client;
+			%playerCount++;
+		}
 	}
-	// for(%a = 0; %a < ClientGroup.getCount(); %a++)
-	// {
-		// %client = ClientGroup.getObject(%a);
-		// if(%client.inBBB)
-		// {
-			// %so.players[%a] = %client;
-		// }
-	// }
+	%so.numPlayers = %playerCount;
 
-	%currIndex = %playerCount;
+	%numTraitors = mFloor(%playerCount / $BBB::Traitor::MinPlayers);
+	if(!%numTraitors)
+		%numTraitors = 1; // Gotta have at least one.
+
+	%numDetectives = mFloor(%playerCount / $BBB::Detective::MinPlayers);
+
+	%currIndex = %playerCount - 1;
 	// While there remain elements to shuffle...
-	%safe = 0;
-	while (0 != %currIndex)
+	while (%currIndex > 0)
 	{
 		// Pick a remaining element...
-		%randIndex = mFloor(getRandom() * %currIndex);
-		%currIndex -= 1;
+		%randIndex = getRandom(0,%currIndex);
+		%currIndex--;
 
 		// And swap it with the current element.
 		%temp = %so.players[%currIndex];
 		%so.players[%currIndex] = %so.players[%randIndex];
 		%so.players[%randIndex] = %temp;
-
-		%safe++;
-		if(%safe > 256)
-		{
-			talk("!!!");
-			talk("assignroles just went over 256!");
-			break;
-		}
 	}
 	// =============================================
 	// Source: http://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
@@ -1432,7 +1446,7 @@ function BBB_Minigame::assignRoles(%so)
 
 	for(%a = 0; %a < %playerCount; %a++)
 	{
-		%client = %so.member[%a];
+		%client = %so.players[%a];
 		if(%client.role $= "Traitor" && getFieldCount($BBB::Traitors) > 1)
 		{
 			//ghost this traitor's billboard to other traitors
@@ -1456,14 +1470,6 @@ function BBB_Minigame::assignRoles(%so)
 			%client.play2D(BBB_Chat_Sound);
 		}
 	}
-
-	// $BBB::Round::Num["Detective"] = %numDetectives;
-	// $BBB::Round::Num["Innocent"] = %playerCount - %numDetectives - %numTraitors;
-	// $BBB::Round::Num["Traitor"] = %numTraitors;
-
-	// $BBB::Round::NumAlive["Detective"] = %numDetectives;
-	// $BBB::Round::NumAlive["Innocent"] = %playerCount - %numDetectives - %numTraitors;
-	// $BBB::Round::NumAlive["Traitor"] = %numTraitors;
 }
 
 function BBB_Minigame::CleanUp(%so)
@@ -1677,15 +1683,6 @@ function BBB_Minigame::roundSetup(%so)
 	$BBB::ItemPop = false;
 
 	%so.spawnAllPlayers(true);
-	for(%i = 0; %i < %so.numMembers; %i++)
-	{
-		if(BBB_UpdateSlayList(%so.slayList, "targetInList", %so.member[%i].bl_id))
-		{
-			%cl = %so.member[%i];
-			%cl.Player.kill();
-			%cl.Player.deleteCorpse();
-		}
-	}
 
 	%so.setGlobalPrint("PREPARING...");
 	%so.respawnTime = "-1";
@@ -1713,8 +1710,7 @@ function BBB_Minigame::roundStart(%so)
 	%so.spawnAllPlayers();
 	%so.healAllPlayers();
 
-	%so.slayList = BBB_UpdateSlayList(%so.slayList, "decrementAll");
-
+	$BBB::Round::AwardPercentOffset = 0;//for use with traitor rewards
 	%so.assignRoles();
 
 	%so.playGlobalSound(BBB_StartRound_Sound);
@@ -1730,11 +1726,6 @@ function BBB_Minigame::roundStart(%so)
 	messageAll("", "<font:Palatino Linotype:35>\c4B<font:Palatino Linotype:34>\c4EGINNING ROUND \c6" @ $BBB::Round);
 	messageAll("", "<font:Palatino Linotype:28>\c4T<font:Palatino Linotype:27>\c4HERE ARE\c6" SPC %so.numMembers SPC "\c4PLAYERS THIS ROUND...");
 	%so.playGlobalSound(BBB_Chat_Sound);
-	for(%i = 0; %i < %so.numMembers; %i++)
-	{
-		%cl = %so.member[%i];
-		%cl.setMusic("MusicData_" @ $BBB::MidRoundMusic, $BBB::Music::Volume);
-	}
 }
 
 function BBB_Minigame::setGlobalPrint(%so, %text)
@@ -1769,6 +1760,16 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 	for(%i = 0; %i < %so.numMembers; %i++)
 	{
 		%client = %so.member[%i];
+		if(%client.slayed > 0)
+		{
+			if(%override)
+			{
+				%client.slayed--;
+			}
+			
+			continue;
+		}
+
 		if(%override)
 			%client.instantRespawn();
 		else if($BBB::Round::Phase $= "PreRound" && !isObject(%client.player))
@@ -1900,43 +1901,45 @@ function serverCmdShop(%client)
 	%client.BBB_DisplayShop(%client.role);
 }
 
-function serverCmdSlay(%client, %w0, %w1, %w2, %w3, %w4, %w5, %w6, %w8, %w9, %w10)
+function serverCmdSlay(%client, %a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a11,%a12,%a13,%a14,%a15)
 {
 	if(!%client.isAdmin)
 		return;
 
-	%search = %w0 SPC %w1 SPC %w2 SPC %w3 SPC %w4 SPC %w5 SPC %w6 SPC %w7 SPC %w8 SPC %w9 SPC %w10;
-	%search = stripTrailingSpaces(%search);
-	if(%search $= "")
-		return;
+	//look for a name in the arguments
+	%c = 0;
+	while(!isObject(%target = findClientByName(%search = %search @ %a[%c++])) && %c < 16){}
 
-	%targetC = findClientByName(%search);
-
-	if(!isObject(%obj = %targetC.player))
-		return;
-
-	%obj.kill();
-	messageAll('MsgAdminForce', '\c3%1\c6 has slain \c3%2\c6.', %client.getPlayerName(), %targetC.getPlayerName());
-}
-
-function serverCmdSlayNR(%client, %search, %amount)
-{
-	if(!%client.isAdmin)
-		return;
-
-	if(%search $= "")
-		return;
-
-	if(!(%amount > 0 || %amount < 0))
-		return;
-
-	%targetC = findClientByName(%search);
-	if(isObject(%targetC))
+	%amount = %a[%c + 1];
+	if(!isObject(%target))
 	{
-		%BLID = %targetC.getBLID();
-		%mini = getMiniGameFromObject(%client);
-		%mini.slayList = BBB_UpdateSlayList(%mini.slayList, "addToTarget", %BLID, %amount);
-		messageAll('MsgAdminForce', '\c3%1\c0 has slain \c3%2 \c0for \c2%3 \c4Rounds\c0.', %client.getPlayerName(), %targetC.getPlayerName(), %amount);
+		%amount = %a2;
+		//look for a blid
+		if(!isObject(%target = findClientByBL_ID(%a1)))
+		{
+			%client.chatMessage("Not a valid player name or BLID");
+			return;
+		}
+	}
+
+	%message = '\c3%1\c6 has slain \c3%2\c6.';
+	if(%amount > 0)
+	{
+		%message = '\c3%1\c6 has slain \c3%2 \c6for \c2%3 \c4Rounds\c6.';
+	}
+	else
+	{
+		%amount = 0;
+	}
+
+	messageAll('MsgAdminForce', %message, %client.getPlayerName(), %target.getPlayerName(), %amount);
+
+	%client.slayed = %amount;
+
+	%player = %target.player;
+	if(isObject(%player))
+	{
+		%player.kill();
 	}
 }
 

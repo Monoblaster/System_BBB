@@ -7,3 +7,4 @@
 [G] Stick Grenade
 [G] Tear Gas Grenade
 [G] Decoy Grenade
+[G] Stim Grenade

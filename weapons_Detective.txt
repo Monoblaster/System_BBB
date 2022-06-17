@@ -1,4 +1,4 @@
 XRay
 Riot Shield
 DNA Scanner
-Health Station
+[T] Health Station

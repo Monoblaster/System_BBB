@@ -372,6 +372,75 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 		return Parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
 	}
 
+	//traitor/detective rewards
+	//percentage dead reward
+	//get the current percent of dead innocents
+	%mini = BBB_Minigame;
+	%count = %mini.numPlayers;
+	%totalInno = 0;
+	%deadInno = 0;
+	for(%i = 0; %i < %count; %i++)
+	{
+		%currClient = %mini.player[%i];
+		if(%currClient.role $= "Innocent")
+		{
+			%totalInno++;
+			//are they dead?
+			if(isObject(%currClient.player))
+			{
+				%deadInno++;
+			}
+		}
+	}
+	%percentDead = %deadInno / %totalInno;
+
+	//is it reward time?
+	if(%percentDead > $BBB::Traitor::AwardPercent + $BBB::Round::AwardPercentOffset)
+	{
+		//reward all traitors the ammount
+		for(%i = 0; %i < %count; %i++)
+		{
+			%currClient = %mini.player[%i];
+			if(%currClient.role $= "Traitor")
+			{
+				//are they dead?
+				if(isObject(%currClient.player))
+				{
+					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::AwardSize SPC "Credit\c6 for you hard work.");
+					%currClient.credits += $BBB::Traitor::AwardSize;
+				}
+			}
+		}
+
+		$BBB::Round::AwardPercentOffset += $BBB::Traitor::AwardPercent;
+	}
+
+	//did a traitor kill the detective?
+	if(%client.role $= "Detective" && %sourceClient.role $= "Traitor")
+	{
+		%sourceClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::DetectiveKill SPC "Credit\c6 for you hard work.");
+		%sourceClient.credits += $BBB::Traitor::DetectiveKill;
+	}
+
+	//did a traitor die?
+	if(%client.role $= "Traitor")
+	{
+		//reward all detectives the ammount
+		for(%i = 0; %i < %count; %i++)
+		{
+			%currClient = %mini.player[%i];
+			if(%currClient.role $= "Detective")
+			{
+				//are they dead?
+				if(isObject(%currClient.player))
+				{
+					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Detective::TraitorDead SPC "Credit\c6 for you hard work.");
+					%currClient.credits += $BBB::Detective::TraitorDead;
+				}
+			}
+		}
+	}
+
 	if (%sourceObject.sourceObject.isBot)
 	{
 		%sourceClientIsBot = 1;
@@ -443,15 +512,6 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 			new SimSet(CorpseGroup);
 
 		CorpseGroup.add(%player);
-
-		//drop the player's items
-		//make sure the shop isn't open
-		Inventory_Pop(%player);
-		%count = %player.getDatablock().maxTools;
-		for(%i = 0; %i < %count; %i++)
-		{
-			ServerCmdDropTool(%client, %i);
-		}
 	}
 	else
 		warn("WARNING: No player object in GameConnection::onDeath() for client '" @ %client @ "'");

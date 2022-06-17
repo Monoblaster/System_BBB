@@ -34,6 +34,14 @@ $BBB::Time::Bonus		= "10000"; // Bonus time for every time an innocent is killed
 $BBB::Detective::MinPlayers = 8; // 1 Detective for X players. ex. if there are 16 players, there are 2 detectives.
 $BBB::Traitor::MinPlayers = 4; // 1 traitor per x players
 
+$BBB::Traitor::StartingCredits = 2; 
+$BBB::Traitor::AwardPercent = 0.35;//what percent of people need to be dead for credits to be awarded (repeats)
+$BBB::Traitor::AwardSize = 1;//how many credits are earned from the award
+$BBB::Traitor::DetectiveKill = 1;//how many credits recieved when they kill the detective
+
+$BBB::Detective::StartingCredits = 1;
+$BBB::Detective::TraitorDead = 1;//number of credits from a traitor's death 
+
 // Weapons
 // $BBB::Weapons_Primary = "GunItem"; //primary
 

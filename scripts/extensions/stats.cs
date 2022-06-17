@@ -323,7 +323,7 @@ function serverCmdStats(%client,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a1
 		//go until you find a valid name
 		%c = 0;
 		%name = %a0;
-		while((%blid = $Stats::NameToBLID[%name]) $= "" && %c < 16)
+		while((%blid = $Stats::NameToBLID[getSafeVariableName(%name)]) $= "" && %c < 16)
 		{
 			%c++;
 			%name = %name SPC %a[%c];
