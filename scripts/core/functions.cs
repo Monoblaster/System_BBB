@@ -1079,6 +1079,20 @@ function Player::grabCorpse(%obj, %corpse)
 
 	//open the player's inventory as a menu
 	inventory_push(%obj,%corpse.corpseInventory);
+
+	//loot credits if availible
+	%client = %obj.client;
+	if(%client.role $= "Detective" || %client.role $= "Traitor" && isObject(%client))
+	{
+		%credits = %corpse.credits;
+		%corpse.credits = 0;
+
+		if(%credits > 0)
+		{
+			%client.credits += %credits;
+			%client.chatMessage("\c6You looted\c3" SPC %credits SPC "Credits\c6 from the corpse.");
+		}
+	}
 }
 
 
@@ -1424,7 +1438,7 @@ function BBB_Minigame::assignRoles(%so)
 
 	%assignedDetectives = 0;
 	%assignedTraitors = 0;
-
+	
 	for(%a = 0; %a < %playerCount; %a++)
 	{
 		%client = %so.players[%a];
@@ -1433,15 +1447,25 @@ function BBB_Minigame::assignRoles(%so)
 			%client.BBB_Give_Role("Traitor");
 			$BBB::Traitors = $BBB::Traitors @ "\c0" @ %client.name @ ", 	";
 			%assignedTraitors++;
+
+			//reset name to normal
+			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
 		else if(%assignedDetectives < %numDetectives)
 		{
 			%client.BBB_Give_Role("Detective");
 			$BBB::Detectives = $BBB::Detectives @ "\c1" @ %client.name @ ", 	";
 			%assignedDetectives++;
+
+			//Show this player is detective in the player list
+			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "[Detective]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
 		else
+		{
 			%client.BBB_Give_Role("Innocent");
+			//reset name to normal
+			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+		}
 	}
 
 	for(%a = 0; %a < %playerCount; %a++)
@@ -1456,6 +1480,8 @@ function BBB_Minigame::assignRoles(%so)
 				if(%checkTraitor.role $= "Traitor" && %checkTraitor !$= %client)
 				{
 					Billboard_Ghost(%client.player.rolebillboard,%checkTraitor);
+					//mark them as traitor in the player list
+					secureCommandToClient ("zbR4HmJcSY8hdRhr",%checkTraitor ,'ClientJoin', "[Traitor]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 				}
 			}	
 
@@ -1469,6 +1495,18 @@ function BBB_Minigame::assignRoles(%so)
 			messageClient(%client, '', "<color:7DD4FF>Your fellow \c3Detectives <color:7DD4FF>are: \c1" @ %members);
 			%client.play2D(BBB_Chat_Sound);
 		}
+	}
+}
+
+function secureCommandToAllTS (%code, %command, %a1, %a2,%a3, %a4, %a5, %a6,%a7)
+{
+	%group = ClientGroup;
+	%count = %group.getCount();
+	for(%i = 0; %i < %count; %i++)
+	{
+		%client = %group.getObject(%i);
+
+		secureCommandToClient(%code,%client,%command,%a1,%a2,%a3,%a4,%a5,%a6,%a7);
 	}
 }
 
@@ -1850,12 +1888,12 @@ function serverCmdBuy(%client, %search)
 						return;
 					}
 
-					for(%i = $BBB::FirstShopSlot-1; %i < %player.getDatablock().maxTools; %i++)
+					for(%i = $BBB::FirstShopSlot-1; %i < %player.getDatablock().maxTools - 1; %i++)
 					{
 						%tool = %player.tool[%i];
 						if(!isObject(%tool))
 						{
-							%player.tool[%i] = %image; //.getID()
+							%player.tool[%i] = %image.getID();
 							%player.weaponCount++;
 							messageClient(%client,'MsgItemPickup','',%i,%image); //%image.getID());
 							%player.bought[%image] = true;

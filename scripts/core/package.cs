@@ -247,7 +247,16 @@ package BBB_Armor
 								//findclientbyname(lego).player.setShapeName("0", 8564862);
 								%corpse.unIDed = false;
 								if($BBB::Announce::BodyFound)
+								{
 									chatMessageAll("", "\c6" @ %obj.client.name SPC "\c4found\c6" SPC %corpse.displayName @ "\c4!" SPC "They were" @ (%corpse.role $= "Traitor" || %corpse.role $= "Detective" ? " a " : " ") @ %roleprint @ "\c4!");
+									
+									%client = findClientByName(%corpse.name);
+									if(isObject(%client))
+									{
+										//mark them as dead in the player list
+										secureCommandToAllTS("zbR4HmJcSY8hdRhr", 'ClientJoin', "[Dead]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+									}
+								}
 							}
 
 						}
@@ -372,75 +381,6 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 		return Parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
 	}
 
-	//traitor/detective rewards
-	//percentage dead reward
-	//get the current percent of dead innocents
-	%mini = BBB_Minigame;
-	%count = %mini.numPlayers;
-	%totalInno = 0;
-	%deadInno = 0;
-	for(%i = 0; %i < %count; %i++)
-	{
-		%currClient = %mini.player[%i];
-		if(%currClient.role $= "Innocent")
-		{
-			%totalInno++;
-			//are they dead?
-			if(isObject(%currClient.player))
-			{
-				%deadInno++;
-			}
-		}
-	}
-	%percentDead = %deadInno / %totalInno;
-
-	//is it reward time?
-	if(%percentDead > $BBB::Traitor::AwardPercent + $BBB::Round::AwardPercentOffset)
-	{
-		//reward all traitors the ammount
-		for(%i = 0; %i < %count; %i++)
-		{
-			%currClient = %mini.player[%i];
-			if(%currClient.role $= "Traitor")
-			{
-				//are they dead?
-				if(isObject(%currClient.player))
-				{
-					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::AwardSize SPC "Credit\c6 for you hard work.");
-					%currClient.credits += $BBB::Traitor::AwardSize;
-				}
-			}
-		}
-
-		$BBB::Round::AwardPercentOffset += $BBB::Traitor::AwardPercent;
-	}
-
-	//did a traitor kill the detective?
-	if(%client.role $= "Detective" && %sourceClient.role $= "Traitor")
-	{
-		%sourceClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::DetectiveKill SPC "Credit\c6 for you hard work.");
-		%sourceClient.credits += $BBB::Traitor::DetectiveKill;
-	}
-
-	//did a traitor die?
-	if(%client.role $= "Traitor")
-	{
-		//reward all detectives the ammount
-		for(%i = 0; %i < %count; %i++)
-		{
-			%currClient = %mini.player[%i];
-			if(%currClient.role $= "Detective")
-			{
-				//are they dead?
-				if(isObject(%currClient.player))
-				{
-					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Detective::TraitorDead SPC "Credit\c6 for you hard work.");
-					%currClient.credits += $BBB::Detective::TraitorDead;
-				}
-			}
-		}
-	}
-
 	if (%sourceObject.sourceObject.isBot)
 	{
 		%sourceClientIsBot = 1;
@@ -475,6 +415,7 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 		%player.isBody = true;
 		%player.client = 0;
 		%player.origClient = %client;
+		%player.credits = %client.credits;
 
 		// BBB Corpse data
 		%player.name = %client.name;
@@ -621,6 +562,75 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 	}
 
 	//the end//
+
+	//traitor/detective rewards
+	//percentage dead reward
+	//get the current percent of dead innocents
+	%mini = BBB_Minigame;
+	%count = %mini.numPlayers;
+	%totalInno = 0;
+	%deadInno = 0;
+	for(%i = 0; %i < %count; %i++)
+	{
+		%currClient = %mini.players[%i];
+		if(%currClient.role $= "Innocent")
+		{
+			%totalInno++;
+			//are they dead?
+			if(!isObject(%currClient.player))
+			{
+				%deadInno++;
+			}
+		}
+	}
+	%percentDead = %deadInno / %totalInno;
+
+	//is it reward time?
+	if(%percentDead > $BBB::Traitor::AwardPercent + $BBB::Round::AwardPercentOffset)
+	{
+		//reward all traitors the ammount
+		for(%i = 0; %i < %count; %i++)
+		{
+			%currClient = %mini.players[%i];
+			if(%currClient.role $= "Traitor")
+			{
+				//are they dead?
+				if(isObject(%currClient.player))
+				{
+					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::AwardSize SPC "Credit\c6 for you hard work.");
+					%currClient.credits += $BBB::Traitor::AwardSize;
+				}
+			}
+		}
+
+		$BBB::Round::AwardPercentOffset += $BBB::Traitor::AwardPercent;
+	}
+
+	//did a traitor kill the detective?
+	if(%client.role $= "Detective" && %sourceClient.role $= "Traitor")
+	{
+		%sourceClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::DetectiveKill SPC "Credit\c6 for you hard work.");
+		%sourceClient.credits += $BBB::Traitor::DetectiveKill;
+	}
+
+	//did a traitor die?
+	if(%client.role $= "Traitor")
+	{
+		//reward all detectives the ammount
+		for(%i = 0; %i < %count; %i++)
+		{
+			%currClient = %mini.players[%i];
+			if(%currClient.role $= "Detective")
+			{
+				//are they dead?
+				if(isObject(%currClient.player))
+				{
+					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Detective::TraitorDead SPC "Credit\c6 for you hard work.");
+					%currClient.credits += $BBB::Detective::TraitorDead;
+				}
+			}
+		}
+	}
 
 	echo("\c4" SPC %sourceClientName SPC "(" @ %sourceClient.role @ ") killed" SPC (%clientName $= %sourceClientName ? "themselves" : %clientName @ "(" @ %client.role @ ")"));
 	// removed mini-game checks here
