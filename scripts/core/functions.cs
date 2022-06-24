@@ -820,22 +820,15 @@ function Player::BBB_ApplyOutfit(%obj)
 	%obj.setFaceName($BBB::Outfit::Face);
 }
 
-function Player::BBB_GiveItem(%obj, %itemToGive)
+function ItemData::getSlot(%db)
 {
-	%client = %obj.client;
-
-	// Are we even trying?
-	if(!isObject(%client) || !isObject(%obj) || !isObject(%itemToGive))
-		return 0;
-
-	%itemName = %itemToGive.getDatablock().getName();
-
+	%dbName = %db.getName();
 	// Get slot
 	%slot = "";
 	%found = false;
-	for(%a = 0; %a <= 3; %a++)
+	for(%i = 0; %i < 4; %i++)
 	{
-		switch(%a)
+		switch(%i)
 		{
 			case 0:
 				%name = "Primary";
@@ -847,28 +840,40 @@ function Player::BBB_GiveItem(%obj, %itemToGive)
 				%name = "Grenade";
 		}
 
-		%fieldCount = getFieldCount($BBB::Weapons_[%name]);
-		for(%b = 0; %b < %fieldCount; %b++)
+		%fields = $BBB::Weapons_[%name];
+		%fieldCount = getFieldCount(%fields);
+		for(%j = 0; %j < %fieldCount; %j++)
 		{
-			%field = getField($BBB::Weapons_[%name], %b);
+			%field = getField(%fields, %j);
 			if(%field $= %itemName)
 			{
-				%found = true;
-				%slot = %a;
-				break;
+				return %i;
 			}
-
 		}
-		if(%found)
-			break;
 	}
+	return "";
+}
+
+function ItemData::onPickup (%this, %obj, %user, %amount)
+{
+	if(!%user.client.inBBB)
+	{
+		parent::onPickup (%this, %obj, %user, %amount);
+	}
+
+	if (%obj.canPickup == 0)
+	{
+		return;
+	}
+
+	// Get slot
+	%slot = %this.getSlot();
 	if(%slot $= "")
 	{
-		%name = "";
 		//look for a not used slot
 		for(%i = 4; %i < 7; %i++)
 		{
-			if(!isObject(%obj.tool[%i]))
+			if(!isObject(%user.tool[%i]))
 			{
 				%slot = %i;
 				break;
@@ -876,20 +881,30 @@ function Player::BBB_GiveItem(%obj, %itemToGive)
 		}
 	}
 
-	// Check if slot is active
-	if(%obj.tool[%slot] != 0 && !%itemToGive.ammoDrop && %name !$= "")
-		commandToClient(%client, 'CenterPrint', "\c5Your \c3" @ %name SPC "\c5slot is full!", 0.5);
-	else if(%slot != 7) // Give the item
+	if(!%obj.ammoDrop && %user.tool[%slot] == 0 && %slot != 7)
 	{
-		%image = %itemToGive.getDatablock();
-		%obj.tool[%slot] = %image; //.getID()
-		%obj.weaponCount++;
-		messageClient(%client,'MsgItemPickup','',%slot,%image); //%image.getID());
+		if(%obj.isStatic())
+		{
+			%obj.Respawn();
+		}
+		else 
+		{
+			%obj.delete ();
+		}
 
-		%itemToGive.delete();
+		%user.tool[%slot] = %this;
+		if (%user.client)
+		{
+			messageClient (%user.client, 'MsgItemPickup', '', %slot, %this.getId());
+		}
+		return 1;
 	}
+	return 0;
+}
 
-	return 1;
+function Player::BBB_GiveItem(%obj, %db)
+{
+	%obj.pickup(new Item(){dataBlock = %db;});
 }
 
 function Player::BBB_TargetAPlayer(%obj)
@@ -1426,12 +1441,12 @@ function BBB_Minigame::assignRoles(%so)
 	{
 		// Pick a remaining element...
 		%randIndex = getRandom(0,%currIndex);
-		%currIndex--;
 
 		// And swap it with the current element.
 		%temp = %so.players[%currIndex];
 		%so.players[%currIndex] = %so.players[%randIndex];
 		%so.players[%randIndex] = %temp;
+		%currIndex--;
 	}
 	// =============================================
 	// Source: http://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
@@ -1820,98 +1835,50 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 // =================================================
 // 7. ServerCMD
 // =================================================
-function serverCmdBuy(%client, %search)
+function BBB_CreditBuy(%client,%item)
+{
+	%credits = %client.credits;
+	%price = %item.creditCost;
+	%player = %client.player;
+
+	if(%price $= "")
+	{
+		%price = 1;
+	}
+
+	if(%credits >= %price)
+	{
+		%credits -= %price;
+
+		%player.pickup(new Item(){dataBlock = %item;});
+		
+		return true;
+	}
+
+	return false;
+}
+
+function serverCmdBuy(%client, %num)
 {
 	%player = %client.player;
-	%player.lastBoughtItem = "";
-
 	%role = %client.role;
-	if((%role !$= "Detective" && %role !$= "Traitor") || ( !isObject(%client.player)))
-		return;
-	if(%client.credits == 0)
+
+	%item = $BBB_Shop_[%role,%num];
+	if(!isObject(%item))
 	{
-		messageClient(%client,'', "\c6You have \c30\c6 credits!");
-		%client.play2D(BBB_Chat_Sound);
 		return;
 	}
-	if(%search $= "")
-		return;
-	
-	if(%search > 0 || %search $= "0")
-		%doNumSearch = true;
 
-	if(%doNumSearch)
+	%success = BBB_CreditBuy(%item);
+
+	if(%success)
 	{
-		%image = $BBB::Shop_[%role, %search];
-		if(isObject(%image))
-		{
-			if(%image.singleBuy && %player.bought[%image])
-			{
-				messageClient(%client,'', "\c6This item is out of stock.");
-				%client.play2D(BBB_Chat_Sound);
-				return;
-			}
-
-			for(%i = $BBB::FirstShopSlot-1; %i < %player.getDatablock().maxTools; %i++)
-			{
-				%tool = %player.tool[%i];
-				if(!isObject(%tool))
-				{
-					%player.tool[%i] = %image; //.getID()
-					%player.weaponCount++;
-					messageClient(%client,'MsgItemPickup','',%i,%image); //%image.getID());
-					%player.bought[%image] = true;
-					%player.lastBoughtItem = %image;
-					%itemGiven = true;
-					%client.credits--;
-					break;
-				}
-			}
-		}
+		%client.chatMessage("\c6You bought" SPC %item.uiName SPC ".");
 	}
 	else
 	{
-		%itemCount = getFieldCount($BBB::Weapons_[%role]);
-		for(%j = 0; %j < %itemCount; %j++)
-		{
-			%haystack = strLwr($BBB::Shop_[%role, %j].uiName);
-			%needle = strLwr(%search);
-			if(strstr(%haystack, %needle) >= 0)
-			{
-				%image = $BBB::Shop_[%role, %j];
-				if(isObject(%image))
-				{
-					if(%image.singleBuy && %player.bought[%image])
-					{
-						messageClient(%client,'', "\c6This item is out of stock.");
-						%client.play2D(BBB_Chat_Sound);
-						return;
-					}
-
-					for(%i = $BBB::FirstShopSlot-1; %i < %player.getDatablock().maxTools - 1; %i++)
-					{
-						%tool = %player.tool[%i];
-						if(!isObject(%tool))
-						{
-							%player.tool[%i] = %image.getID();
-							%player.weaponCount++;
-							messageClient(%client,'MsgItemPickup','',%i,%image); //%image.getID());
-							%player.bought[%image] = true;
-							%player.lastBoughtItem = %image;
-							%itemGiven = true;
-							%client.credits--;
-							break;
-						}
-					}
-				}
-			}
-		}
+		%client.chatMessage("Not enough credits.");
 	}
-
-	if(!%itemGiven)
-		messageClient(%client,'', "\c6You were unable to purchase \c3\"" @ %search @ "\"\c6." );
-	else
-		messageClient(%client,'', "\c6You bought a \c4" @ %image.uiName @ "\c6.");
 
 	%client.play2D(BBB_Chat_Sound);
 }
@@ -1972,7 +1939,7 @@ function serverCmdSlay(%client, %a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a11,%a
 
 	messageAll('MsgAdminForce', %message, %client.getPlayerName(), %target.getPlayerName(), %amount);
 
-	%client.slayed = %amount;
+	%target.slayed = %amount;
 
 	%player = %target.player;
 	if(isObject(%player))
@@ -2090,4 +2057,64 @@ function serverCmdLog(%cl, %t, %tk)
 			}
 		}
 	}
+}
+
+$RTV::Percent = 0.75;
+$RTV::VotingRound = 0;
+$RTV::CurrentCooldown = 0;
+$RTV::VoteTime = 20000;
+$RTV::Voting = false;
+$RTV::Cooldown = 10000;
+function servercmdRTV(%client)
+{
+	if($RTV::CurrentCooldown > getSimTime())
+	{
+		%client.chatMessage("\c6Please wait" SPC mfloor(($RTV::CurrentCooldown - getSimTime()) / 1000) SPC "more seconds.");
+		return;
+	}
+
+	if(!$RTV::Voting)
+	{
+		$RTV::Voting = true;
+		$RTV::VotingRound++;
+
+		//start the vote count down
+		$RTV::Finish = schedule($RTV::VoteTime,0,"RTV_Finish");
+	}
+
+	if($RTV::VotingRound == $RTV::BLIDToRound[%client.getBLID()])
+	{
+		%client.chatMessage("\c6You already rocked the vote.");
+		return;
+	}
+
+	$RTV::Votes++;
+	$RTV::BLIDToRound[%client.getBLID()] = $RTV::VotingRound;
+
+	%votesRemaining = mFloor($RTV::Percent * clientGroup.getCount()) - $RTV::Votes;
+	if(%votesRemaining == 0)
+	{
+		//vote suceeded
+		MessageAll ('', "\c3" @ %client.getPlayerName() SPC "\c6has rocked the vote! Vote suceeded, map vote will happen at the end of the round.");
+		$BBB::Round = $BBB::Map::Rounds;
+		RTV_Reset();
+	}
+	else
+	{
+		MessageAll ('', "\c3" @ %client.getPlayerName() SPC "\c6has rocked the vote!\c3" SPC %votesRemaining SPC "\c6more votes needed.");
+	}
+}
+
+function RTV_Finish()
+{
+	MessageAll ('', "\c3RTV failed.");
+	RTV_Reset();
+}
+
+function RTV_Reset()
+{
+	$RTV::CurrentCooldown = $RTV::Cooldown + getsimtime();
+	$RTV::Voting = false;
+	$RTV::Votes = 0;
+	cancel($RTV::Finish);
 }

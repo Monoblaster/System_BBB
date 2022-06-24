@@ -139,7 +139,7 @@ function TTTInventory_ShopItemBuy(%client,%space,%slot)
 
     if(isObject(%player))
     {
-        serverCmdBuy(%client, %item.uiname);
+        BBB_CreditBuy(%client,%item);
     }
 }
 
@@ -366,9 +366,10 @@ package TTTInventory
         return %r;
     }
 
-    function serverCmdBuy(%client, %search)
+    function BBB_CreditBuy(%client,%item)
     {
-        %r = parent::serverCmdBuy(%client, %search);
+        %success = parent::BBB_CreditBuy(%client,%item);
+
         %obj = %client.player;
         if(isObject(%client))
         {
@@ -389,7 +390,7 @@ package TTTInventory
             %inventory.display(true);
         }
 
-        return %r;
+        return %success;
     }
 
     function ServerCmdDropTool(%client, %position)

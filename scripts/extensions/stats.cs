@@ -691,23 +691,22 @@ package StatSaver
 		return Parent::roundSetup(%so);
 	}
 
-	function serverCmdBuy(%client, %search)
+	function BBB_CreditBuy(%client,%item)
 	{
-		parent::serverCmdBuy(%client, %search);
-		%item = %client.player.lastBoughtItem;
-		if(isObject(%item))
+		%success = parent::BBB_CreditBuy(%client,%item);
+
+		if(isObject(%item) && %success)
 		{
-			%image = %item.getName();
+			%itemName = %item.getName();
 			%role = %client.role;
+
+			if(%itemName!$= "")
+			{
+				%client.AddStatArray(getSubStr(%role,0,1) SPC "Item",%itemName,1);
+			}
 		}
 		
-
-		if(%image $= "")
-		{
-			return;
-		}
-
-		%client.AddStatArray(getSubStr(%role,0,1) SPC "Item",%image,1);
+		return %success;
 	}
 
 	function Player::BBB_GiveItem(%obj, %itemToGive)

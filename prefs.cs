@@ -8,6 +8,7 @@ $Pref::AEBase::HUD = 9;
 $Blood::MinDecalAmt = 1;
 $Blood::MaxDecalAmt = 10;
 $Blood::DeathDecalAmt = 20;
+trap_healthImage.healthteam = true
 function Player::WeaponAmmoPrint(%pl, %cl, %idx, %sit)
 {
 	return;

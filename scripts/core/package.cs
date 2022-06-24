@@ -167,7 +167,7 @@ package BBB_Armor
 
 				if((%col.getType() & $TypeMasks::ItemObjectType) && %col.getDatablock() != AE_AmmoItem.getID())
 				{
-					if(%obj.BBB_GiveItem(%col))
+					if(%obj.pickup(%col))
 						return;
 				}
 				else
@@ -597,7 +597,7 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 				//are they dead?
 				if(isObject(%currClient.player))
 				{
-					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::AwardSize SPC "Credit\c6 for you hard work.");
+					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::AwardSize SPC "Credit\c6 for your hard work.");
 					%currClient.credits += $BBB::Traitor::AwardSize;
 				}
 			}
@@ -609,7 +609,7 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 	//did a traitor kill the detective?
 	if(%client.role $= "Detective" && %sourceClient.role $= "Traitor")
 	{
-		%sourceClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::DetectiveKill SPC "Credit\c6 for you hard work.");
+		%sourceClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::DetectiveKill SPC "Credit\c6 for your hard work.");
 		%sourceClient.credits += $BBB::Traitor::DetectiveKill;
 	}
 
@@ -625,7 +625,7 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 				//are they dead?
 				if(isObject(%currClient.player))
 				{
-					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Detective::TraitorDead SPC "Credit\c6 for you hard work.");
+					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Detective::TraitorDead SPC "Credit\c6 for your hard work.");
 					%currClient.credits += $BBB::Detective::TraitorDead;
 				}
 			}
