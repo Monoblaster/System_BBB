@@ -42,8 +42,11 @@ function BBB_BuildShopList()
 	while(%counter < getFieldCount($BBB::Weapons_Detective))
 	{
 		%item = getField($BBB::Weapons_Detective, %counter);
+		talk(%item);
 		$BBB::Shop_Detective_[%counter] = %item.getID();
-
+		%item.price = $BBB::WeaponPrice["Detective",%item];
+		%item.stock = $BBB::WeaponStock["Detective",%item];
+		
 		%counter++;
 	}
 
@@ -55,6 +58,9 @@ function BBB_BuildShopList()
 	{
 		%item = getField($BBB::Weapons_Traitor, %counter);
 		$BBB::Shop_Traitor_[%counter] = %item.getID();
+		$BBB::Shop_Detective_[%counter] = %item.getID();
+		%item.price = $BBB::WeaponPrice["Traitor",%item];
+		%item.stock = $BBB::WeaponStock["Traitor",%item];
 
 		%counter++;
 	}
@@ -399,7 +405,7 @@ function BBB_TimerLoop(%rCounter)
 			%health = 0;
 
 		if($BBB::Round::Phase $= "Round" && isobject(%client.player) && (%client.role $= "Traitor" || %client.role $= "Detective"))
-			%tip = "<just:right><font:Palatino Linotype:18>\c4Type \c6/shop\c4 to buy items.";
+			%tip = "<just:right><font:Palatino Linotype:34>\c3" @ %client.credits @ "¢";
 		else
 			%tip = " ";
 
@@ -824,8 +830,6 @@ function ItemData::getSlot(%db)
 {
 	%dbName = %db.getName();
 	// Get slot
-	%slot = "";
-	%found = false;
 	for(%i = 0; %i < 4; %i++)
 	{
 		switch(%i)
@@ -845,7 +849,7 @@ function ItemData::getSlot(%db)
 		for(%j = 0; %j < %fieldCount; %j++)
 		{
 			%field = getField(%fields, %j);
-			if(%field $= %itemName)
+			if(%field $= %dbName)
 			{
 				return %i;
 			}
@@ -883,14 +887,8 @@ function ItemData::onPickup (%this, %obj, %user, %amount)
 
 	if(!%obj.ammoDrop && %user.tool[%slot] == 0 && %slot != 7)
 	{
-		if(%obj.isStatic())
-		{
-			%obj.Respawn();
-		}
-		else 
-		{
-			%obj.delete ();
-		}
+		
+		%obj.delete ();
 
 		%user.tool[%slot] = %this;
 		if (%user.client)
@@ -900,11 +898,6 @@ function ItemData::onPickup (%this, %obj, %user, %amount)
 		return 1;
 	}
 	return 0;
-}
-
-function Player::BBB_GiveItem(%obj, %db)
-{
-	%obj.pickup(new Item(){dataBlock = %db;});
 }
 
 function Player::BBB_TargetAPlayer(%obj)
@@ -1837,23 +1830,35 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 // =================================================
 function BBB_CreditBuy(%client,%item)
 {
-	%credits = %client.credits;
-	%price = %item.creditCost;
 	%player = %client.player;
-
-	if(%price $= "")
+	if(isObject(%item) && isObject(%player))
 	{
-		%price = 1;
-	}
-
-	if(%credits >= %price)
-	{
-		%credits -= %price;
-
-		%player.pickup(new Item(){dataBlock = %item;});
+		%credits = %client.credits;
+		%price = %item.price;
+		%stock = %item.stock;
 		
-		return true;
+
+		if(%price $= "")
+		{
+			%price = 1;
+		}
+
+		if(%stock $= "")
+		{
+			%stock = inf;
+		}
+
+		if(%credits >= %price && %stock > %player.bought[%item.getId()])
+		{
+			%client.credits -= %price;
+			%player.bought[%item.getId()]++;
+
+			%player.pickup(new Item(){dataBlock = %item;});
+			
+			return true;
+		}
 	}
+
 
 	return false;
 }
@@ -2062,9 +2067,9 @@ function serverCmdLog(%cl, %t, %tk)
 $RTV::Percent = 0.75;
 $RTV::VotingRound = 0;
 $RTV::CurrentCooldown = 0;
-$RTV::VoteTime = 20000;
+$RTV::VoteTime = 60000; // 1 minute
 $RTV::Voting = false;
-$RTV::Cooldown = 10000;
+$RTV::Cooldown = 60000 * 5; // 5 minutes
 function servercmdRTV(%client)
 {
 	if($RTV::CurrentCooldown > getSimTime())
@@ -2092,7 +2097,7 @@ function servercmdRTV(%client)
 	$RTV::BLIDToRound[%client.getBLID()] = $RTV::VotingRound;
 
 	%votesRemaining = mFloor($RTV::Percent * clientGroup.getCount()) - $RTV::Votes;
-	if(%votesRemaining == 0)
+	if(%votesRemaining <= 0)
 	{
 		//vote suceeded
 		MessageAll ('', "\c3" @ %client.getPlayerName() SPC "\c6has rocked the vote! Vote suceeded, map vote will happen at the end of the round.");

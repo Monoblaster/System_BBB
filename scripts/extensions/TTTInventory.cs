@@ -122,8 +122,25 @@ function TTTInventory_ShopItemPrompt(%client,%space,%slot,%select)
 {
     if(%select)
     {
-        %name = %space.getValue(%slot).uiName;
-        %client.centerPrint("\c6" @ %name @ "<br>\c5Drop this item to select.");
+        %item = %space.getValue(%slot);
+        %name = %item.uiName;
+        %price = %item.price;
+        %stock = %item.stock;
+        %currStock = %stock - %client.player.bought[%item.getId()];
+
+        %prompt = "\c3" @ %price @ "¢";
+        if(%stock !$= "")
+        {
+            %prompt = %prompt @ "<br>\c4" @ %currStock SPC "left";
+        }
+
+        %prompt = %prompt @ "<br>\c5Drop this item to select.";
+        if(%currStock <= 0 && %stock !$= "")
+        {
+            %prompt = "\c3Item out of stock";
+        }
+        
+        %client.centerPrint("\c6" @ %name @ "<br>"@ %prompt);
     }
     else
     {
@@ -139,7 +156,15 @@ function TTTInventory_ShopItemBuy(%client,%space,%slot)
 
     if(isObject(%player))
     {
-        BBB_CreditBuy(%client,%item);
+        %success = BBB_CreditBuy(%client,%item);
+        if(%success)
+        {
+            %client.chatMessage("\c6Item bought.");
+        }
+        else
+        {
+            %client.chatMessage("Not enough credits.");
+        }
     }
 }
 
@@ -340,57 +365,30 @@ package TTTInventory
         Parent::ServerCmdUnUseTool(%client);
     }
 
-    function Player::BBB_GiveItem(%obj, %itemToGive)
+    function ItemData::onPickup (%this, %obj, %user, %amount)
     {
-        %r = parent::BBB_GiveItem(%obj, %itemToGive);
-        %client = %obj.client;
+        %r = ItemData::onPickup (%this, %obj, %user, %amount);
+        %client = %user.client;
         if(isObject(%client))
         {
             //update the inventory display
-            %count = %obj.getDatablock().maxTools;
+            %count = %user.getDatablock().maxTools;
             %space = %client.tttInventory.getvalue(0);
             for(%i = 0; %i < %count; %i++)
             {
-                %tool = %obj.tool[%i];
+                %tool = %user.tool[%i];
                 %space.setSlot(%i,%tool,true);
             }
         }
 
         //redisplay so no overlap
-        %inventory = Inventory_GetTop(%obj);
+        %inventory = Inventory_GetTop(%user);
         if(isObject(%inventory))
         {
             %inventory.display(true);
         }
 
         return %r;
-    }
-
-    function BBB_CreditBuy(%client,%item)
-    {
-        %success = parent::BBB_CreditBuy(%client,%item);
-
-        %obj = %client.player;
-        if(isObject(%client))
-        {
-            //update the inventory display
-            %count = %obj.getDatablock().maxTools;
-            %space = %client.tttInventory.getvalue(0);
-            for(%i = 0; %i < %count; %i++)
-            {
-                %tool = %obj.tool[%i];
-                %space.setSlot(%i,%tool,true);
-            }
-        }
-
-        //redisplay so no overlap
-        %inventory = Inventory_GetTop(%obj);
-        if(isObject(%inventory))
-        {
-            %inventory.display(true);
-        }
-
-        return %success;
     }
 
     function ServerCmdDropTool(%client, %position)

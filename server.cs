@@ -19,7 +19,7 @@ $BBB::Enable = true;
 
 // Maps
 $BBB::Start::Map		= "Add-Ons/BBB_Roy_The_Shipper/save.bls";
-$BBB::Map::Rounds		= 4;
+$BBB::Map::Rounds		= 6;
 
 // Time
 $BBB::Time::Base		= "300000"; // In MS
@@ -41,20 +41,6 @@ $BBB::Traitor::DetectiveKill = 1;//how many credits recieved when they kill the 
 
 $BBB::Detective::StartingCredits = 1;
 $BBB::Detective::TraitorDead = 1;//number of credits from a traitor's death 
-
-// Weapons
-// $BBB::Weapons_Primary = "GunItem"; //primary
-
-// $BBB::Weapons_Secondary = "R_MW92fsItem" TAB "R_92fsItem" TAB "R_SubmachineGunOPFORItem" TAB "R_PistolMagnumItem" TAB "R_PistolHeavyItem" TAB "R_PistolItem" TAB "R_PistolSopmodItem"; //secondary
-
-// $BBB::Weapons_Grenade = "grenade_smokeItem" TAB "grenade_concussionItem" TAB "grenade_electroItem" TAB "grenade_flashbangItem" TAB "grenade_nailbombItem" TAB "grenade_fragmentItem" TAB "grenade_stickItem" TAB "grenade_riotItem" TAB "grenade_decoyItem";//"SmokeGrenadeItem"; //tiertary
-
-// $BBB::Weapons_Other = "meatcleaverItem" TAB "pipeWrenchItem" TAB "fryingpanItem" TAB "baseballBatItem" TAB "macheteItem" TAB "sledgeHammerItem" TAB "hockeystickItem" TAB "shovelItem" TAB "pitchforkItem" TAB "spikeBatItem" TAB "crowbarItem" TAB "axeItem" TAB "tireironItem" TAB "leadpipeItem" TAB "R_AmmoResupplyItem" TAB "R_AmmoPackItem" TAB "R_AmmoResupplyItem" TAB "R_AmmoPackItem" TAB "R_AmmoPackItem";
-
-// // Shop Weapons
-// //healthStationHandItem
-// $BBB::Weapons_Detective = "XrayItem" TAB "medi_stimpackItem" TAB "R_ShieldPistolItem" TAB "DNAScannerItem"; 
-// $BBB::Weapons_Traitor = "XrayItem" TAB "DisguiserItem" TAB "grenade_mollyItem" TAB "HL1TripmineItem" TAB "ThrowingKnifeItem" TAB "silencedGunItem" TAB "FlareItem" TAB "grenade_remoteItem" TAB "grenade_clusterItem" TAB "grenade_dynamiteItem";
 
 $BBB::FirstShopSlot = 5;
 
@@ -102,19 +88,24 @@ function BBB_RebuildItemTable()
 				while(!%fileObj.isEOF())
 				{
 					%str = %fileObj.readLine();
-					
-					if(trim(%str) $= "")
+
+					if(%str $= "")
 						continue;
 					
-					if(isObject(%item = $uiNameTable_items[%str]))
+					%item = $uiNameTable_items[getField(%str,0)];
+					%price = getField(%str,1);
+					%stock = getField(%str,2);
+
+					if(isObject(%item))
 					{
-						if($BBB::Weapons_[%table] $= "")
-							$BBB::Weapons_[%table] = %item.getName();
-						else
-							$BBB::Weapons_[%table] = $BBB::Weapons_[%table] TAB %item.getName();
+						$BBB::Weapons_[%table] = $BBB::Weapons_[%table] TAB %item.getName();
+						$BBB::WeaponPrice[%table,%item.getName()] = %price;
+						$BBB::WeaponStock[%table,%item.getName()] = %stock;
 					}
 					else
 						warn("BBB_RebuildItemTable() - Couldn't find weapon \"" @ %str @ "\" for table \"" @ %table @ "\"");
+
+					$BBB::Weapons_[%table] = trim($BBB::Weapons_[%table]);
 				}
 			}
 

@@ -1,4 +1,4 @@
-XRay
-Riot Shield
-DNA Scanner
-[T] Health Station
+XRay	2
+Riot Shield	2
+DNA Scanner	1	1
+[T] Health Station	1

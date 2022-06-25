@@ -262,7 +262,7 @@ function GameConnection::LoadStats(%client)
     {
 		%line = %in.readLine();
         %field = getField(%line,0);
-        %value = getField(%line,1);
+        %value = getFields(%line,1);
 
         %client.setObjField(%field,%value);
     }
@@ -709,43 +709,25 @@ package StatSaver
 		return %success;
 	}
 
-	function Player::BBB_GiveItem(%obj, %itemToGive)
+	function ItemData::onPickup (%this, %obj, %user, %amount)
 	{
-		%client = %obj.client;
+		%client = %user.client;
 
 		// Are we even trying?
-		if(!isObject(%client) || !isObject(%obj) || !isObject(%itemToGive))
+		if(!isObject(%client) || !isObject(%user) || !isObject(%obj))
 			return 0;
 
-		%itemName = %itemToGive.getDatablock().getName();
+		%itemName = %this.getName();
 
 		// Get slot
-		%slot = "";
-		%found = false;
-		for(%a = 0; %a <= 1; %a++)
+		%slot = %this.getSlot();
+
+		if(%slot < 2)
 		{
-			switch(%a)
-			{
-				case 0:
-					%name = "Primary";
-				case 1:
-					%name = "Secondary";
-			}
-
-			%fieldCount = getFieldCount($BBB::Weapons_[%name]);
-			for(%b = 0; %b < %fieldCount; %b++)
-			{
-				%field = getField($BBB::Weapons_[%name], %b);
-				if(%field $= %itemName)
-				{
-					%client.AddStatArray("Gun",%itemName,1);
-					break;
-				}
-
-			}
+			%client.AddStatArray("Gun",%itemName,1);
 		}
-
-		return parent::BBB_GiveItem(%obj, %itemToGive);
+		
+		return parent::onPickup (%this, %obj, %user, %amount);
 	}
 
 	function serverCmdVoteMap(%client, %w0, %w1, %w2, %w3, %w4, %w5, %w6, %w8, %w9, %w10)
