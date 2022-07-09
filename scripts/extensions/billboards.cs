@@ -109,7 +109,6 @@ function Billboard_Create(%lightDB,%mountDB,%dontGhost)
 	};
 	
 	%mount.setDamageLevel(10000);
-	%mount.setTransform("0 0 0");
 
 	%mount.light = %light;
 	%light.attachToObject(%mount);

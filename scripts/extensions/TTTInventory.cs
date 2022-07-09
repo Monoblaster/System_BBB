@@ -128,7 +128,7 @@ function TTTInventory_ShopItemPrompt(%client,%space,%slot,%select)
         %stock = %item.stock;
         %currStock = %stock - %client.player.bought[%item.getId()];
 
-        %prompt = "\c3" @ %price @ "¢";
+        %prompt = "\c3" @ %price @ "c";
         if(%stock !$= "")
         {
             %prompt = %prompt @ "<br>\c4" @ %currStock SPC "left";
@@ -214,7 +214,7 @@ function TTTInventory_ShopNext(%client,%space,%slot)
     }
 }
 
-package TTTInventory
+package TTTInventory2
 {
     function GameConnection::spawnPlayer(%this)
     {
@@ -232,70 +232,70 @@ package TTTInventory
         return %r;
     }
 
-    function Player::WeaponAmmoUse(%pl)
+    function ShapeBase::WeaponAmmoUse(%pl,%slot)
     {
         %temp = %pl.currTool;
         %pl.currTool = %pl.realCurrTool;
-        %r = Parent::WeaponAmmoUse(%pl);
+        %r = Parent::WeaponAmmoUse(%pl,%slot);
         %pl.currTool = %temp;
         return %r;
     }
 
-    function Player::aeAmmoCheck(%pl)
+    function ShapeBase::aeAmmoCheck(%pl,%slot)
     {
         %temp = %pl.currTool;
         %pl.currTool = %pl.realCurrTool;
-        %r = Parent::aeAmmoCheck(%pl);
+        %r = Parent::aeAmmoCheck(%pl,%slot);
         %pl.currTool = %temp;
         return %r;
     }
 
-    function Player::AEReserveCheck(%pl)
+    function ShapeBase::AEReserveCheck(%pl,%slot)
     {
         %temp = %pl.currTool;
         %pl.currTool = %pl.realCurrTool;
-        %r = Parent::AEReserveCheck(%pl);
+        %r = Parent::AEReserveCheck(%pl,%slot);
         %pl.currTool = %temp;
         return %r;
     }
 
-    function Player::AEMagReload(%pl)
+    function ShapeBase::AEMagReload(%pl,%slot)
     {
         %temp = %pl.currTool;
         %pl.currTool = %pl.realCurrTool;
-        %r = Parent::AEMagReload(%pl);
+        %r = Parent::AEMagReload(%pl,%slot);
         %pl.currTool = %temp;
         return %r;
     }
 
-    function Player::AEUnloadMag(%pl)
+    function ShapeBase::AEUnloadMag(%pl,%slot)
     {
         %temp = %pl.currTool;
         %pl.currTool = %pl.realCurrTool;
-        %r = Parent::AEUnloadMag(%pl);
+        %r = Parent::AEUnloadMag(%pl,%slot);
         %pl.currTool = %temp;
         return %r;
     }
 
-    function Player::AEUnloadShell(%pl)
+    function ShapeBase::AEUnloadShell(%pl,%slot)
     {
         %temp = %pl.currTool;
         %pl.currTool = %pl.realCurrTool;
-        %r = Parent::AEUnloadShell(%pl);
+        %r = Parent::AEUnloadShell(%pl,%slot);
         %pl.currTool = %temp;
         return %r;
     }
 
-    function Player::AEShellReload(%pl)
+    function ShapeBase::AEShellReload(%pl,%slot)
     {
         %temp = %pl.currTool;
         %pl.currTool = %pl.realCurrTool;
-        %r = Parent::AEShellReload(%pl);
+        %r = Parent::AEShellReload(%pl,%slot);
         %pl.currTool = %temp;
         return %r;
     }
 
-    function Player::baadDisplayAmmo(%obj, %this)
+    function ShapeBase::baadDisplayAmmo(%obj, %this,%slot)
     {
         %pl = %obj;
         %temp = %pl.currTool;
@@ -305,7 +305,7 @@ package TTTInventory
         return %r;
     }
 
-    function Player::unBlockImageDismount(%pl)
+    function ShapeBase::unBlockImageDismount(%pl,%slot)
     {
         %temp = %pl.currTool;
         %pl.currTool = %pl.realCurrTool;
@@ -367,27 +367,31 @@ package TTTInventory
 
     function ItemData::onPickup (%this, %obj, %user, %amount)
     {
-        %r = ItemData::onPickup (%this, %obj, %user, %amount);
+        %r = Parent::onPickup (%this, %obj, %user, %amount);
         %client = %user.client;
-        if(isObject(%client))
+        if(%r)
         {
-            //update the inventory display
-            %count = %user.getDatablock().maxTools;
-            %space = %client.tttInventory.getvalue(0);
-            for(%i = 0; %i < %count; %i++)
+            if(isObject(%client))
             {
-                %tool = %user.tool[%i];
-                %space.setSlot(%i,%tool,true);
+                //update the inventory display
+                %count = %user.getDatablock().maxTools;
+                %space = %client.tttInventory.getvalue(0);
+                for(%i = 0; %i < %count; %i++)
+                {
+                    %tool = %user.tool[%i];
+                    %space.setSlot(%i,%tool,true);
+                }
+            }
+
+            //redisplay so no overlap
+            %inventory = Inventory_GetTop(%user);
+            if(isObject(%inventory))
+            {
+                
+                %inventory.display(true);
             }
         }
-
-        //redisplay so no overlap
-        %inventory = Inventory_GetTop(%user);
-        if(isObject(%inventory))
-        {
-            %inventory.display(true);
-        }
-
+        
         return %r;
     }
 

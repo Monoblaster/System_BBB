@@ -239,5 +239,29 @@ package DNA_Scanner
 		%obj.hasDNAScanner = false;
 		parent::onFire(%this, %obj, %slot);
 	}
+
+
+	function servercmdDropTool(%this,%slot)
+	{
+		%player = %this.player;
+
+		if(isobject(%player.tool[%slot]))
+		{
+		if(%player.tool[%slot].getname() $= "DNAScannerItem")
+		{
+			parent::servercmdDropTool(%this,%slot);
+
+			if(%player.hasRadar && %player.hasDNAScanner) 
+			{
+				%player.hasRadar = false;
+				%player.hasDNAScanner = false;
+			}
+			return;
+		}
+		
+		
+		}
+		parent::servercmdDropTool(%this,%slot);
+	}
 };
 activatePackage(DNA_Scanner);

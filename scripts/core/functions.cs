@@ -405,7 +405,7 @@ function BBB_TimerLoop(%rCounter)
 			%health = 0;
 
 		if($BBB::Round::Phase $= "Round" && isobject(%client.player) && (%client.role $= "Traitor" || %client.role $= "Detective"))
-			%tip = "<just:right><font:Palatino Linotype:34>\c3" @ %client.credits @ "¢";
+			%tip = "<just:right><font:Palatino Linotype:34>\c3" @ %client.credits @ "c";
 		else
 			%tip = " ";
 
@@ -438,7 +438,7 @@ function BBB_TimerLoop(%rCounter)
 				BBB_Minigame.doWinCheck();
 				return;
 			case "PostRound":
-				if($BBB::Round == $BBB::Map::Rounds)
+				if($BBB::Round >= $BBB::Map::Rounds)
 					BBB_MapVote_P1();
 				else
 					BBB_Minigame.roundSetup();
@@ -867,7 +867,7 @@ function ItemData::onPickup (%this, %obj, %user, %amount)
 
 	if (%obj.canPickup == 0)
 	{
-		return;
+		return 0;
 	}
 
 	// Get slot
@@ -1416,7 +1416,7 @@ function BBB_Minigame::assignRoles(%so)
 		%client = %so.member[%i];
 		if(isObject(%client.player))
 		{
-			%so.players[%i] = %client;
+			%so.players[%playerCount] = %client;
 			%playerCount++;
 		}
 	}
@@ -1853,9 +1853,9 @@ function BBB_CreditBuy(%client,%item)
 			%client.credits -= %price;
 			%player.bought[%item.getId()]++;
 
-			%player.pickup(new Item(){dataBlock = %item;});
-			
-			return true;
+			%success = %player.pickup(new Item(){dataBlock = %item;});
+
+			return %success;
 		}
 	}
 
@@ -1868,13 +1868,13 @@ function serverCmdBuy(%client, %num)
 	%player = %client.player;
 	%role = %client.role;
 
-	%item = $BBB_Shop_[%role,%num];
+	%item = $BBB::Shop_[%role,%num];
 	if(!isObject(%item))
 	{
 		return;
 	}
 
-	%success = BBB_CreditBuy(%item);
+	%success = BBB_CreditBuy(%client,%item);
 
 	if(%success)
 	{
@@ -2064,7 +2064,7 @@ function serverCmdLog(%cl, %t, %tk)
 	}
 }
 
-$RTV::Percent = 0.75;
+$RTV::Percent = 0.50;
 $RTV::VotingRound = 0;
 $RTV::CurrentCooldown = 0;
 $RTV::VoteTime = 60000; // 1 minute
@@ -2106,7 +2106,7 @@ function servercmdRTV(%client)
 	}
 	else
 	{
-		MessageAll ('', "\c3" @ %client.getPlayerName() SPC "\c6has rocked the vote!\c3" SPC %votesRemaining SPC "\c6more votes needed.");
+		MessageAll ('', "\c3" @ %client.getPlayerName() SPC "\c6has rocked the vote!\c3" SPC %votesRemaining SPC "\c6more \c3/rtv \c6votes needed.");
 	}
 }
 

@@ -181,22 +181,24 @@ function XrayBatteryLoop(%player)
 
 package XrayPackage
 {
-	// function shapeBase::unmountImage(%this,%slot)
-	// {
-	// if(%this.getMountedImage(%slot) $= nametoID(x2Image))
-	// {
-		// parent::unmountImage(%this,%slot);
-		// %this.unmountImage(2);
-	// }
-	 // parent::unmountImage(%this,%slot);
-	// }
   function servercmdDropTool(%this,%slot)
   {
-    if(isobject(%this.player.tool[%slot]) && %this.player.tool[%slot].getname() $= "XrayItem")
+    %player = %this.player;
+
+    if(isobject(%player.tool[%slot]))
     {
-      parent::servercmdDropTool(%this,%slot);
-      if(isobject(%this.player.getmountedimage(2)) && %this.player.getmountedimage(2).getname() $= "XrayScopeImage") { %this.player.schedule(5,unmountimage,2); }
-      return;
+      if(%player.tool[%slot].getname() $= "XrayItem")
+      {
+        parent::servercmdDropTool(%this,%slot);
+
+        if(%player.hasRadar && !%player.hasDNAScanner) 
+        {
+          %player.hasRadar = false;
+        }
+        return;
+      }
+      
+      
     }
     parent::servercmdDropTool(%this,%slot);
   }
