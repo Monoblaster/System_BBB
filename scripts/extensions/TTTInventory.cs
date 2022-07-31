@@ -163,7 +163,7 @@ function TTTInventory_ShopItemBuy(%client,%space,%slot)
         }
         else
         {
-            %client.chatMessage("Not enough credits.");
+            %client.chatMessage("Purchase failed.");
         }
     }
 }
@@ -214,7 +214,7 @@ function TTTInventory_ShopNext(%client,%space,%slot)
     }
 }
 
-package TTTInventory2
+package TTTInventory
 {
     function GameConnection::spawnPlayer(%this)
     {
@@ -339,6 +339,42 @@ package TTTInventory2
         %temp = %pl.currTool;
         %pl.currTool = %pl.realCurrTool;
         %r = Parent::serverCmdDropAmmo(%cl, %a0, %a1, %a2, %a3, %a4, %a5, %a6, %a7);
+        %pl.currTool = %temp;
+        return %r;
+    }
+
+    function Player::WeaponAmmoStart(%pl)
+    {
+        %temp = %pl.currTool;
+        %pl.currTool = %pl.realCurrTool;
+        %r = Parent::WeaponAmmoStart(%pl);
+        %pl.currTool = %temp;
+        return %r;
+    }
+
+    function Player::WeaponAmmoUse(%pl)
+    {
+        %temp = %pl.currTool;
+        %pl.currTool = %pl.realCurrTool;
+        %r = Parent::WeaponAmmoUse(%pl);
+        %pl.currTool = %temp;
+        return %r;
+    }
+
+    function Player::WeaponAmmoGive(%pl, %amt, %slot)
+    {
+        %temp = %pl.currTool;
+        %pl.currTool = %pl.realCurrTool;
+        %r = Parent::WeaponAmmoGive(%pl, %amt, %slot);
+        %pl.currTool = %temp;
+        return %r;
+    }
+
+    function Player::WeaponAmmoCheck(%pl)
+    {
+        %temp = %pl.currTool;
+        %pl.currTool = %pl.realCurrTool;
+        %r = Parent::WeaponAmmoCheck(%pl);
         %pl.currTool = %temp;
         return %r;
     }

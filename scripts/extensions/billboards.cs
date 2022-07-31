@@ -270,7 +270,7 @@ function AVBillboards::Load(%group,%client,%pos)
 {
 	if(%group.loadedClient !$= "")
 	{
-		warn("AVBillboards::Load: " @ %grooup @ " already loaded to client " @ %group.loadedClient);
+		warn("AVBillboards::Load: " @ %group @ " already loaded to client " @ %group.loadedClient);
 		return;
 	}
 

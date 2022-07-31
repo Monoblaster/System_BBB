@@ -713,10 +713,6 @@ package StatSaver
 	{
 		%client = %user.client;
 
-		// Are we even trying?
-		if(!isObject(%client) || !isObject(%user) || !isObject(%obj))
-			return 0;
-
 		%itemName = %this.getName();
 
 		// Get slot

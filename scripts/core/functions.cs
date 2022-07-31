@@ -1466,7 +1466,7 @@ function BBB_Minigame::assignRoles(%so)
 			%assignedDetectives++;
 
 			//Show this player is detective in the player list
-			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "[Detective]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "\c1" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
 		else
 		{
@@ -1489,7 +1489,7 @@ function BBB_Minigame::assignRoles(%so)
 				{
 					Billboard_Ghost(%client.player.rolebillboard,%checkTraitor);
 					//mark them as traitor in the player list
-					secureCommandToClient ("zbR4HmJcSY8hdRhr",%checkTraitor ,'ClientJoin', "[Traitor]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+					secureCommandToClient ("zbR4HmJcSY8hdRhr",%checkTraitor ,'ClientJoin', "\c0" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 				}
 			}	
 
@@ -1816,6 +1816,11 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 			continue;
 		}
 
+		if(%client.loadingbillboards)
+		{
+			return;
+		}
+
 		if(%override)
 			%client.instantRespawn();
 		else if($BBB::Round::Phase $= "PreRound" && !isObject(%client.player))
@@ -1854,7 +1859,6 @@ function BBB_CreditBuy(%client,%item)
 			%player.bought[%item.getId()]++;
 
 			%success = %player.pickup(new Item(){dataBlock = %item;});
-
 			return %success;
 		}
 	}

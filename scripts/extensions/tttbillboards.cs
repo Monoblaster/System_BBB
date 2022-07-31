@@ -105,6 +105,7 @@ package tttbillboards
 		%client.centerPrint("\c6Welcome To TTT! Yes that's me talking to you!<br>\c5Click when you're ready to join.");
 		%client.avBillboardGroup = %group = AVBillboards_Create("BillboardMount",30);
 		%group.load(%client,"0 0 1000");
+		%client.loadingbillboards = true;
 		return %r;
 	}
 	
@@ -113,6 +114,7 @@ package tttbillboards
 		parent::OnTrigger(%data,%camera,%triggerNum,%triggerVal);
 		%group = %camera.loading;
 		%client = %group.loadedClient;
+		%client.loadingbillboards = false;
 		%client.centerPrint("");
 		if(!isObject(%client.player))
 		{

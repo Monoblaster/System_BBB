@@ -11,7 +11,7 @@
 // 1. Preferences
 // =================================================
 $Pref::Radar::UpdateTime = 20000;
-$Pref::Radar::SearchRadius = 100;
+$Pref::Radar::SearchRadius = 1000;
 
 // =================================================
 // 2. Functions

@@ -219,10 +219,13 @@ package BBB_Armor
 							{
 								case "Detective":
 									%rolePrint = "\c1DETECTIVE";
+									%rolecolor = "\c1";
 								case "Innocent":
 									%rolePrint = "\c2INNOCENT";
+									%rolecolor = "\c2";
 								case "Traitor":
 									%rolePrint = "\c0TRAITOR";
+									%rolecolor = "\c0";
 								default:
 									%rolePrint = "???";
 							}
@@ -254,7 +257,7 @@ package BBB_Armor
 									if(isObject(%client))
 									{
 										//mark them as dead in the player list
-										secureCommandToAllTS("zbR4HmJcSY8hdRhr", 'ClientJoin', "[Dead]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+										secureCommandToAllTS("zbR4HmJcSY8hdRhr", 'ClientJoin',%rolecolor @ "[Dead]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 									}
 								}
 							}
