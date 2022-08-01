@@ -1457,7 +1457,7 @@ function BBB_Minigame::assignRoles(%so)
 			%assignedTraitors++;
 
 			//reset name to normal
-			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "\c6" @  %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
 		else if(%assignedDetectives < %numDetectives)
 		{
@@ -1466,13 +1466,13 @@ function BBB_Minigame::assignRoles(%so)
 			%assignedDetectives++;
 
 			//Show this player is detective in the player list
-			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "\c1" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "\c1" @ %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
 		else
 		{
 			%client.BBB_Give_Role("Innocent");
 			//reset name to normal
-			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "\c6" @ %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
 	}
 
