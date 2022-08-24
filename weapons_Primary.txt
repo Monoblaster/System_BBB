@@ -47,3 +47,4 @@ B&E: MP5SD
 B&E: PP-19 Bizon
 B&E: Winchester 1873
 B&E: Kar98k
+B&E: M1903 Springfield

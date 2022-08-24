@@ -14,8 +14,6 @@ function BillboardLoadingCamera::OnTrigger(%data,%camera,%triggerNum,%triggerVal
 
 		%group.FinishLoad();
 
-		%client.setControlObject(%client.player);
-
 		%camera2.delete();
 		%camera.delete();
 	}
@@ -382,6 +380,11 @@ function AVBillboards::Clear(%group,%tag)
 		//push to back so only active billboards are in front
 		%group.pushToBack(%billboard);
 		%group.active--;
+	}
+
+	if(%group.active < 0)
+	{
+		%group.active = 0;
 	}
 
 	return %group;

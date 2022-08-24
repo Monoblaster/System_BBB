@@ -28,6 +28,22 @@ datablock fxLightData(traitorBillboard)
 	flareColor = "1 0 0 1";
 };
 
+datablock fxLightData(traitorAVBillboard)
+{
+	LightOn = false;
+
+	flareOn = true;
+	flarebitmap = "./traitor.png";
+	ConstantSize = 0.5;
+    ConstantSizeOn = true;
+    FadeTime = inf;
+
+	LinkFlare = false;
+	blendMode = 1;
+	flareColor = "1 0 0 1";
+};
+
+
 datablock fxLightData(normalRadarBillboard)
 {
 	LightOn = false;
@@ -77,15 +93,24 @@ package tttbillboards
 		{
 			%client = %so.member[%i];
 			%client.avBillboardGroup.clear("xray");
+			%client.avRoleBillboardGroup.clear();
 		}
 	}
 
     function Armor::onDisabled(%this, %obj, %state)
     {
+		%client = %obj.origClient || %obj.client;
         if(isObject(%obj.rolebillboard))
         {
             Billboard_Delete(%obj.rolebillboard);
         }
+
+		%group = ClientGroup;
+		%count = %group.getCount();
+		for(%i = 0; %i < %count; %i++)
+		{
+			%group.getObject(%i).avRoleBillboardGroup.clear(%client.getBLID());
+		}
         return Parent::onDisabled(%this, %obj, %state);
     }
 
@@ -103,22 +128,45 @@ package tttbillboards
 	{	
 		%r = Parent::onClientEnterGame(%client);
 		%client.centerPrint("\c6Welcome To TTT! Yes that's me talking to you!<br>\c5Click when you're ready to join.");
-		%client.avBillboardGroup = %group = AVBillboards_Create("BillboardMount",30);
+		%client.avBillboardGroup = %group = AVBillboards_Create("BillboardMount",24);
+		%client.avRoleBillboardGroup = AVBillboards_Create("OverheadBillboardMount",6);
 		%group.load(%client,"0 0 1000");
 		%client.loadingbillboards = true;
+		%client.loadPhase = 0;
 		return %r;
 	}
 	
 	function BillboardLoadingCamera::OnTrigger(%data,%camera,%triggerNum,%triggerVal)
 	{
-		parent::OnTrigger(%data,%camera,%triggerNum,%triggerVal);
 		%group = %camera.loading;
 		%client = %group.loadedClient;
-		%client.loadingbillboards = false;
-		%client.centerPrint("");
-		if(!isObject(%client.player))
+		if(%client.loadPhase == 0)
 		{
-			%client.setcontrolObject(%client.camera);
+			parent::OnTrigger(%data,%camera,%triggerNum,%triggerVal);
+			%client.avRoleBillboardGroup.load(%client,"0 0 1000");
+			%client.loadPhase = 1;
+		}
+		else if(%client.loadPhase == 1)
+		{
+			%client.loadPhase = 2;
+		}
+		else if(%client.loadPhase == 2)
+		{
+			%client.loadPhase = 3;
+		}
+		else if(%client.loadPhase == 3)
+		{
+			parent::OnTrigger(%data,%camera,%triggerNum,%triggerVal);
+			%client.loadingbillboards = false;
+			%client.centerPrint("");
+			if(!isObject(%client.player))
+			{
+				%client.setcontrolObject(%client.camera);
+			}
+			else
+			{
+				%client.setcontrolObject(%client.player);
+			}
 		}
 	}
 

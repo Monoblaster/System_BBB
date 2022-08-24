@@ -3,11 +3,8 @@ Syringe	2
 [G] Molotov	1
 [G] Thermite Stick	1
 [G] Remote Explosive	1
-[T] Laser Tripmine	1
 [T] Proxy Mine	1
-[T] Blast Mine	1
 [T] Incendiary Mine	1
-[T] Electric Mine	1
 [T] Claymore	1
 Disguiser	1
 Throwing Knife	1

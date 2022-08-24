@@ -466,7 +466,10 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 		{
 			%client.camera.setMode("Corpse", %player);
 			%client.camera.setControlObject(0);
-			%client.setControlObject(%client.camera);
+			if(%client.getControlObject().getDatablock().getName() !$= "BillboardLoadingCamera")
+	  		{
+				%client.setControlObject(%client.camera);
+			}
 		}
 	}
 

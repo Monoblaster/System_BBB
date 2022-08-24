@@ -42,7 +42,6 @@ function BBB_BuildShopList()
 	while(%counter < getFieldCount($BBB::Weapons_Detective))
 	{
 		%item = getField($BBB::Weapons_Detective, %counter);
-		talk(%item);
 		$BBB::Shop_Detective_[%counter] = %item.getID();
 		%item.price = $BBB::WeaponPrice["Detective",%item];
 		%item.stock = $BBB::WeaponStock["Detective",%item];
@@ -58,7 +57,6 @@ function BBB_BuildShopList()
 	{
 		%item = getField($BBB::Weapons_Traitor, %counter);
 		$BBB::Shop_Traitor_[%counter] = %item.getID();
-		$BBB::Shop_Detective_[%counter] = %item.getID();
 		%item.price = $BBB::WeaponPrice["Traitor",%item];
 		%item.stock = $BBB::WeaponStock["Traitor",%item];
 
@@ -88,7 +86,11 @@ function BBB_LoadMap(%filename)
 	  %camera = %client.camera;
 	  %camera.setFlyMode();
 	  %camera.mode = "Observer";
-	  %client.setControlObject(%camera);
+
+	  if(%client.getControlObject().getDatablock().getName() !$= "BillboardLoadingCamera")
+	  {
+		%client.setControlObject(%camera);
+	  }
 	}
 
 	//clear all bricks
@@ -768,8 +770,6 @@ function GameConnection::BBB_Give_Role(%client, %role)
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c1D<font:Palatino Linotype:43>\c1ETECTIVE";
 			%client.credits = $BBB::Detective::StartingCredits;
 	    case "Traitor":
-			%player.rolebillboard = %billboard = Billboard_ClearGhost(Billboard_Create("traitorBillboard","OverheadBillboardMount",true),"ALL");
-			%player.mountObject(%billboard,8);
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c0T<font:Palatino Linotype:43>\c0RAITOR";
 			%client.credits = $BBB::Traitor::StartingCredits;
 		case "Innocent":
@@ -945,12 +945,16 @@ function Player::BBB_TargetAPlayer(%obj)
 			%ray = containerRaycast(%start,%end,%targets,%obj);
 
 			%hit = firstWord(%ray);
+			if(%hit.getClassName() $= "AIPlayer")
+			{
+
+			}
+
 			if(!isObject(%hit))
 			{
 				%obj.targetLastCheck = $Sim::Time;
 				%obj.targetName = %col.displayName;
 				return %obj.targetName;
-				//break;
 			}
 		}
 
@@ -1019,7 +1023,7 @@ function Player::findCorpseRayCast(%obj, %long)
 	while (isObject(%col = containerSearchNext()))
 	{
 		%safe++;
-		if (!%col.isBody)
+		if (!%col.isBody || %col.getClassName() $= "AIPlayer")
 			continue;
 		%p = %col.getHackPosition();
 		%ab = vectorSub(%b, %a);
@@ -1054,6 +1058,11 @@ datablock PlayerData(EmptyPlayer)
 
 function Player::grabCorpse(%obj, %corpse)
 {
+	if(%corpse.getObjectMount())
+	{
+		return;
+	}
+
 	%obj.unMountImage(0);
 	fixArmReady(%obj);
 
@@ -1110,7 +1119,7 @@ function Player::throwCorpse(%obj)
 		return 0;
 
 	%obj.playThread(2, "shiftUp");
-	%a = %obj.getEyePoint();
+	%a = %obj.getMuzzlePoint(3);
 	%b = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %a);
 	%ray = containerRayCast(%a, %b, $TypeMasks::All ^ $TypeMasks::fxAlwaysBrickObjectType, %obj);
 	if(%ray)
@@ -1457,7 +1466,7 @@ function BBB_Minigame::assignRoles(%so)
 			%assignedTraitors++;
 
 			//reset name to normal
-			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "\c6" @  %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
 		else if(%assignedDetectives < %numDetectives)
 		{
@@ -1466,13 +1475,13 @@ function BBB_Minigame::assignRoles(%so)
 			%assignedDetectives++;
 
 			//Show this player is detective in the player list
-			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "\c1" @ %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "[D]" @ %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
 		else
 		{
 			%client.BBB_Give_Role("Innocent");
 			//reset name to normal
-			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "\c6" @ %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin',%client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
 	}
 
@@ -1487,9 +1496,11 @@ function BBB_Minigame::assignRoles(%so)
 				%checkTraitor = %so.member[%i];
 				if(%checkTraitor.role $= "Traitor" && %checkTraitor !$= %client)
 				{
-					Billboard_Ghost(%client.player.rolebillboard,%checkTraitor);
+					//make always visible traitor billboard
+					%billboard = %client.avRoleBillboardGroup.Make(traitorAVBillboard,"0 0 0",%checkTraitor.getBLID());
+					%checkTraitor.player.mountObject(%billboard,8);
 					//mark them as traitor in the player list
-					secureCommandToClient ("zbR4HmJcSY8hdRhr",%checkTraitor ,'ClientJoin', "\c0" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+					secureCommandToClient ("zbR4HmJcSY8hdRhr",%checkTraitor ,'ClientJoin', "[T]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 				}
 			}	
 
@@ -1818,7 +1829,7 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 
 		if(%client.loadingbillboards)
 		{
-			return;
+			continue;
 		}
 
 		if(%override)
@@ -1886,7 +1897,7 @@ function serverCmdBuy(%client, %num)
 	}
 	else
 	{
-		%client.chatMessage("Not enough credits.");
+		%client.chatMessage("Purchase failed.");
 	}
 
 	%client.play2D(BBB_Chat_Sound);
