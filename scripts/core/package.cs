@@ -165,33 +165,36 @@ package BBB_Armor
 			if(isObject(%client) && isObject(%obj) && isObject(AE_AmmoItem))
 			{
 
-				if((%col.getType() & $TypeMasks::ItemObjectType) && %col.getDatablock() != AE_AmmoItem.getID())
+				if(%client.getClassname() $= "GameConnection")
 				{
-					if(%obj.pickup(%col))
-						return;
-				}
-				else
-				{
-					if(getSimTime() - %obj.lastAmmoPickupTime > 15000)
+					if((%col.getType() & $TypeMasks::ItemObjectType) && %col.getDatablock() != AE_AmmoItem.getID())
 					{
-						%data = %col.getDatablock();
-						if(%data == AE_AmmoItem.getID())
-						{
-							if(%col.canPickup && %obj.getDamagePercent() < 1.0 && minigameCanUse(%obj, %col))
-							{
-								%col.spawnBrick = "";
-								Parent::onCollision(%this, %obj, %col, %vel, %speed);
-								
-								if(%data == AE_AmmoItem.getID())
-									%col.schedule(10, delete);
-								%obj.lastAmmoPickupTime = getSimTime();
-								return;
-							}
-						}
+						if(%obj.pickup(%col))
+							return;
 					}
 					else
-						return;
-				}
+					{
+						if(getSimTime() - %obj.lastAmmoPickupTime > 15000)
+						{
+							%data = %col.getDatablock();
+							if(%data == AE_AmmoItem.getID())
+							{
+								if(%col.canPickup && %obj.getDamagePercent() < 1.0 && minigameCanUse(%obj, %col))
+								{
+									%col.spawnBrick = "";
+									Parent::onCollision(%this, %obj, %col, %vel, %speed);
+									
+									if(%data == AE_AmmoItem.getID())
+										%col.schedule(10, delete);
+									%obj.lastAmmoPickupTime = getSimTime();
+									return;
+								}
+							}
+						}
+						else
+							return;
+					}
+				}	
 			}
 		}
 

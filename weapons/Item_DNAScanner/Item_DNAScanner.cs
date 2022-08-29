@@ -220,16 +220,16 @@ package DNA_Scanner
 			%radarPos[%count] = %currObj.getPosition();
 			%count++;
 		}
-
-		%group = %obj.client.AVBillboardGroup;
-		%group.Clear("xray");
+		%client = %Obj.client;
+		%group = %client.AVBillboardGroup;
+		%client.ClearXrayBillboards();
 		//create new ghosts at our positions and move them there
 		for(%i = 0; %i < %count; %i++)
 		{
 			%pos = %radarPos[%i];
 			if(%pos !$= "")
 			{
-				%group.make("normalRadarBillboard",%pos,"xray");
+				%client.AddXrayBillboard(normalRadarBillboard,%pos);
 			}
 		}
 	}

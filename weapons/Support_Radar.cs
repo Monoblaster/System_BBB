@@ -17,6 +17,28 @@ $Pref::Radar::SearchRadius = 1000;
 // 2. Functions
 // =================================================
 // from Bot_Hole
+function GameConnection::AddXrayBillboard(%client,%bbData,%pos)
+{
+	%BBMGroup = %client.XrayBBMGroup = %client.XrayBBMGroup || new ScriptGroup();
+	%newMount = DefaultBillboardMount.Make();
+	%light = BillboardMount_AddAVBillboard(%newMount,%client.AVBillboardGroup,%bbData,"xray");
+	if(!%light)
+	{
+		%newMount.delete();
+		return "";
+	}
+
+	%newMount.setTransform(%pos);
+	%BBMGroup.add(%newMount);
+}
+
+function GameConnection::ClearXrayBillboards(%client)
+{
+	%BBMGroup = %client.XrayBBMGroup = %client.XrayBBMGroup || new ScriptGroup();
+	%BBMGroup.deleteAll();
+	%client.AVBillboardGroup.clear("xray");
+}
+
 function RadarSilentLoop()
 {
 	cancel($Radar::SilentSchedule);	//prevent double schedules
@@ -37,7 +59,7 @@ function RadarSilentLoop()
 			else if(!%client.cleardXrayBillboardGroup)
 			{
 				%client.cleardXrayBillboardGroup = true;
-				%client.AVBillboardGroup.Clear("xray");
+				%client.ClearXrayBillboards();
 			}
 		}
 	}
@@ -92,8 +114,9 @@ function Player::updateRadarPositions(%player)
 		%count++;
 	}
 
-	%group = %player.client.AVBillboardGroup;
-	%group.Clear("xray");
+	%client = %player.client;
+	%group = %client.AVBillboardGroup;
+	%client.ClearXrayBillboards();
 	//create new ghosts at our positions and move them there
 	for(%i = 0; %i < %count; %i++)
 	{
@@ -103,11 +126,11 @@ function Player::updateRadarPositions(%player)
 		{
 			if(%role $= "Traitor" && %player.client.role $= "Traitor")
 			{
-				%group.make("traitorRadarBillboard",%pos,"xray");
+				%client.AddXrayBillboard(traitorSilhouetteAVBillboard,%pos);
 			}
 			else
 			{
-				%group.make("normalRadarBillboard",%pos,"xray");
+				%client.AddXrayBillboard(normalSilhouetteAVBillboard,%pos);
 			}
 		}
 	}

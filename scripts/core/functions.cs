@@ -762,11 +762,12 @@ function GameConnection::BBB_Give_Role(%client, %role)
 {
 	%client.role = %role;
 	%player = %client.player;
+	%player.roleBBM = %player.roleBBM || OverheadBillboardMount.Make();
+	%player.mountObject(%player.roleBBM,8);
 	switch$(%role)
 	{
 	    case "Detective":
-			%player.rolebillboard = %billboard = Billboard_ClearGhost(Billboard_Create("detectiveBillboard","OverheadBillboardMount"),%client);
-			%player.mountObject(%billboard,8);
+			Billboard_ClearGhost(BillboardMount_AddBillboard(%player.roleBBM,detectiveBillboard),%client);
 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c1D<font:Palatino Linotype:43>\c1ETECTIVE";
 			%client.credits = $BBB::Detective::StartingCredits;
 	    case "Traitor":
@@ -1493,12 +1494,11 @@ function BBB_Minigame::assignRoles(%so)
 			//ghost this traitor's billboard to other traitors
 			for(%i = 0; %i < %playerCount; %i++)
 			{
-				%checkTraitor = %so.member[%i];
-				if(%checkTraitor.role $= "Traitor" && %checkTraitor !$= %client)
+				%checkTraitor = %so.players[%i];
+				if(%checkTraitor.role $= "Traitor" && %checkTraitor != %client)
 				{
 					//make always visible traitor billboard
-					%billboard = %client.avRoleBillboardGroup.Make(traitorAVBillboard,"0 0 0",%checkTraitor.getBLID());
-					%checkTraitor.player.mountObject(%billboard,8);
+					BillboardMount_AddAVBillboard(%checkTraitor.player.roleBBM,%client.AVBillboardGroup,traitorAVBillboard,%checkTraitor.getBLID());
 					//mark them as traitor in the player list
 					secureCommandToClient ("zbR4HmJcSY8hdRhr",%checkTraitor ,'ClientJoin', "[T]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 				}
