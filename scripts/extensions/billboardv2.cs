@@ -88,11 +88,11 @@ function BillboardMount_AddBillboard(%bbm,%lightData,%dontGhost)
 	return %obj;
 }
 
-function BillboardMount_CLearBillboards(%bbm)
+function BillboardMount_ClearBillboards(%bbm)
 {
 	%group = %bbm.billBoardGroup;
 	%count = %group.getCount();
-	for(%i = %count - 1; %i >= 0; %i++)
+	for(%i = %count - 1; %i >= 0; %i--)
 	{
 		%obj = %group.getObject(%i);
 		%obj.delete();
@@ -299,7 +299,6 @@ function AVBillboardGroup::Clear(%avbbg,%tag)
 		}
 		%bb.setNetFlag(8,true);
 		%bb.setEnable(false);
-		%bb.detachFromObject();
 		%bb.setNetFlag(8,false);
 		%bb.tag = "";
 		%bb.isActive = false;

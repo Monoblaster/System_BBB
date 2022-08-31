@@ -69,7 +69,11 @@ package tttbillboards
 		%count = %group.getCount();
 		for(%i = 0; %i < %count; %i++)
 		{
-			%group.getObject(%i).AVBillboardGroup.clear(%client.getBLID());
+			%client = %group.getObject(%i);
+			if(%client.AVBillboardGroup)
+			{
+				%client.AVBillboardGroup.clear(%client.getBLID());
+			}
 		}
         return Parent::onDisabled(%this, %obj, %state);
     }

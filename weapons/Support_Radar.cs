@@ -35,8 +35,8 @@ function GameConnection::AddXrayBillboard(%client,%bbData,%pos)
 function GameConnection::ClearXrayBillboards(%client)
 {
 	%BBMGroup = %client.XrayBBMGroup = %client.XrayBBMGroup || new ScriptGroup();
-	%BBMGroup.deleteAll();
 	%client.AVBillboardGroup.clear("xray");
+	%BBMGroup.deleteAll();
 }
 
 function RadarSilentLoop()
