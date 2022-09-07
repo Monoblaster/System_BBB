@@ -115,7 +115,6 @@ function Player::updateRadarPositions(%player)
 	}
 
 	%client = %player.client;
-	%group = %client.AVBillboardGroup;
 	%client.ClearXrayBillboards();
 	//create new ghosts at our positions and move them there
 	for(%i = 0; %i < %count; %i++)

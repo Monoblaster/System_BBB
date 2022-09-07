@@ -69,10 +69,10 @@ package tttbillboards
 		%count = %group.getCount();
 		for(%i = 0; %i < %count; %i++)
 		{
-			%client = %group.getObject(%i);
-			if(%client.AVBillboardGroup)
+			%currclient = %group.getObject(%i);
+			if(%currclient.AVBillboardGroup)
 			{
-				%client.AVBillboardGroup.clear(%client.getBLID());
+				%currclient.AVBillboardGroup.clear(%client.getBLID());
 			}
 		}
         return Parent::onDisabled(%this, %obj, %state);
@@ -104,16 +104,10 @@ package tttbillboards
 	{
 		if(isObject(%client.avBillboardGroup))
 		{
+			%client.ClearXrayBillboards();
 			%client.avBillboardGroup.delete();
 		}
-
-		if(isObject(%client.XrayBBMGroup))
-		{
-			%client.ClearXrayBillboards();
-			%client.XrayBBMGroup.delete();
-		}
-
-		
+			
 		return Parent::onClientLeaveGame(%client);
 	}
 };
