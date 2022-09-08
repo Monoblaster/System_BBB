@@ -762,7 +762,10 @@ function GameConnection::BBB_Give_Role(%client, %role)
 {
 	%client.role = %role;
 	%player = %client.player;
-	%player.roleBBM = %player.roleBBM || OverheadBillboardMount.Make();
+	if(!isObject(%player.roleBBM))
+	{
+		%player.roleBBM = OverheadBillboardMount.Make();
+	}
 	%player.mountObject(%player.roleBBM,8);
 	switch$(%role)
 	{
@@ -1056,6 +1059,11 @@ datablock PlayerData(EmptyPlayer)
 {
 	shapeFile = "base/data/shapes/empty.dts";
 };
+
+datablock EmptyPlayer::onUnmount(%db,%obj,%mount,%node) 
+{
+	%obj.delete();
+}
 
 function Player::grabCorpse(%obj, %corpse)
 {

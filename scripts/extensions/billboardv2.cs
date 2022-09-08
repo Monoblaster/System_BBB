@@ -111,13 +111,19 @@ function BillboardMount_AddAVBillboard(%bbm,%avbbg,%lightData,%tag)
 	{
 		return "";
 	}
+	%ghostID = %avbbg.loadedClient.getGhostID(%bbm);
+	if(%ghostID == -1)
+	{
+		schedule(100,%bbm,"BillboardMount_AddAVBillboard",%bbm,%avbbg,%lightData,%tag);
+		return "HOLD";
+	}
 
 	%group = %avbbg;
 	%count = %group.getCount();
 	for(%i = 0; %i < %count; %i++)
 	{
 		%obj = %group.getObject(%i);
-		if(!%obj.isActive)
+		if(!%obj.active)
 		{
 			break;
 		}
@@ -129,8 +135,7 @@ function BillboardMount_AddAVBillboard(%bbm,%avbbg,%lightData,%tag)
 	
 	%bb = %avbbg.getObject(%i);
 	%bb.tag = %tag;
-	%bb.isActive = true;
-	%avbbg.active++;
+	%bb.active = true;
 
 	%bb.setNetFlag(8,true);
 	%bb.setDatablock(%lightData);
@@ -290,10 +295,10 @@ function AVBillboardGroup::Clear(%avbbg,%tag)
 
 	%group = %avbbg;
 	%count = %group.getCount();
-	for(%i = %count - 1; %i >= 0; %i--)
+	for(%i = 0; %i < %count; %i++)
 	{
 		%bb = %group.getObject(%i);
-		if((%tag !$= "" && %tag !$= %bb.tag) || !%bb.isActive)
+		if((%tag !$= "" && %tag !$= %bb.tag) || !%bb.active)
 		{
 			continue;
 		}
@@ -301,12 +306,8 @@ function AVBillboardGroup::Clear(%avbbg,%tag)
 		%bb.setEnable(false);
 		%bb.setNetFlag(8,false);
 		%bb.tag = "";
-		%bb.isActive = false;
-
-		%group.active--;
+		%bb.active = false;
 	}
-
-	%group.active = getMax(%group.active,0);
 	return %group;
 }
 

@@ -22,11 +22,6 @@ function GameConnection::AddXrayBillboard(%client,%bbData,%pos)
 	%BBMGroup = %client.XrayBBMGroup = %client.XrayBBMGroup || new ScriptGroup();
 	%newMount = DefaultBillboardMount.Make();
 	%light = BillboardMount_AddAVBillboard(%newMount,%client.AVBillboardGroup,%bbData,"xray");
-	if(!%light)
-	{
-		%newMount.delete();
-		return "";
-	}
 
 	%newMount.setTransform(%pos);
 	%BBMGroup.add(%newMount);
@@ -126,11 +121,9 @@ function Player::updateRadarPositions(%player)
 			if(%role $= "Traitor" && %player.client.role $= "Traitor")
 			{
 				%client.AddXrayBillboard(traitorSilhouetteAVBillboard,%pos);
+				continue;
 			}
-			else
-			{
-				%client.AddXrayBillboard(normalSilhouetteAVBillboard,%pos);
-			}
+			%client.AddXrayBillboard(normalSilhouetteAVBillboard,%pos);
 		}
 	}
 }
