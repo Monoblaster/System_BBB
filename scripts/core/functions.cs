@@ -926,9 +926,12 @@ function Player::BBB_TargetAPlayer(%obj)
 	%corpse = %obj.findCorpseRayCast(true);
 	if(isObject(%corpse))
 	{
-		%obj.targetLastCheck = $Sim::Time;
-		%obj.targetName = %corpse.displayName;
-		return %obj.targetName;
+		if(%corpse.getClassname() !$= "AiPlayer")
+		{
+			%obj.targetLastCheck = $Sim::Time;
+			%obj.targetName = %corpse.displayName;
+			return %obj.targetName;
+		}
 	}
 
 	%cts = 0;
@@ -942,7 +945,7 @@ function Player::BBB_TargetAPlayer(%obj)
 		%cts++;
 		%product = vectorDot(%vec, vectorNormalize(vectorSub(%col.getEyePoint(), %start)));
 		%result =  %product >= 1 - (%angle / 360) * 2;
-		if(%result)
+		if(%result && %col.getClassname() !$= "AiPlayer")
 		{
 			%end = %col.getEyePoint();
 			%targets = ($TypeMasks::FxBrickObjectType | $TypeMasks::StaticObjectType | $TypeMasks::TerrainObjectType | $TypeMasks::VehicleObjectType);
