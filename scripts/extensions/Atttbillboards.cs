@@ -82,22 +82,11 @@ package tttbillboards
 	function GameConnection::onClientEnterGame(%client)
 	{	
 		%r = Parent::onClientEnterGame(%client);
-		%client.centerPrint("\c6Welcome To TTT! Yes that's me talking to you!<br>\c5Click when you're ready to join.");
+		%client.centerPrint("\c6Welcome To TTT! Yes that's me talking to you!");
 		%client.avBillboardGroup = %group = AVBillboardGroup_Make();
 		%group.load(%client,30);
 		%client.loadingbillboards = true;
 		return %r;
-	}
-	
-	function BillboardLoadingCamera::OnTrigger(%data,%camera,%triggerNum,%triggerVal)
-	{
-		%client = %camera.getControllingClient();
-		if(%client)
-		{
-			%client.loadingbillboards = false;
-			%client.centerPrint("");
-			%client.avBillboardGroup.FinishLoad();
-		}
 	}
 
 	function GameConnection::onClientLeaveGame(%client)

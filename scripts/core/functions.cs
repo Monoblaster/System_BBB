@@ -1063,7 +1063,7 @@ datablock PlayerData(EmptyPlayer)
 	shapeFile = "base/data/shapes/empty.dts";
 };
 
-datablock EmptyPlayer::onUnmount(%db,%obj,%mount,%node) 
+function EmptyPlayer::onUnmount(%db,%obj,%mount,%node) 
 {
 	%obj.delete();
 }
