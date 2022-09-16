@@ -25,6 +25,8 @@ function GameConnection::AddXrayBillboard(%client,%bbData,%pos)
 
 	%newMount.setTransform(%pos);
 	%BBMGroup.add(%newMount);
+	%newMount.setnetflag(8,false);
+	%newMount.scopeToClient(%client);
 }
 
 function GameConnection::ClearXrayBillboards(%client)

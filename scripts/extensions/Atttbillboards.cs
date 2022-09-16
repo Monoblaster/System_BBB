@@ -65,6 +65,11 @@ package tttbillboards
 			return Parent::onDisabled(%this, %obj, %state);
 		}
 
+		if(isObject(%obj.roleBBM))
+		{
+			%obj.roleBBM.delete();
+		}
+
 		%group = ClientGroup;
 		%count = %group.getCount();
 		for(%i = 0; %i < %count; %i++)
@@ -82,10 +87,9 @@ package tttbillboards
 	function GameConnection::onClientEnterGame(%client)
 	{	
 		%r = Parent::onClientEnterGame(%client);
-		%client.centerPrint("\c6Welcome To TTT! Yes that's me talking to you!");
+		%client.centerPrint("\c6Welcome To TTT! Yes that's me talking to you!",5);
 		%client.avBillboardGroup = %group = AVBillboardGroup_Make();
 		%group.load(%client,30);
-		%client.loadingbillboards = true;
 		return %r;
 	}
 

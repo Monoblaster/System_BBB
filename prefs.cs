@@ -18,6 +18,22 @@ function Player::WeaponAmmoPrint(%pl, %cl, %idx, %sit)
 	return;
 }
 
+function grenade_dynamiteImage::onFire(%this, %obj, %slot)
+{
+	%obj.stopAudio(2);
+	%obj.playThread(2, shiftDown);
+	%obj.weaponAmmoUse();
+	serverPlay3D(grenade_throwSound, %obj.getMuzzlePoint(%slot));
+	%projs = ProjectileFire(%this.Projectile, %obj.getMuzzlePoint(%slot), %obj.getMuzzleVector(%slot), 0, 1, %slot, %obj, %obj.client);
+	for(%i = 0; %i < getFieldCount(%projs); %i++)
+	{
+		%proj = getField(%projs, %i);
+		%proj.cookDeath = %proj.schedule((%proj.getDatablock().lifeTime * 32) - (getSimTime() - %obj.chargeStartTime[%this]), FuseExplode);
+	}
+
+	%obj.chargeStartTime[%this] = "";
+}
+
 //disable weapon ammo pickups
 package aeAmmo
 {

@@ -1005,7 +1005,7 @@ function Player::dropCorpse(%obj)
 	%corpse.setTransform(%pos);
 	%corpse.setVelocity(%obj.getVelocity());
 
-	inventory_pop(%obj);
+	corpseInventory_UnDisplay(%obj.client);
 	return 1;
 }
 
@@ -1106,8 +1106,7 @@ function Player::grabCorpse(%obj, %corpse)
 		%corpse.corpseInventory = %corpse.GetCorpseInventory();
 	}
 
-	//open the player's inventory as a menu
-	inventory_push(%obj,%corpse.corpseInventory);
+	corpseInventory_Display(%obj.client,%corpse.corpseInventory);
 
 	//loot credits if availible
 	%client = %obj.client;
@@ -1145,7 +1144,7 @@ function Player::throwCorpse(%obj)
 	%corpse.setTransform(%pos);
 	%corpse.setVelocity(%velocity);
 
-	inventory_pop(%obj);
+	corpseInventory_UnDisplay(%obj.client);
 	return 1;
 }
 
@@ -1508,6 +1507,7 @@ function BBB_Minigame::assignRoles(%so)
 				%checkTraitor = %so.players[%i];
 				if(%checkTraitor.role $= "Traitor" && %checkTraitor != %client)
 				{
+					
 					//make always visible traitor billboard
 					BillboardMount_AddAVBillboard(%checkTraitor.player.roleBBM,%client.AVBillboardGroup,traitorAVBillboard,%checkTraitor.getBLID());
 					//mark them as traitor in the player list
@@ -1838,11 +1838,10 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 			continue;
 		}
 
-		if(%client.loadingbillboards)
+		if(!%client.AVBillboardGroup.loaded)
 		{
 			continue;
 		}
-
 		if(%override)
 			%client.instantRespawn();
 		else if($BBB::Round::Phase $= "PreRound" && !isObject(%client.player))

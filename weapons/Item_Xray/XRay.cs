@@ -202,7 +202,17 @@ package XrayPackage
     }
     parent::servercmdDropTool(%this,%slot);
   }
+
+  function Armor::onDisabled(%this, %obj, %state)
+  {
+    if(isObject(%obj.client))
+    {
+      %obj.client.ClearXrayBillboards();
+    }
+    parent::onDisabled(%this, %obj, %state);
+  }
 };
+deactivatepackage(XrayPackage);
 activatepackage(XrayPackage);
 
 //### Special Images

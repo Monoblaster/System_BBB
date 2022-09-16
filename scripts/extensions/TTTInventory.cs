@@ -1,92 +1,58 @@
-if($TTTInventory::ShopItem $= "")
+if($TTTInventory::Shop $= "")
 {
-    schedule(10000,0,"TTTInventory_Create");
+    schedule(1000,0,"TTTInventoryV2_Init");
 }
 
-function TTTInventory_Create()
+function TTTInventory_Prompt(%client,%slot,%select)
 {
-    $TTTInventory::ShopItem = InventorySlotItemData_Create("Shop");
-    $TTTInventory::EmptyItem = InventorySlotItemData_Create("Empty","","",true);
-    $TTTInventory::NextPage = InventorySlotItemData_Create("V");
-    $TTTInventory::ExitShop = InventorySlotItemData_Create("Exit Shop");
-
-    $TTTInventory::TraitorShopPage[0] = Inventory_Create("TTTTraitorShop0");
-    
-    %table = $BBB::Weapons_["Traitor"];
-    %itemCount = getWordCount(%table);
-    %itemsUsed = 0;
-    %maxItemsPerPage = 6;
-    %numberOfPages = mCeil(%itemCount / %maxItemsPerPage);
-    %currPage = $TTTInventory::TraitorShopPage[0];
-
-    for(%i = 0; %i < %numberOfPages; %i++)
+    if(%client.TTTInventory_Shop)
     {
-        //create the slots
-        %currPage.add(InventorySpace_Create("ShopExit",1,$TTTInventory::ExitShop,1,"TTTInventory_ShopExitPrompt","","","TTTInventory_ShopExit"));
-        %itemSlot = %currPage.add(InventorySpace_Create("ShopItems",%maxItemsPerPage,$TTTInventory::EmptyItem,%maxItemsPerPage,"TTTInventory_ShopItemPrompt","","","TTTInventory_ShopItemBuy"));
-        %currPage.add(InventorySpace_Create("ShopNext",1,$TTTInventory::NextPage,1,"TTTInventory_ShopNextPrompt","","","TTTInventory_ShopNext"));
-
-        //loop and add the items to the shop page
-        %itemsOnThisPage = getMin(%itemCount - %itemsUsed,%maxItemsPerPage);
-        for(%j = 0; %j < %itemsOnThisPage;%j++)
+        if(%slot == 7)
         {
-            %currItem = getWord(%table,%itemsUsed + %j);
-            %itemSlot.SetSlot(%j,%currItem,true);
+            TTTInventory_ShopNextPrompt(%client,%slot,%select);
+            return;
         }
-        %itemsUsed += %itemsOnThisPage;
-
-        if(%itemsUsed != %itemCount)
-        {
-            //create the next page
-            %currPage = $TTTInventory::TraitorShopPage[%i + 1] = Inventory_Create("TTTTraitorShop" @ %i + 1);
-            $TTTInventory::TraitorShopPage[%i].nextPage = %currPage;
-        }
-        
+        TTTInventory_ShopItemPrompt(%client,%slot,%select);
     }
-    %currPage.nextPage = $TTTInventory::TraitorShopPage[0];
-
-    $TTTInventory::DetectiveShopPage[0] = Inventory_Create("TTTDetectiveShop0");
-    
-    %table = $BBB::Weapons_["Detective"];
-    %itemCount = getWordCount(%table);
-    %itemsUsed = 0;
-    %maxItemsPerPage = 6;
-    %numberOfPages = mCeil(%itemCount / %maxItemsPerPage);
-    %currPage = $TTTInventory::DetectiveShopPage[0];
-
-    for(%i = 0; %i < %numberOfPages; %i++)
+    else if(%client.TTTInventory_Corpse)
     {
-        //create the slots
-        %currPage.add(InventorySpace_Create("ShopExit",1,$TTTInventory::ExitShop,1,"TTTInventory_ShopExitPrompt","","","TTTInventory_ShopExit"));
-        %itemSlot = %currPage.add(InventorySpace_Create("ShopItems",%maxItemsPerPage,$TTTInventory::EmptyItem,%maxItemsPerPage,"TTTInventory_ShopItemPrompt","","","TTTInventory_ShopItemBuy"));
-        %currPage.add(InventorySpace_Create("ShopNext",1,$TTTInventory::NextPage,1,"TTTInventory_ShopNextPrompt","","","TTTInventory_ShopNext"));
-
-        //loop and add the items to the shop page
-        %itemsOnThisPage = getMin(%itemCount - %itemsUsed,%maxItemsPerPage);
-        for(%j = 0; %j < %itemsOnThisPage;%j++)
-        {
-            %currItem = getWord(%table,%itemsUsed + %j);
-            %itemSlot.SetSlot(%j,%currItem,true);
-        }
-        %itemsUsed += %itemsOnThisPage;
-
-        if(%itemsUsed != %itemCount)
-        {
-            //create the next page
-            %currPage = $TTTInventory::DetectiveShopPage[%i + 1] = Inventory_Create("TTTDetectiveShop0" @ %i + 1);
-            $TTTInventory::DetectiveShopPage[%i].nextPage = %currPage;
-        }
-        
+        corpseInventory_Prompt(%client,%slot,%select);
     }
-    %currPage.nextPage = $TTTInventory::DetectiveShopPage[0];
+    else
+    {
+        if(%slot == 7)
+        {
+            TTTInventory_OpenShopPrompt(%client,%slot,%select);
+        }
+    }
 }
 
-function empty()
+function TTTInventory_Use(%client,%slot)
 {
-
+    if(%client.TTTInventory_Shop)
+    {
+        if(%slot == 7)
+        {
+            TTTInventory_ShopNext(%client,%slot);
+            return;
+        }
+        TTTInventory_ShopItemBuy(%client,%slot);
+    }
+    else if(%client.TTTInventory_Corpse)
+    {
+        corpseInventory_Drop(%client,%slot);
+    }
+    else
+    {
+        if(%slot == 7)
+        {
+            TTTInventory_OpenShop(%client,%slot);
+        }
+    }
 }
 
-function TTTInventory_OpenShopPrompt(%client,%space,%slot,%select)
+
+function TTTInventory_OpenShopPrompt(%client,%slot,%select)
 {
     if(%select)
     {
@@ -98,7 +64,7 @@ function TTTInventory_OpenShopPrompt(%client,%space,%slot,%select)
     }
 }
 
-function TTTInventory_OpenShop(%client,%space,%slot)
+function TTTInventory_OpenShop(%client,%slot)
 {
     %player = %client.player;
 
@@ -108,9 +74,11 @@ function TTTInventory_OpenShop(%client,%space,%slot)
         switch$(%role)
         {
         case "Traitor":
-            inventory_push(%player,$TTTInventory::TraitorShopPage[0]);
+            %client.TTTInventory_Shop = $TTTInventory::TraitorShopMain;
+            $TTTInventory::TraitorShopMain.display(%client,true);
         case "Detective":
-            inventory_push(%player,$TTTInventory::DetectiveShopPage[0]);
+            %client.TTTInventory_Shop = $TTTInventory::DetectiveShopMain;
+            $TTTInventory::DetectiveShopMain.display(%client,true);
         default:
             %client.centerPrint("\c5You do not have a shop");
         }
@@ -118,11 +86,11 @@ function TTTInventory_OpenShop(%client,%space,%slot)
     }
 }
 
-function TTTInventory_ShopItemPrompt(%client,%space,%slot,%select)
+function TTTInventory_ShopItemPrompt(%client,%slot,%select)
 {
     if(%select)
     {
-        %item = %space.getValue(%slot);
+        %item = %client.TTTInventory_Shop.get(%slot);
         %name = %item.uiName;
         %price = %item.price;
         %stock = %item.stock;
@@ -148,11 +116,11 @@ function TTTInventory_ShopItemPrompt(%client,%space,%slot,%select)
     }
 }
 
-function TTTInventory_ShopItemBuy(%client,%space,%slot)
+function TTTInventory_ShopItemBuy(%client,%slot)
 {
     %player = %client.player;
 
-    %item = %space.getValue(%slot);
+    %item = %client.TTTInventory_Shop.get(%slot);
 
     if(isObject(%player))
     {
@@ -166,30 +134,21 @@ function TTTInventory_ShopItemBuy(%client,%space,%slot)
             %client.chatMessage("Purchase failed.");
         }
     }
+
+    %client.TTTInventory_Shop.Display(%client,true);
 }
 
-function TTTInventory_ShopExitPrompt(%client,%space,%slot,%select)
-{
-    if(%select)
-    {
-        %name = "Exit Shop";
-        %client.centerPrint("\c6" @ %name @ "<br>\c5Drop this item to select.");
-    }
-    else
-    {
-        %client.centerPrint("");
-    }
-}
-
-function TTTInventory_ShopExit(%client,%space,%slot)
+function TTTInventory_ShopExit(%client,%slot)
 {
     %player = %client.player;
     if(isObject(%player))
     {
-        inventory_pop(%player);
+        %client.TTTInventory_Shop = "";
+        Inventory::Display(%player,%client,true);
+        $TTTInventory::Shop.display(%client);
     }
 }
-function TTTInventory_ShopNextPrompt(%client,%space,%slot,%select)
+function TTTInventory_ShopNextPrompt(%client,%slot,%select)
 {
     if(%select)
     {
@@ -202,16 +161,206 @@ function TTTInventory_ShopNextPrompt(%client,%space,%slot,%select)
     }
 }
 
-function TTTInventory_ShopNext(%client,%space,%slot)
+function TTTInventory_ShopNext(%client,%slot)
 {
     %player = %client.player;
 
     if(isObject(%player))
     {
-        %next = Inventory_GetTop(%player).nextPage;
-        inventory_pop(%player);
-        inventory_push(%player,%next);
+        %client.TTTInventory_Shop = %client.TTTInventory_Shop.nextPage;
+        %client.TTTInventory_Shop.display(%client,true);
     }
+}
+
+package WeaponDroping
+{
+	function servercmdDropTool(%client,%slot)
+	{
+        %player = %client.player;
+        if(isObject(%player) && isObject(%image = %player.getMountedImage(0)) && %image.item.aebase && isObject(%player.tool[%slot]))
+        {
+            %player.unmountImage(0);
+        }
+
+        return Parent::servercmdDropTool(%client,%slot);
+	}
+};
+
+
+//corpse inventory
+function Player::GetCorpseInventory(%player)
+{
+    %inv = Inventory_Create();
+    %inv.Corpse = true;
+    
+    //add the items to the inventory
+    for(%i = 0; %i < 7; %i++)
+    {
+        %inv.set(%i,%player.tool[%i]);
+    }
+
+    return %inv;
+}
+
+function corpseInventory_Drop(%client,%slot)
+{
+    %obj = %client.player;
+    if(!isObject(%obj))
+    {
+        return;
+    }
+
+    //god i hat how this gamemode's code is structured
+    %currItem = %client.TTTInventory_Corpse.get(%slot);
+    if(!isObject(%currItem))
+    {
+        return;
+    }
+
+    %itemname = %currItem.getName();
+
+    for(%a = 0; %a <= 3; %a++)
+	{
+		switch(%a)
+		{
+			case 0:
+				%name = "Primary";
+			case 1:
+				%name = "Secondary";
+			case 2:
+				%name = "Other";
+			case 3:
+				%name = "Grenade";
+		}
+
+		%fieldCount = getFieldCount($BBB::Weapons_[%name]);
+		for(%b = 0; %b < %fieldCount; %b++)
+		{
+			%field = getField($BBB::Weapons_[%name], %b);
+			if(%field $= %itemName)
+			{
+				%found = true;
+				%foundSlot = %a;
+				break;
+			}
+
+		}
+		if(%found)
+			break;
+	}
+
+	if(%foundSlot $= "")
+	{
+		%name = "";
+		//look for a not used slot
+		for(%i = 4; %i < 7; %i++)
+		{
+			if(!isObject(%obj.tool[%i]))
+			{
+				%foundSlot = %i;
+				break;
+			}
+		}
+	}
+
+    if(%foundSlot $= "")
+	{
+        %foundSlot = 6;
+    }
+
+    //swap the found slot on the player and the curr slot on the corpse
+    %playerItem = %obj.tool[%foundSlot];
+    echo(%playerItem SPC %slot SPC %currItem);
+    %client.TTTInventory_Corpse.set(%slot,%playerItem);
+    %obj.tool[%foundSlot] = %currItem.getId();
+    %client.TTTInventory_Corpse.Display(%client,true);
+}
+
+function corpseInventory_Prompt(%client,%slot,%select)
+{
+    if(%select)
+    {
+        %name = %client.TTTInventory_Corpse.get(%slot).uiName;
+        %client.centerPrint("\c6" @ %name @ "<br>\c5Drop this item take it.");
+    }
+    else
+    {
+        %client.centerPrint("");
+    }
+}
+
+function corpseInventory_Display(%client,%inv)
+{
+    %client.TTTInventory_Corpse = %Inv;
+    %inv.display(%client,true);
+}
+
+function corpseInventory_UnDisplay(%client)
+{
+    Inventory::display(%client.player,%client,true);
+    $TTTInventory::Shop.display(%client);
+    %client.TTTInventory_Corpse = "";
+}
+
+datablock ItemData(TTTShop_Shop)
+{
+    category = "Tools";
+    uiName = "Shop";
+    iconName = "";
+    doColorShift = true;
+    colorShiftColor = "0 1 0 1";
+};
+
+datablock ItemData(TTTShop_Next)
+{
+    category = "Tools";
+    uiName = "V";
+    iconName = "";
+    doColorShift = true;
+    colorShiftColor = "1 1 1 1";
+};
+
+function TTTInventoryV2_Init()
+{
+    $TTTInventory::TraitorShopMain = TTTInventoryV2_makeShop("Traitor");
+    $TTTInventory::DetectiveShopMain = TTTInventoryV2_makeShop("Detective");
+    $TTTInventory::Shop = Inventory_create().set(7,TTTShop_Shop);
+}
+
+function TTTInventoryV2_makeShop(%tablename)
+{
+    %main = Inventory_Create();
+    
+    %table = $BBB::Weapons_[%tablename];
+    %itemCount = getWordCount(%table);
+    %itemsUsed = 0;
+    %maxItemsPerPage = 7;
+    %numberOfPages = mCeil(%itemCount / %maxItemsPerPage);
+    %currPage = %main;
+    for(%i = 0; %i < %numberOfPages; %i++)
+    {
+        %currPage.set(7,TTTShop_Next);
+
+        //loop and add the items to the shop page
+        %itemsOnThisPage = getMin(%itemCount - %itemsUsed,%maxItemsPerPage);
+        for(%j = 0; %j < %itemsOnThisPage;%j++)
+        {
+            %currItem = getWord(%table,%itemsUsed + %j);
+            %currPage.set(%j,%currItem);
+        }
+        %itemsUsed += %itemsOnThisPage;
+
+        if(%itemsUsed != %itemCount)
+        {
+            //create the next page
+            %nextPage = Inventory_Create();
+            %currPage.nextPage = %nextPage;
+            %currPage = %nextPage;
+        }
+        
+    }
+    %currPage.nextPage = %main;
+    return %main;
 }
 
 package TTTInventory
@@ -220,14 +369,9 @@ package TTTInventory
     {
         %r = Parent::spawnPlayer(%this);
 
-        %player = %this.player;
-        if(isObject(%player))
-        {
-            //clears the previous items
-            %this.tttInventory.getValue(0).clear();
-
-            Inventory_Push(%player,%this.tttInventory);
-        }
+        corpseInventory_UnDisplay(%this);
+        Inventory::Display(%this.player,%this,true);
+        $TTTInventory::Shop.display(%this);
 
         return %r;
     }
@@ -394,189 +538,42 @@ package TTTInventory
     function ServerCmdUnUseTool(%client)
     {
         %player = %client.player;
+        TTTInventory_Prompt(%client,%player.currTool,false);
+        
         if(isObject(%player))
         {
             %player.realCurrTool = -1;
         }
-        Parent::ServerCmdUnUseTool(%client);
-    }
-
-    function ItemData::onPickup (%this, %obj, %user, %amount)
-    {
-        %r = Parent::onPickup (%this, %obj, %user, %amount);
-        %client = %user.client;
-        if(%r)
+        if(%client.TTTInventory_Shop $= "")
         {
-            if(isObject(%client))
-            {
-                //update the inventory display
-                %count = %user.getDatablock().maxTools;
-                %space = %client.tttInventory.getvalue(0);
-                for(%i = 0; %i < %count; %i++)
-                {
-                    %tool = %user.tool[%i];
-                    %space.setSlot(%i,%tool,true);
-                }
-            }
-
-            //redisplay so no overlap
-            %inventory = Inventory_GetTop(%user);
-            if(isObject(%inventory))
-            {
-                
-                %inventory.display(true);
-            }
+            %r = Parent::ServerCmdUnUseTool(%client);
         }
-        
+        if(%client.TTTInventory_Shop !$= "")
+        {
+            TTTInventory_ShopExit(%client,%player.currTool);
+        }
         return %r;
     }
 
-    function ServerCmdDropTool(%client, %position)
+    function ServerCmdUseTool(%client,%slot)
     {
-        %obj = %client.player;
-        %wasValid = isObject(%obj.tool[%position]);
-
-        %r = parent::ServerCmdDropTool(%client, %position);
-
-        if(isObject(%obj) && %wasValid)
+        TTTInventory_Prompt(%client,%client.player.currTool,false);
+        %client.player.currTool = %slot;
+        TTTInventory_Prompt(%client,%slot,true);
+        if(%client.TTTInventory_Shop $= "" && %client.TTTInventory_Corpse $= "")
         {
-            //update the inventory display
-            %count = %obj.getDatablock().maxTools;
-            %space = %client.tttInventory.getvalue(0);
-            for(%i = 0; %i < %count; %i++)
-            {
-                %tool = %obj.tool[%i];
-                %space.setSlot(%i,%tool,true);
-            }
+            return Parent::ServerCmdUseTool(%client,%slot);
         }
-
-        return %r;
     }
 
-    function GameConnection::onClientEnterGame(%client)
-	{	
-        %client.tttInventory = Inventory_Create("TTTInventory");
-        %client.tttInventory.add(InventorySpace_Create("Space",7,$TTTInventory::EmptyItem,7));
-        %client.tttInventory.add(InventorySpace_Create("Shop",1,$TTTInventory::ShopItem,1,"TTTInventory_OpenShopPrompt","","","TTTInventory_OpenShop"));
-		return Parent::onClientEnterGame(%client);
-	}
+    function ServerCmdDropTool(%client,%position)
+    {
+        TTTInventory_Use(%client,%position);
+        if(%client.TTTInventory_Shop $= "" && %client.TTTInventory_Corpse $= "")
+        {
+            return parent::ServerCmdDropTool(%client,%position);
+        }
+    }
 };
-activatePackage(TTTInventory);
-
-package WeaponDroping
-{
-	function servercmdDropTool(%client,%slot)
-	{
-    %player = %client.player;
-    if(isObject(%player) && isObject(%image = %player.getMountedImage(0)) && %image.item.aebase && isObject(%player.tool[%slot]))
-    {
-      %player.unmountImage(0);
-    }
-    return Parent::servercmdDropTool(%client,%slot);
-	}
-};
-
-
-//corpse inventory
-function Player::GetCorpseInventory(%player)
-{
-    %inv = Inventory_Create("CorpseInventory" @ %player);
-    %space = %inv.add(InventorySpace_Create("Space",7,$TTTInventory::EmptyItem,7,"corpseInventory_Prompt","","","corpseInventory_Drop"));
-    
-    //add the items to the inventory
-    for(%i = 0; %i < 7; %i++)
-    {
-        %tool = %player.tool[%i];
-    
-        %space.setSlot(%i,%tool,true);
-    }
-
-    return %inv;
-}
-
-function corpseInventory_Drop(%client,%space,%slot)
-{
-    %obj = %client.player;
-    if(!isObject(%obj))
-    {
-        return;
-    }
-
-    //god i hat how this gamemode's code is structured
-    %currItem = %space.getValue(%slot);
-    if(!isObject(%currItem))
-    {
-        return;
-    }
-
-    %itemname = %currItem.getName();
-
-    for(%a = 0; %a <= 3; %a++)
-	{
-		switch(%a)
-		{
-			case 0:
-				%name = "Primary";
-			case 1:
-				%name = "Secondary";
-			case 2:
-				%name = "Other";
-			case 3:
-				%name = "Grenade";
-		}
-
-		%fieldCount = getFieldCount($BBB::Weapons_[%name]);
-		for(%b = 0; %b < %fieldCount; %b++)
-		{
-			%field = getField($BBB::Weapons_[%name], %b);
-			if(%field $= %itemName)
-			{
-				%found = true;
-				%foundSlot = %a;
-				break;
-			}
-
-		}
-		if(%found)
-			break;
-	}
-
-	if(%foundSlot $= "")
-	{
-		%name = "";
-		//look for a not used slot
-		for(%i = 4; %i < 7; %i++)
-		{
-			if(!isObject(%obj.tool[%i]))
-			{
-				%foundSlot = %i;
-				break;
-			}
-		}
-	}
-
-    if(%foundSlot $= "")
-	{
-        %foundSlot = 6;
-    }
-
-    //swap the found slot on the player and the curr slot on the corpse
-    %playerItem = %obj.tool[%foundSlot];
-
-    %space.setSlot(%slot,%playerItem);
-    %client.tttInventory.getValue(0).setSlot(%foundSlot,%currItem);
-    %obj.tool[%foundSlot] = %currItem.getId();
-}
-
-function corpseInventory_Prompt(%client,%space,%slot,%select)
-{
-    if(%select)
-    {
-        %name = %space.getValue(%slot).uiName;
-        %client.centerPrint("\c6" @ %name @ "<br>\c5Drop this item take it.");
-    }
-    else
-    {
-        %client.centerPrint("");
-    }
-}
+deactivatePackage("TTTInventory");
+activatePackage("TTTInventory");
