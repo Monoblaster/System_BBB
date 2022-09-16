@@ -151,7 +151,7 @@ function DNAScannerImage::onFire(%this,%obj,%slot)
 				%obj.client.play2D(XrayOnSound);
 				%obj.hasDNAScanner = true;
 				%obj.hasRadar = true;
-				commandToClient(%obj.clien, 'clearCenterPrint');
+				commandToClient(%obj.client, 'clearCenterPrint');
 				RadarSilentLoop();
 			}
 		}
@@ -227,9 +227,10 @@ package DNA_Scanner
 		for(%i = 0; %i < %count; %i++)
 		{
 			%pos = %radarPos[%i];
+			
 			if(%pos !$= "")
 			{
-				%client.AddXrayBillboard(normalRadarBillboard,%pos);
+				%client.AddXrayBillboard(normalSilhouetteAVBillboard,%pos);
 			}
 		}
 	}
