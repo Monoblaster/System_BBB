@@ -108,10 +108,7 @@ function BBB_LoadMapP2(%filename)
 	$BBB::Round::Phase = "Loading";
 	BBB_TimerLoop();
 
-	%displayName = %filename;
-	%displayName = strReplace(%displayName, "Add-Ons/BBB_", "");
-	%displayName = strReplace(%displayName, "/save.bls", "");
-	%displayName = strReplace(%displayName, "_", " ");
+	%displayName = FilePath2MapName(%filename);
 
 	%loadMsg = "\c4Now loading \c6" @ %displayName;
 
@@ -218,8 +215,23 @@ function BBB_LookLoop()
 	{
 		%client = BBB_Minigame.member[%i];
 		%obj = %client.player;
+
+		
+
 		if(isObject(%obj))
 		{
+			%health = mCeil(100 - %obj.getDamageLevel());
+			if(%health > 80)
+				%obj.setShapeNameColor("0 1 0");
+			else if(%health > 60)
+				%obj.setShapeNameColor("0.7 1 0.1");
+			else if(%health > 40)
+				%obj.setShapeNameColor("1 1 0");
+			else if(%health > 20)
+				%obj.setShapeNameColor("1 0.5 0");
+			else
+				%obj.setShapeNameColor("1 0 0");
+
 			checkForTPS(%client, %obj);
 
 			%obj.setShapeNameDistance(12);
@@ -275,6 +287,38 @@ function BBB_LookLoop()
 	// messageClient(%client, '', "\c6 - \c3Cause of death\c6: [" @ %corpse.SOD @ "]");
 	// messageClient(%client, '', "\c6 - \c3Dead for\c6: " @ %minutes @ ":" @ %seconds);
 // }
+function FilePath2MapName(%file)
+{
+	%displayName = strReplace(%file, "Add-Ons/BBB_", "");
+	%displayName = strReplace(%displayName, "/save.bls", "");
+	%displayName = strReplace(%displayName, "_", " ");
+	return %displayName;
+}
+
+function SelectMaps(%n)
+{
+	%remaining = %n;
+	for(%i = 0; %i < $BBB::numMaps; %i++)
+	{
+		%mod = getMin(%i + 1,$BBB::numMaps);
+		if((%i + %remaining + 1) >= $BBB::numMaps)
+		{
+			%mod = $BBB::numMaps;
+		}
+		if(getRandom() <= %mod / $BBB::numMaps)
+		{
+			%selected = %selected TAB $BBB::Map[%i];
+			%remaining--;
+
+			if(%remaining == 0)
+			{
+				break;
+			}
+		}
+	}
+	return trim(%selected);
+}
+
 function BBB_MapVote_P1()
 {
 	$BBB::Vote::Data = "";
@@ -283,19 +327,20 @@ function BBB_MapVote_P1()
 	BBB_Minigame.setGlobalPrint("VOTING...");
 
 	messageAll('', "<font:Palatino linotype:35>\c6[\c4MAP VOTE LIST\c6]");
-	for(%i = 0; %i < $BBB::numMaps; %i++)
+	///choose 3 random maps and have a vote between them
+	$BBB::SelectedCount = 3;
+	$BBB::SelectedMaps = SelectMaps($BBB::SelectedCount);
+
+	for(%i = 0; %i < $BBB::SelectedCount; %i++)
 	{
-		%filename = $BBB::Map[%i];
+		%filename = getField($BBB::SelectedMaps,%i);
 		$BBB::Map::Votes[%i] = 0;
 
-		%displayName = %filename;
-		%displayName = strReplace(%displayName, "Add-Ons/BBB_", "");
-		%displayName = strReplace(%displayName, "/save.bls", "");
-		%displayName = strReplace(%displayName, "_", " ");
+		%displayName = FilePath2MapName(%filename);
 
 		messageAll('', "\c6" @ %i @ ". \c2" @ %displayName);
 	}
-	messageAll(''," <font:Palatino linotype:20>\c6To vote, type \c3/voteMap [Number] \c6or \c3/voteMap [Name]\c6.");
+	messageAll(''," <font:Palatino linotype:20>\c6To vote, type \c3/voteMap [Number].");
 	$BBB::Round::Phase = "MapVote";
 
 	$BBB::rTimeLeft = $BBB::Time::MapVote;
@@ -306,27 +351,21 @@ function BBB_MapVote_P1()
 
 function BBB_MapVote_P2()
 {
-	%max = 0;
-	for(%i = 0; %i < $BBB::numMaps; %i++)
+	%maxVoted = $BBB::SelectedMaps;
+	%maxVotes = 0;
+	for(%i = 0; %i < $BBB::SelectedCount; %i++)
 	{
-		if($BBB::Map::Votes[%i] > %max)
+		if($BBB::Map::Votes[%i] >= %maxVotes)
 		{
-			%file = $BBB::Map[%i];
-			%max = $BBB::Map::Votes[%i];
+			%maxVoted = %maxVoted TAB getField($BBB::SelectedMaps,%i);
+			%maxVotes = $BBB::Map::Votes[%i];
 		}
 	}
-	if(%max == 0)
-	{
-		%num = getRandom(0, $BBB::numMaps - 1);
-		%file = $BBB::Map[%num];
-	}
+	%file = getField(%maxVoted,getRandom(0,getFieldCount(%maxVoted) - 1));
 
-	%displayName = %file;
-	%displayName = strReplace(%displayName, "Add-Ons/BBB_", "");
-	%displayName = strReplace(%displayName, "/save.bls", "");
-	%displayName = strReplace(%displayName, "_", " ");
+	%displayName = FilePath2MapName(%file);
 
-	messageAll('', "<font:Palatino linotype:35>\c6 " @ %displayName @ " <font:Palatino linotype:30>\c4WON WITH \c6" @ %max @ " \c4" @ (%max > 1 ? "VOTES" : "VOTE") @ ".");
+	messageAll('', "<font:Palatino linotype:35>\c6 " @ %displayName @ " <font:Palatino linotype:30>\c4WON WITH \c6" @ %maxVotes @ " \c4" @ (%maxVoted > 1 ? "VOTES" : "VOTE") @ ".");
 	BBB_Minigame.playGlobalSound(BBB_Chat_Sound);
 	BBB_LoadMap(%file);
 }
@@ -1426,6 +1465,30 @@ function BBB_Minigame::assignRandomOutfit(%so)
 	}
 }
 
+function bbb_addListSeperators(%s)
+{
+	%wcount = getFieldCount(%s); 
+	for(%j = 0; %j < %wcount; %j++)
+	{
+		%lists = "";
+		if(%j <= %wCount - 2)
+		{
+			if(%wCount > 2)
+			{
+				%lists = ",";
+			}
+			
+			if(%j == %wCount - 2)
+			{
+				%lists = %lists @ " and";
+			}
+		}
+		%w = getField(%s,%j);
+		%s = setField(%s,%j,%w @ %lists);
+	}
+	return trim(strReplace(%s,"\t"," "));
+}
+
 function BBB_Minigame::assignRoles(%so)
 {
 	// Shuffle Loop
@@ -1473,7 +1536,7 @@ function BBB_Minigame::assignRoles(%so)
 		if(%assignedTraitors < %numTraitors)
 		{
 			%client.BBB_Give_Role("Traitor");
-			$BBB::Traitors = $BBB::Traitors @ "\c0" @ %client.name @ ", 	";
+			$BBB::Traitors = %client.name TAB $BBB::Traitors;
 			%assignedTraitors++;
 
 			//reset name to normal
@@ -1482,7 +1545,7 @@ function BBB_Minigame::assignRoles(%so)
 		else if(%assignedDetectives < %numDetectives)
 		{
 			%client.BBB_Give_Role("Detective");
-			$BBB::Detectives = $BBB::Detectives @ "\c1" @ %client.name @ ", 	";
+			$BBB::Detectives = %client.name TAB $BBB::Detectives;
 			%assignedDetectives++;
 
 			//Show this player is detective in the player list
@@ -1514,15 +1577,15 @@ function BBB_Minigame::assignRoles(%so)
 					secureCommandToClient ("zbR4HmJcSY8hdRhr",%checkTraitor ,'ClientJoin', "[T]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 				}
 			}	
-
-			%members = strReplace($BBB::Traitors, %client.name @ ", 	", "");
-			messageClient(%client, '', "<color:FFD0D0>Your fellow \c0Traitors <color:FFD0D0>are: \c0" @ %members);
+			
+			%members = strReplace($BBB::Traitors, %client.name @ "\t", "");
+			messageClient(%client, '', "<color:FFD0D0>Your fellow \c0Traitors <color:FFD0D0>are: \c0" @ bbb_addListSeperators(%members));
 			%client.play2D(BBB_Chat_Sound);
 		}
 		if(%client.role $= "Detective" && getFieldCount($BBB::Detectives) > 1)
 		{
-			%members = strReplace($BBB::Detectives, %client.name @ ", 	", "");
-			messageClient(%client, '', "<color:7DD4FF>Your fellow \c3Detectives <color:7DD4FF>are: \c1" @ %members);
+			%members = strReplace($BBB::Detectives, %client.name @ "\t", "");
+			messageClient(%client, '', "<color:7DD4FF>Your fellow \c3Detectives <color:7DD4FF>are: \c1" @ bbb_addListSeperators(%members));
 			%client.play2D(BBB_Chat_Sound);
 		}
 	}
@@ -1971,6 +2034,11 @@ function serverCmdSlay(%client, %a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a11,%a
 
 	%target.slayed = %amount;
 
+	if($BBB::Round::Phase $= "Round")
+	{
+		%target.slayed += 1;
+	}
+
 	%player = %target.player;
 	if(isObject(%player))
 	{
@@ -1978,7 +2046,7 @@ function serverCmdSlay(%client, %a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a11,%a
 	}
 }
 
-function serverCmdVoteMap(%client, %w0, %w1, %w2, %w3, %w4, %w5, %w6, %w8, %w9, %w10)
+function serverCmdVoteMap(%client, %n)
 {
 	%client.lastvotedmap = "";
 
@@ -1992,61 +2060,21 @@ function serverCmdVoteMap(%client, %w0, %w1, %w2, %w3, %w4, %w5, %w6, %w8, %w9, 
 		return;
 	}
 
-	%search = %w0 SPC %w1 SPC %w2 SPC %w3 SPC %w4 SPC %w5 SPC %w6 SPC %w7 SPC %w8 SPC %w9 SPC %w10;
-	%search = stripTrailingSpaces(%search);
-	if(%search $= "")
-		return;
-
-	if(%search > 0 || %search $= "0")
-		%doNumSearch = true;
-	else
-		%doNumSearch = false;
-
-	%found = false;
-	if(%doNumSearch)
+	if(%n < 0 || %n >= $BBB::SelectedCount)
 	{
-		for(%i = 0; %i < $BBB::numMaps; %i++)
-		{
-			if(%i == %search)
-			{
-				$BBB::Map::Votes[%i]++;
-				%found = true;
-				break;
-			}
-		}
-	}
-	else
-	{
-		for(%i = 0; %i < $BBB::numMaps; %i++)
-		{
-			%filename = $BBB::Map[%i];
-			%displayName = %filename;
-			%displayName = strReplace(%displayName, "Add-Ons/BBB_", "");
-			%displayName = strReplace(%displayName, "/save.bls", "");
-			%displayName = strReplace(%displayName, "_", " ");
-
-			if(strstr(strlwr(%displayName), strlwr(%search)) > -1)
-			{
-				$BBB::Map::Votes[%i]++;
-				%found = true;
-				break;
-			}
-		}
-	}
-
-	if(%found)
-	{
-		$BBB::Vote::Data = $BBB::Vote::Data @ "|" @ %client.getBLID() @ "|";
-
-		%filename = $BBB::Map[%i];
-		%displayName = %filename;
-		%displayName = strReplace(%displayName, "Add-Ons/BBB_", "");
-		%displayName = strReplace(%displayName, "/save.bls", "");
-		%displayName = strReplace(%displayName, "_", " ");
-
-		messageClient(%client, '', "<bitmap:base/client/ui/ci/star>\c6 You " @ "\c4voted for \c6" @ %displayName @ "\c4.");
+		messageClient(%client, '', "\c6Choose a valid map!");
 		%client.play2D(BBB_Chat_Sound);
+		return;
 	}
+
+	$BBB::Vote::Data = $BBB::Vote::Data @ "|" @ %client.getBLID() @ "|";
+	$BBB::Map::Votes[%n] += 1;
+	
+	%filename = getField($BBB::SelectedMaps,%n);
+	%displayName = FilePath2MapName(%fileName);
+	messageClient(%client, '', "<bitmap:base/client/ui/ci/star>\c6 You " @ "\c4voted for \c6" @ %displayName @ "\c4.");
+
+	%client.play2D(BBB_Chat_Sound);
 
 	%client.lastvotedmap = %displayName;
 }
