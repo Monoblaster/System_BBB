@@ -6,11 +6,6 @@ function Inventory_Create()
 	};
 }
 
-function Inventory::OnAdd(%inv)
-{
-	%inv.set = new SimSet();
-}
-
 function Inventory::Set(%inv,%slot,%db)
 {
 	%inv.tool[%slot] = %db;

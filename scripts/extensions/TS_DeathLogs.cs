@@ -35,6 +35,7 @@ function clearDeathLogs()
 
 function announceDeathLogs()
 {
+     announce("\c6The \c0Traitors \c6were \c0" @ bbb_addListSeperators($BBB::Traitors) @ ".");
      for(%i = 0; %i < $DeathLogCount; %i++)
           announce($DeathLog[%i]);
 }
