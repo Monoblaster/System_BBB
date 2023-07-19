@@ -6,7 +6,14 @@
 //shop purchases
 //item interaction
 
+//refactor:
+//each log will contain a message type and fields
+//this means we can reconstruct the message using tagged string construction saving string space
+//also use dataInstance as a standard saving method
 $Log::MaxStringLen = 10000000;
+
+function Log_
+
 function Log::Clear(%log)
 {
 	%count = %log.logNum;
