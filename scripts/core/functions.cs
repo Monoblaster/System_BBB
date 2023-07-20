@@ -1906,9 +1906,13 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 			continue;
 		}
 		if(%override)
+		{
 			%client.instantRespawn();
+		}
 		else if($BBB::Round::Phase $= "PreRound" && !isObject(%client.player))
+		{
 			%client.instantRespawn();
+		}
 
 		%client.player.displayName = %client.name;
 	}

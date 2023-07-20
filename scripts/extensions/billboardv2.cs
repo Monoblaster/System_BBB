@@ -249,17 +249,27 @@ function AVBillboardGroup::Load(%avbbg,%client,%num)
 	%camera = %client.AVBillboardGroup_LoadCamera = %client.AVBillboardGroup_LoadCamera ||  new Camera(){dataBlock = BillboardLoadingCamera;};
 	%dummyCamera = %client.AVBillboardGroup_LoadDummyCamera = %client.AVBillboardGroup_LoadDummyCamera || new Camera(){dataBlock = BillboardLoadingCamera;};
 	
-	if(%client.getGhostId(%client.AVBillboardGroup_LoadCamera) == -1 || %client.getGhostId(%client.AVBillboardGroup_LoadDummyCamera) == -1 || %client.getGhostId($AVBillboard::loadMount) == -1)
-	{
-
-	}
-
-	%avbbg.loadedClient = %client;
 	$AVBillboard::loadMount.scopeToClient(%client);
 	%camera.setTransform($AVBillboard::loadTransform);
 	%camera.setcontrolObject(%dummyCamera);
 	%client.setControlObject(%camera);
-	
+
+	%avbbg.loadedClient = %client;
+
+	AVBillboardGroup_StartLoad(%avbbg,%num);
+
+	return %avbbg;
+}
+
+function AVBillboardGroup_StartLoad(%avbbg,%num)
+{
+	%client = %avbbg.loadedClient;
+	if(%client.getGhostId(%client.AVBillboardGroup_LoadCamera) == -1 || %client.AVBillboardGroup_LoadDummyCamera == -1 || %client.getGhostId($AVBillboard::loadMount) == -1)
+	{
+		schedule(100,%client,"AVBillboardGroup_StartLoad",%avbbg,%num);
+		return;
+	}
+
 	for(%i = 0; %i < %num; %i++)
 	{
 		%bb = new fxLight()
@@ -277,8 +287,6 @@ function AVBillboardGroup::Load(%avbbg,%client,%num)
 	{
 		AVBillboardGroup_CheckLoadProgress(%avbbg.getObject(%i));
 	}
-
-	return %avbbg;
 }
 
 function AVBillboardGroup_CheckLoadProgress(%bb)
