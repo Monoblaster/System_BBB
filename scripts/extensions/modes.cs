@@ -1,4 +1,246 @@
-$Role::DataCount = -1;
+//major refactoring:
+//remove class based roles and replace with scriptobjects that hold function names for callbacks
+//allows for easy reuse of callbacks without needing to copy and paste or parenting
+//seperate roles from teams/team related ideas and win conditions
+//a team will be it's own object and be instanced and setup on round start
+//replace the RoleList idea with Modes
+//each mode will have it's own rules and ideas and have it's own role lists which are independant from the rules
+
+//modes:
+//they are essentialy an easy way to swap between games within "ttt"
+//i suppose this means i can implement whatever i want within this space although that has some interesting side effects
+//each mode will have the following information
+//onStart, called when the mode starts
+//onStop, called when the mode stops
+//onspawn, callback when a player is spawned
+//ondamaged, callback when player is damaged
+//ondamage, callback when player damages
+//onkill, callback when player kills
+//onkilled, callback when player is killed
+//ontrigger, callback when the player activates a trigger
+//pacakge, a package to activate and deactivate when the mode is active
+
+datablock PlayerData(StandardModePlayer : PlayerStandardArmor)
+{
+	classname = "ModePlayer";
+};
+
+function ModePlayer::onAdd(%db,%player)
+{
+	if(%player.client)
+	{
+		Mode_onSpawn($Mode::Manager.currentMode,%player.client);
+	}
+}
+
+function ModePlayer::onRemove(%db,%player)
+{
+	
+}
+
+function ModePlayer::onCollision(%db,%player,%obj,%vec,%speed)
+{
+
+}
+
+function ModePlayer::onImpact(%db,%player,%obj,%vec,%speed)
+{
+
+}
+
+function ModePlayer::Damage(%db,%victim,%source,%pos,%n,%type)
+{
+	Mode_onDamage($Mode::Manager.currentMode,%source,%victim);
+	if(%victim.isDisabled())
+	{
+		Mode_onDisable($Mode::Manager.currentMode,%source,%victim);
+	}
+}
+
+function ModePlayer::OnTrigger(%db,%player,%num,%val)
+{
+	Mode_onTrigger($Mode::Manager.currentMode,%source,%num,%val);
+}
+
+function ModeMinigame::addMember(%obj, %client)
+{
+	Mode_Join($Mode::Manager.currentMode,%client)
+}
+
+function ModeMinigame::removeMember(%obj, %client)
+{
+	Mode_Leave($Mode::Manager.currentMode,%client)
+}
+
+//need a script to manage modes
+function Modes_Setup()
+{
+	if(!isObject($Mode::Manager))
+	{
+		%manager = $Mode::Manager = new ScriptGroup();
+		%manager.currentMode = "";
+		$manager.minigame = new ScriptObject()
+		{
+			superclass = "MiniGameSO";
+			class = "ModeMinigame";
+			owner = -1;
+			numMembers = 0;
+
+			title = "MOOD";
+			colorIdx = "3";
+			inviteOnly = false;
+			UseAllPlayersBricks = true;
+			PlayersUseOwnBricks = false;
+
+			Points_BreakBrick = 0;
+			Points_PlantBrick = 0;
+			Points_KillPlayer = 0;
+			Points_KillSelf = 0;
+			Points_Die = 0;
+
+			respawnTime = "-1";
+			vehiclerespawntime = "10000";
+			brickRespawnTime = "30000";
+			playerDatablock = "StandardModePlayer";
+
+			useSpawnBricks = true;
+			fallingdamage = true;
+			weapondamage = true;
+			SelfDamage = true;
+			VehicleDamage = true;
+			brickDamage = false;
+
+			enableWand = false;
+			EnableBuilding = false;
+			enablePainting = false;
+
+			StartEquip0 = 0;
+			StartEquip1 = 0;
+			StartEquip2 = 0;
+			StartEquip3 = 0;
+			StartEquip4 = 0;
+		};
+
+		
+	}
+}
+Modes_Setup();
+
+
+function Create_Mode(%name,%data)
+{
+	%newMode = d(%name SPC "Mode",%data);
+	$Mode::Manager.add(%newMode);
+	if($Mode::Manager.currentMode $= "")
+	{
+		%newMode.start();
+	}	
+	return %newMode;
+}
+
+function Mode::Start(%o)
+{
+	if(isObject($Mode::Manager.currentMode))
+	{
+		$Mode::Manager.currentMode.stop();
+	}
+
+	$Mode::Manager.currentMode = %o;
+	activatePackage(%o.pacakge);
+
+	//call join for all players still in the gamemode
+	%count = %o.minigame.numMembers;
+	for(%i = 0; %i < %count; %i++)
+	{
+		Mode_Join(%o,%o.minigame.member[%i]);
+	}
+	Mode_Start(%o);
+}
+
+
+function Mode::Stop(%o)
+{
+	$Mode::Manager.currentMode = "";
+	Mode_Stop(%o);
+
+	//call leave for all players still in the gamemode
+	%count = %o.minigame.numMembers;
+	for(%i = 0; %i < %count; %i++)
+	{
+		Mode_Leave(%o,%o.minigame.member[%i]);
+	}
+	deactivatePackage(%o.pacakge);
+}
+
+
+
+//TTT:
+package TTTPackage
+{
+	function Mode_onStart(%mode)
+	{
+		//setup and start ttt
+	}
+
+	function Mode_onStop(%mode)
+	{
+		//clean up and stop ttt
+	}
+
+	function Mode_Join(%mode,%client)
+	{
+		//called when a client joins the mode ()
+	}
+
+	function Mode_Leave(%mode,%client)
+	{
+		//called when a client leaves the mode
+	}
+
+	function Mode_onSpawn(%mode,%client)
+	{
+		//called when something with the mode class is spawned
+	}
+
+	function Mode_onDamage(%mode,%source,%target)
+	{
+		//called when something with the mode class takes damage
+	}
+
+	function Mode_onDisable(%mode,%source,%target)
+	{
+		//called when something with the mode class is disabled
+	}
+
+	function Mode_onTrigger(%mode,%source,%trigger,%state)
+	{
+		//called when something with the mode class activates a trigger
+	}
+};
+
+
+%ttt = Create_Mode("TTT","package = TTTPackage");
+
+
+//roles:
+//each role will have the following information
+//name, the name dispalyed to players
+//description, a description displayed to the players
+//icon, an icon name to be referenced for diaply and over head icons
+//onspawn, callback when the role is first given
+//ongiven, callback when the role is given
+//ondamaged, callback when player is damaged
+//ondamage, callback when player damages
+//onkill, callback when player kills
+//onkilled, callback when player is killed
+//ontrigger, callback when the player activates a trigger
+//onroundstart, callback when the round starts
+//onroundend, callback when the round ends
+//onroundtick, callback every round tick
+
+return;
+
+$Data::DataCount = -1;
 function d(%class,%data)
 {
 	%e = "";
@@ -22,7 +264,7 @@ function d(%class,%data)
 	}
 
 	//delete old data if it exists
-	%name = "Role_Data" @ $Role::DataCount++;
+	%name = "Role_Data" @ $Data::DataCount++;
 	if(isObject(%name))
 	{
 		%name.delete();

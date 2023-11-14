@@ -388,7 +388,7 @@ function PlayerData::onDestroyed(){}
 function PlayerData::onEnterLiquid(){}
 function PlayerData::onLeaveLiquid(){}
 function PlayerData::onTrigger(){}
-function PlayerData::onPiclup(){}
+function PlayerData::onPickup(){}
 
 function GameMinigame::addMember(%this, %client)
 {
