@@ -33,7 +33,7 @@ function vote_start(%func,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j,%k,%l)
 		typeNumber[%k] = %count-1;
 		typeName[%count++-1] = %l;
 		typeNumber[%l] = %count-1;
-	}
+	};
 	return true;
 }
 
@@ -81,7 +81,7 @@ function Vote_addCrossUniqueVote(%client,%type,%number)
 	}
 
 	%number = %obj.typeNumber[%type];
-	%name = %type
+	%name = %type;
 	if(%obj.typeName[%type] !$= "")
 	{
 		%name = %obj.typeName[%type];

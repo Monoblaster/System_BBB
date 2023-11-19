@@ -101,8 +101,6 @@ function Oopsies_ContestedVoteEnd(%killerData,%contestedList)
 		return;
 	}
 
-	%killerData
-
 	%temp = vote_end();
 	%winners = getField(%temp,0);
 	%winningTotal = getField(%temp,1);
@@ -139,7 +137,7 @@ function Oopsies_PointsCheck()
 		%client = %minigame.players[%i];
 
 		%amount = %client.dataInstance($TTT::Data).oopsies;
-		%refunded = %client.dataInstance($TTT::Data).refundoopsies
+		%refunded = %client.dataInstance($TTT::Data).refundoopsies;
 
 		if(%refunded > 0)
 		{
@@ -211,7 +209,7 @@ function Oopsies_KillCheck(%player,%target)
 $TTT::Data = 1;
 function GameConnection::AddOopsies(%client,%amount)
 {
-	%client.dataInstance($TTT::Data).oopsies += %amount
+	%client.dataInstance($TTT::Data).oopsies += %amount;
 	%client.dataInstance($TTT::Data).oopsiesChange = true;
 
 	if(%amount < 0 && !%client.slayed)
@@ -235,7 +233,7 @@ function GameConnection::AddOopsies(%client,%amount)
 
 function GameConnection::SetOopsies(%client,%amount)
 {
-	%client.dataInstance($TTT::Data).oopsies = %amount
+	%client.dataInstance($TTT::Data).oopsies = %amount;
 	%client.dataInstance($TTT::Data).oopsiesChange = true;
 }
 
@@ -322,7 +320,7 @@ function Player::isValidState(%player,%target,%state)
 
 function Player::getSoonestCriminal(%player,%target)
 {
-	%playerState = getWord(%player.validStateFor[%target],0)
+	%playerState = getWord(%player.validStateFor[%target],0);
 	if(%playerState == getWord(%target.validStateFor[%player],0) && %playerState == $ValidState::Criminal)
 	{
 		if(getWord(%player.validStateFor[%target],0) - getWord(%target.validStateFor[%player],0) < 0)
@@ -362,19 +360,19 @@ function Player::CriminalDemotionLoop(%player)
 		}
 
 		//can see feet
-		if(containerRayCast(%target.getEyePoint(), %player.getPosition(), $Bi$TypeMasks::FxBrickObjectType, %target))
+		if(containerRayCast(%target.getEyePoint(), %player.getPosition(), $TypeMasks::FxBrickObjectType, %target))
 		{
 			continue;
 		}
 
 		//can see eyes
-		if(containerRayCast(%target.getEyePoint(), %player.getEyePoint(), $Bi$TypeMasks::FxBrickObjectType, %target))
+		if(containerRayCast(%target.getEyePoint(), %player.getEyePoint(), $TypeMasks::FxBrickObjectType, %target))
 		{
 			continue;
 		}
 
 		//can see center
-		if(containerRayCast(%target.getEyePoint(), %player.getHackPosition(), $Bi$TypeMasks::FxBrickObjectType, %target))
+		if(containerRayCast(%target.getEyePoint(), %player.getHackPosition(), $TypeMasks::FxBrickObjectType, %target))
 		{
 			continue;
 		}
@@ -403,19 +401,19 @@ function Player::CriminalDemotionLoop(%player)
 		}
 
 		//can see feet
-		if(containerRayCast(%target.getEyePoint(), %player.getPosition(), $Bi$TypeMasks::FxBrickObjectType, %target))
+		if(containerRayCast(%target.getEyePoint(), %player.getPosition(), $TypeMasks::FxBrickObjectType, %target))
 		{
 			continue;
 		}
 
 		//can see eyes
-		if(containerRayCast(%target.getEyePoint(), %player.getEyePoint(), $Bi$TypeMasks::FxBrickObjectType, %target))
+		if(containerRayCast(%target.getEyePoint(), %player.getEyePoint(), $TypeMasks::FxBrickObjectType, %target))
 		{
 			continue;
 		}
 
 		//can see center
-		if(containerRayCast(%target.getEyePoint(), %player.getHackPosition(), $Bi$TypeMasks::FxBrickObjectType, %target))
+		if(containerRayCast(%target.getEyePoint(), %player.getHackPosition(), $TypeMasks::FxBrickObjectType, %target))
 		{
 			continue;
 		}
@@ -465,21 +463,21 @@ function Oopsies_DoVisibleEvent(%source)
 			}
 
 			//can see feet
-			if(containerRayCast(%player.getEyePoint(), %source.getPosition(), $Bi$TypeMasks::FxBrickObjectType, %player))
+			if(containerRayCast(%player.getEyePoint(), %source.getPosition(), $TypeMasks::FxBrickObjectType, %player))
 			{
 				%source.SetValidState(%player,%newState);
 				continue;
 			}
 
-			//can see eyes
-			if(containerRayCast(%player.getEyePoint(), %source.getEyePoint(), $Bi$TypeMasks::FxBrickObjectType, %player))
+			//can see eye
+			if(containerRayCast(%player.getEyePoint(), %source.getEyePoint(), $TypeMasks::FxBrickObjectType, %player))
 			{
 				%source.SetValidState(%player,%newState);
 				continue;
 			}
 
 			//can see center
-			if(containerRayCast(%player.getEyePoint(), %source.getHackPosition(), $Bi$TypeMasks::FxBrickObjectType, %player))
+			if(containerRayCast(%player.getEyePoint(), %source.getHackPosition(), $TypeMasks::FxBrickObjectType, %player))
 			{
 				%source.SetValidState(%player,%newState);
 				continue;
@@ -490,7 +488,7 @@ function Oopsies_DoVisibleEvent(%source)
 
 function Oopsies_DoCallout(%target,%caller)
 {
-	%target.SetValidState(%player,$ValidState::Callout)
+	%target.SetValidState(%player,$ValidState::Callout);
 }
 
 // Visible incriminating actions will make the player hard valid to other players within los
@@ -512,7 +510,7 @@ package TTT_Oopsies
 					{
 						if(!%image.TTT_isSilent)
 						{
-							Oopsies_DoAudibleEvent(%player)
+							Oopsies_DoAudibleEvent(%player);
 						}
 						Oopsies_DoVisibleEvent(%source);
 					}
@@ -543,5 +541,5 @@ package TTT_Oopsies
 		
 		return parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
 	}
-}
+};
 activatePackage("TTT_Oopsies");
