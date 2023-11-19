@@ -1538,7 +1538,7 @@ function BBB_Minigame::assignRoles(%so)
 			%client.BBB_Give_Role("Traitor");
 			$BBB::Traitors = %client.name TAB $BBB::Traitors;
 			%assignedTraitors++;
-
+			WinCondition_set(%player,"WinCondition_Traitor");
 			//reset name to normal
 			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
@@ -1548,6 +1548,7 @@ function BBB_Minigame::assignRoles(%so)
 			$BBB::Detectives = %client.name TAB $BBB::Detectives;
 			%assignedDetectives++;
 
+			WinCondition_set(%player,"WinCondition_Innocent");
 			//Show this player is detective in the player list
 			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "[D]" @ %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
@@ -1555,6 +1556,8 @@ function BBB_Minigame::assignRoles(%so)
 		{
 			%client.BBB_Give_Role("Innocent");
 			//reset name to normal
+
+			WinCondition_set(%player,"WinCondition_Innocent");
 			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin',%client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
 	}

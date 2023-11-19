@@ -597,7 +597,7 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 	//is it reward time?
 	if(%percentDead > $BBB::Traitor::AwardPercent + $BBB::Round::AwardPercentOffset)
 	{
-		//reward all traitors the ammount
+		//reward all traitors the amount
 		for(%i = 0; %i < %count; %i++)
 		{
 			%currClient = %mini.players[%i];
@@ -625,7 +625,7 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 	//did a traitor die?
 	if(%client.role $= "Traitor")
 	{
-		//reward all detectives the ammount
+		//reward all detectives the amount
 		for(%i = 0; %i < %count; %i++)
 		{
 			%currClient = %mini.players[%i];

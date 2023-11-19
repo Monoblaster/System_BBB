@@ -156,7 +156,7 @@ function GameConnection::AddStatArray(%client,%stat,%key,%value)
 		%curr = getField(%field,0);
 		if(%curr $= %key)
 		{
-			%ammount = getField(%field,1);
+			%amount = getField(%field,1);
 			break;
 		}
 		%c++;
@@ -164,21 +164,21 @@ function GameConnection::AddStatArray(%client,%stat,%key,%value)
 	if(%field $= "")
 	{
 		%curr = %key;
-		%ammount = 0;
+		%amount = 0;
 	}
-	%client.stat_[%array @ %c] = %curr TAB %ammount + %value;
+	%client.stat_[%array @ %c] = %curr TAB %amount + %value;
 
 	%c = 0;
 	%mostKey = "";
-	%mostammount = 0;
+	%mostamount = 0;
 	while((%field = %client.stat_[%array @ %c]) !$= "")
 	{
 		%curr = getField(%field,0);
-		%ammount = getField(%field,1);
-		if(%ammount >= %mostammount)
+		%amount = getField(%field,1);
+		if(%amount >= %mostamount)
 		{
 			%mostKey = %curr;
-			%mostAmmount = %ammount;
+			%mostamount = %amount;
 		}
 		%c++;
 	}
