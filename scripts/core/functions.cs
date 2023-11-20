@@ -256,6 +256,8 @@ function BBB_LookLoop()
 				%obj.targetName = %col.displayName;
 			}
 
+			Oopsies_DoCallout(%col,%obj);
+
 			if(isObject(%col) && %col.getDataBlock().maxDamage)
 				%col.health = %col.getDataBlock().maxDamage - %col.getDamageLevel();
 
@@ -958,6 +960,7 @@ function Player::BBB_TargetAPlayer(%obj)
 	{
 		%obj.targetLastCheck = $Sim::Time;
 		%obj.targetName = %col.displayName;
+		%obj.targetObj = %col;
 		return %obj.targetName;
 	}
 
@@ -969,6 +972,7 @@ function Player::BBB_TargetAPlayer(%obj)
 		{
 			%obj.targetLastCheck = $Sim::Time;
 			%obj.targetName = %corpse.displayName;
+			%obj.targetObj = %col;
 			return %obj.targetName;
 		}
 	}
@@ -1000,6 +1004,7 @@ function Player::BBB_TargetAPlayer(%obj)
 			{
 				%obj.targetLastCheck = $Sim::Time;
 				%obj.targetName = %col.displayName;
+				%obj.targetObj = %col;
 				return %obj.targetName;
 			}
 		}
@@ -1014,10 +1019,10 @@ function Player::BBB_TargetAPlayer(%obj)
 
 	// Stickiness if no other target is detected.
 	if($Sim::Time - %obj.targetLastCheck > 3)
+		%obj.targetObj = "";
 		return "Nobody";
-
+	
 	return %obj.targetName;
-
 }
 
 function Player::deleteCorpse(%obj)
@@ -1538,7 +1543,7 @@ function BBB_Minigame::assignRoles(%so)
 			%client.BBB_Give_Role("Traitor");
 			$BBB::Traitors = %client.name TAB $BBB::Traitors;
 			%assignedTraitors++;
-			WinCondition_set(%player,"WinCondition_Traitor");
+			WinCondition_set(%client,"WinCondition_Traitor");
 			//reset name to normal
 			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
@@ -1548,7 +1553,7 @@ function BBB_Minigame::assignRoles(%so)
 			$BBB::Detectives = %client.name TAB $BBB::Detectives;
 			%assignedDetectives++;
 
-			WinCondition_set(%player,"WinCondition_Innocent");
+			WinCondition_set(%client,"WinCondition_Innocent");
 			//Show this player is detective in the player list
 			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "[D]" @ %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
@@ -1557,7 +1562,7 @@ function BBB_Minigame::assignRoles(%so)
 			%client.BBB_Give_Role("Innocent");
 			//reset name to normal
 
-			WinCondition_set(%player,"WinCondition_Innocent");
+			WinCondition_set(%client,"WinCondition_Innocent");
 			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin',%client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		}
 	}
@@ -1788,6 +1793,7 @@ function BBB_Minigame::roundEnd(%so, %type)
 
 	announceDeathLogs();
 	clearDeathLogs();
+	Oopsies_EndRound();
 
 	%so.schedule($BBB::Time::Shock, announce, %text);
 	//%so.schedule(1, playGlobalSound, BBB_EndRound_Sound);

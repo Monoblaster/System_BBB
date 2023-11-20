@@ -48,114 +48,31 @@ function Oopsies_EndRound()
 {
 	%minigame = BBB_Minigame;
 	%count = %minigame.numPlayers;
-	%ContestedList = "";
 	for(%i = 0; %i < %count; %i++)
 	{
 		%client = %minigame.players[%i];
-		if(!isObject(%client.refundContestor))
+
+		if(!isObject(%client))
 		{
 			continue;
 		}
 
-		%contestedList = %contestedList TAB %client SPC %client.refundContestor;
-		%client.refundContestor = "";
-	}
-
-	Oopsies_ContestedVote(%contestedList);
-}
-
-function Oopsies_ContestedVote(%contestedList)
-{
-	if(getFieldCount(%contestedList) == 0)
-	{
-		Oopsies_PointsCheck();
-		return;
-	}
-
-	%contestor = getWord(getField(%contestedList,0),0);
-	%killer = getWord(getField(%contestedList,0),1);
-
-	if(!isObject(%contestor) || !isObject(%killer))
-	{
-		Oopsies_ContestedVote(removeField(%contestedList,0));
-		return;
-	}
-
-	chatMessageAll(0,'%1 is contesting %2\'s kill on them. If this vote passes the killer will get no oopsie.',%contestor.getPlayerName(),%killer.getPlayerName());
-	chatMessageAll(0,'/yes if you agree with %1',%contestor.getPlayerName());
-	chatMessageAll(0,'/no if you agree with %2',%killer.getPlayerName());
-	vote_start("Vote_addCrossUniqueVote","yes","no");
-
-	schedule(15000,0,"Oopsies_ContestedVoteEnd",%killer.dataInstance($TTT::Data),%contestedList);
-}
-
-function Oopsies_ContestedVoteEnd(%killerData,%contestedList)
-{
-	%killer = getWord(getField(%contestedList,0),1);
-
-
-	if(!isObject(%killer))
-	{
-		%killerData.refundoopsies -= 1;
-		Oopsies_ContestedVote(removeField(%contestedList,0));
-		return;
-	}
-
-	%temp = vote_end();
-	%winners = getField(%temp,0);
-	%winningTotal = getField(%temp,1);
-	if(getWordCount(%winners) > 1)
-	{
-		chatMessageAll(0,'Tied with %2 votes. %1 gets no refund', %killer.getPlayerName(),%winningTotal);
-		%killerData.refundoopsies -= 1;
-		Oopsies_ContestedVote(removeField(%contestedList,0));
-		return;
-	}
-
-	if(%winners == 0)
-	{
-		chatMessageAll(0,'"Yes" won with %2 votes. %1 gets no refund', %killer.getPlayerName(),%winningTotal);
-		%killerData.refundoopsies -= 1;
-		Oopsies_ContestedVote(removeField(%contestedList,0));
-		return;
-	}
-
-	if(%winners == 1)
-	{
-		chatMessageAll(0,'"No" won with %2 votes. %1 gets a refund', %killer.getPlayerName(),%winningTotal);
-	}
-
-	Oopsies_ContestedVote(removeField(%contestedList,0));
-}
-
-function Oopsies_PointsCheck()
-{
-	%minigame = BBB_Minigame;
-	%count = %minigame.numPlayers;
-	for(%i = 0; %i < %count; %i++)
-	{
-		%client = %minigame.players[%i];
-
 		%amount = %client.dataInstance($TTT::Data).oopsies;
-		%refunded = %client.dataInstance($TTT::Data).refundoopsies;
 
-		if(%refunded > 0)
+		if(%client.lostOopsies !$= "")
 		{
-			%addedRefund = mFloor(%amount + %refunded,3) - %amount;
-			%client.chatMessage("You were refunded" SPC %addedRefund SPC "oopsies!");
-			%client.dataInstance($TTT::Data).refundoopsies = 0;
-			%client.dataInstance($TTT::Data).oopsies += %addedRefund;
+			%client.chatMessage("You lost" SPC %client.lostOopsies SPC "oopsies :(");
+			%client.lostOopsies = "";
 		}
 
-		if(!%client.dataInstance($TTT::Data).oopsiesChange && %amount != 3)
+		if(!%client.dataInstance($TTT::Data).oopsiesChange && %amount < 3)
 		{
 			%client.chatMessage("You gained an oopsie!");
-			%client.dataInstance($TTT::Data).oopsies = mFloor(%amount + 1,3);
+			%amount = %client.dataInstance($TTT::Data).oopsies = %amount + 1;
 		}
 		%client.dataInstance($TTT::Data).oopsiesChange = false;
 
-		
-		if(%amount < 0)
+		if(%amount <= 0)
 		{
 			%slayAmount = (-%amount) + 1 + %client.slayed;
 			%message = '%1 ran out of oopsies. They are out for %2 Round.';
@@ -188,29 +105,33 @@ function Oopsies_PointsCheck()
 $KillType::Valid = 0;
 $KillType::Invalid = 1;
 $KillType::Uknown = 2;
-function Oopsies_KillCheck(%player,%target)
+function Oopsies_KillCheck(%client,%targetclient)
 {
-	%type = %client.winCondition.getKillType(%player,%target);
+	talk("kill check");
+	%type = %client.winCondition.getKillType(%client.player,%targetclient.player);
+	talk("type:" SPC %type);
 	if(%type == $KillType::Invalid)
 	{
-		%player.client.AddOopsies(-1);
+		%client.AddOopsies(-1);
 		return;
 	}
 
 	if(%type == $KillType::Uknown)
 	{
-		%player.client.AddOopsies(-1);
-		%target.client.AddOopsies(-1);
-
-		%target.client.OopsieRefundPrompt(%player.client);
+		%client.AddOopsies(-1);
+		%targetclient.AddOopsies(-1);
 	}
 }
 
-$TTT::Data = 1;
 function GameConnection::AddOopsies(%client,%amount)
 {
 	%client.dataInstance($TTT::Data).oopsies += %amount;
 	%client.dataInstance($TTT::Data).oopsiesChange = true;
+
+	if(%amount < 0)
+	{
+		%client.lostOopsies -= %amount;
+	}
 
 	if(%amount < 0 && !%client.slayed)
 	{
@@ -237,77 +158,38 @@ function GameConnection::SetOopsies(%client,%amount)
 	%client.dataInstance($TTT::Data).oopsiesChange = true;
 }
 
-function GameConnection::OopsieRefundPrompt(%client,%killer)
-{
-	%client.refundKiller = %killer;
-	%client.chatMessage("You and your killer both lost an oopsie!");
-	%client.chatMessage("Use /refund to return both of the oopsies");
-	%client.chatMessage("Use /contest to start a server vote at the end of the round to not return your killer's oopsie");
-}
-
-function serverCmdRefund(%client)
-{
-	if(%client.refundKiller !$= "")
-	{
-		if(!isObject(%client.refundKiller))
-		{
-			%client.dataInstance($TTT::Data).refundoopsies += 1;
-			%client.refundKiller = "";
-			return;
-		}
-
-		%client.dataInstance($TTT::Data).refundoopsies += 1;
-		%client.refundKiller.dataInstance($TTT::Data).refundoopsies += 1;
-
-		%client.refundKiller = "";
-	}
-}
-
-function serverCmdContest(%client)
-{
-	if(%client.refundKiller !$= "")
-	{
-		if(!isObject(%client.refundKiller))
-		{
-			%client.dataInstance($TTT::Data).refundoopsies += 1;
-			%client.refundKiller = "";
-			return;
-		}
-
-		%client.dataInstance($TTT::Data).refundoopsies += 1;
-		%client.refundKiller.dataInstance($TTT::Data).refundoopsies += 1;
-
-		%client.refundContestor = %client.refundKiller;
-
-		%client.refundKiller = "";
-	}
-}
-
 $ValidState::Invalid = 0;
 $ValidState::Previously = 1;
 $ValidState::Callout = 2;
 $ValidState::Criminal = 3;
-$ValidState::CriminalCallout = 3;
+$ValidState::CriminalCallout = 4;
 
 function Player::SetValidState(%player,%target,%state)
 {
-	if(%player.validStateFor[%target] !$= "" && %player.validStateFor[%target] != %state)
+	%oldState = getWord(%player.validStateFor[%target],0);
+	if(%oldState == %state)
 	{
-		%statelist = %player.validState[%state];
+		return;
+	}
+
+	
+	if(%oldState !$= "")
+	{
+		%statelist = %player.validStatePlayers[%oldState];
 		%count = getWordCount(%statelist);
 		for(%i = 0; %i < %count; %i++)
 		{
 			if(getWord(%statelist,%i) == %target)
 			{
-				removeWord(%statelist,%i);
+				%player.validStatePlayers[%oldState] = removeWord(%statelist,%i);
 				break;
 			}
 		}
 	}
 
-	%player.validStatePlayers[%state] = %player.validState[%state] SPC %target;
+	%player.validStatePlayers[%state] = ltrim(%player.validStatePlayers[%state] SPC %target);
 	%player.validStateFor[%target] = %state SPC getSimTime();
-	if(%state == $ValidState::Criminal && !%player.CriminalDemotionLoop.isEventPending())
+	if(%state == $ValidState::Criminal && !isEventPending(%player.CriminalDemotionLoop))
 	{
 		%player.CriminalDemotionLoop();
 	}
@@ -348,8 +230,6 @@ function Player::CriminalDemotionLoop(%player)
 		// sanity
 		if(!isObject(%target))
 		{
-			removeWord(%i);
-			%i--;
 			continue;
 		}
 
@@ -359,70 +239,16 @@ function Player::CriminalDemotionLoop(%player)
 			continue;
 		}
 
-		//can see feet
-		if(containerRayCast(%target.getEyePoint(), %player.getPosition(), $TypeMasks::FxBrickObjectType, %target))
+		if(Oopsies_IsVisible(%target,%player))
 		{
 			continue;
 		}
 
-		//can see eyes
-		if(containerRayCast(%target.getEyePoint(), %player.getEyePoint(), $TypeMasks::FxBrickObjectType, %target))
-		{
-			continue;
-		}
-
-		//can see center
-		if(containerRayCast(%target.getEyePoint(), %player.getHackPosition(), $TypeMasks::FxBrickObjectType, %target))
-		{
-			continue;
-		}
-
+		talk(%target SPC "demoted");
 		%player.setValidState(%target,$ValidState::Previously);
 	}
 
-	%stateList = %player.validStatePlayers[$ValidState::CriminalCallout];
-	%count = getWordCount(%statelist);
-	for(%i = 0; %i < %count; %i++)
-	{
-		%target = getWord(%stateList, %i);
-
-		// sanity
-		if(!isObject(%target))
-		{
-			removeWord(%i);
-			%i--;
-			continue;
-		}
-
-		if(%target.isDisabled())
-		{
-			%player.setValidState(%target,$ValidState::Previously);
-			continue;
-		}
-
-		//can see feet
-		if(containerRayCast(%target.getEyePoint(), %player.getPosition(), $TypeMasks::FxBrickObjectType, %target))
-		{
-			continue;
-		}
-
-		//can see eyes
-		if(containerRayCast(%target.getEyePoint(), %player.getEyePoint(), $TypeMasks::FxBrickObjectType, %target))
-		{
-			continue;
-		}
-
-		//can see center
-		if(containerRayCast(%target.getEyePoint(), %player.getHackPosition(), $TypeMasks::FxBrickObjectType, %target))
-		{
-			continue;
-		}
-
-		%player.setValidState(%target,$ValidState::Callout);
-	}
-
-	//continue loop if we still have players on us
-	if(getWordCount(%player.validStatePlayers[$ValidState::Criminal]) != 0)
+	if(getWordCount(%statelist) > 0)
 	{
 		%player.CriminalDemotionLoop = %player.schedule(100,"CriminalDemotionLoop");
 	}
@@ -435,7 +261,7 @@ function Oopsies_DoAudibleEvent(%source)
 	for(%i = 0; %i < %count; %i++)
 	{
 		%player = %minigame.players[%i].player;
-		if(isObject(%player))
+		if(isObject(%player) && %player != %source)
 		{
 			//make sure this isn't demoting a state
 			if(%source.isValidState(%player,$ValidState::Invalid))
@@ -453,7 +279,7 @@ function Oopsies_DoVisibleEvent(%source)
 	for(%i = 0; %i < %count; %i++)
 	{
 		%player = %minigame.players[%i].player;
-		if(isObject(%player))
+		if(isObject(%player) && %player != %source)
 		{	
 			//make sure we aren't demoting a callout
 			%newState = $ValidState::Criminal;
@@ -462,22 +288,7 @@ function Oopsies_DoVisibleEvent(%source)
 				%newState = $ValidState::CriminalCallout;
 			}
 
-			//can see feet
-			if(containerRayCast(%player.getEyePoint(), %source.getPosition(), $TypeMasks::FxBrickObjectType, %player))
-			{
-				%source.SetValidState(%player,%newState);
-				continue;
-			}
-
-			//can see eye
-			if(containerRayCast(%player.getEyePoint(), %source.getEyePoint(), $TypeMasks::FxBrickObjectType, %player))
-			{
-				%source.SetValidState(%player,%newState);
-				continue;
-			}
-
-			//can see center
-			if(containerRayCast(%player.getEyePoint(), %source.getHackPosition(), $TypeMasks::FxBrickObjectType, %player))
+			if(Oopsies_IsVisible(%player,%source))
 			{
 				%source.SetValidState(%player,%newState);
 				continue;
@@ -486,9 +297,40 @@ function Oopsies_DoVisibleEvent(%source)
 	}
 }
 
+function Oopsies_IsVisible(%veiwer,%target)
+{
+	//can see feet
+	if(!isObject(containerRayCast(%veiwer.getEyePoint(), %target.getPosition(), $TypeMasks::FxBrickObjectType)))
+	{
+		return true;
+	}
+
+	//can see eye
+	if(!isObject(containerRayCast(%veiwer.getEyePoint(), %target.getEyePoint(), $TypeMasks::FxBrickObjectType)))
+	{
+		return true;
+	}
+
+	//can see center
+	if(!isObject(containerRayCast(%veiwer.getEyePoint(), %target.getHackPosition(), $TypeMasks::FxBrickObjectType)))
+	{
+		return true;
+	}
+	return false;
+}
+
 function Oopsies_DoCallout(%target,%caller)
 {
-	%target.SetValidState(%player,$ValidState::Callout);
+	//do not demote 
+	if(!%target.isValidState(%caller,$ValidState::CriminalCallout) && %target.getValidState(%caller) > $ValidState::Invalid)
+	{
+		%newstate = $ValidState::Callout;
+		if(%target.isValidState(%caller,$ValidState::Criminal))
+		{
+			%newstate = $ValidState::CriminalCallout;
+		}
+		%target.SetValidState(%caller,%newstate);
+	}
 }
 
 // Visible incriminating actions will make the player hard valid to other players within los
@@ -497,28 +339,39 @@ package TTT_Oopsies
 {
 	function Armor::OnTrigger(%db,%player,%trigger,%active)
 	{
-		%image = %player.getMountedImage(0);
-		if($BBB::Round::Phase $= "Round" && isObject(%image) && !%image.TTT_notWeapon)
+		if(%trigger == 0 && %active)
 		{
-			%currState = %player.getImageState(0);
-			%count = 0;
-			while(%image.stateName[%count] !$= "")
+			%image = %player.getMountedImage(0);
+			if($BBB::Round::Phase $= "Round" && isObject(%image) && !%image.TTT_notWeapon)
 			{
-				if(%image.stateName[%count] $= %currState)
+				%currState = %player.getImageState(0);
+				%count = 0;
+				while(%count < 32)
 				{
-					if(%image.stateTransitionOnTriggerDown[%count] !$= "")
+					%statename = %image.stateName[%count];
+					if(%statename $= "")
 					{
-						if(!%image.TTT_isSilent)
-						{
-							Oopsies_DoAudibleEvent(%player);
-						}
-						Oopsies_DoVisibleEvent(%source);
+						%count++;
+						continue;
 					}
-					break;
+
+					if(%statename $= %currState)
+					{
+						if(%image.stateTransitionOnTriggerDown[%count] !$= "")
+						{
+							if(!%image.TTT_isSilent)
+							{
+								Oopsies_DoAudibleEvent(%player);
+							}
+							Oopsies_DoVisibleEvent(%player);
+						}
+						break;
+					}
+					%count++;
 				}
-				%count++;
 			}
 		}
+		
 		return parent::OnTrigger(%db,%player,%trigger,%active);
 	}
 
@@ -536,10 +389,29 @@ package TTT_Oopsies
 	{
 		if(%client.inBBB && $BBB::Round::Phase $= "Round")
 		{
-			Oopsies_KillCheck(%sourceClient.player,%client.player);
+			Oopsies_KillCheck(%sourceClient,%client);
 		}
 		
 		return parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
 	}
+
+	function serverCmdRotateBrick(%this, %dir)
+	{
+		if(%this.inBBB && isObject(%this.player))
+		{
+			%this.player.BBB_TargetAPlayer();
+			// i hate this gamemode
+			%target = %this.player.targetObj;
+
+			if(%dir == -1 && isobject(%target))
+			{
+				Oopsies_DoCallout(%target,%this.player);
+				
+			}
+		}
+		parent::serverCmdRotateBrick(%this, %dir);
+	}
 };
 activatePackage("TTT_Oopsies");
+
+

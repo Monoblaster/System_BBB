@@ -42,14 +42,15 @@ function WinCondition_set(%player,%condition)
 		return;
 	}
 
-	%player.winCondition = %condition;
+	%player.winCondition = %condition.getId();
 }
 
 // Traitors miskill Traitors
 // Innocents and Detectives miskill Innocents and Detectives
 function WinCondition_Basic::isMiskill(%obj,%target)
 {
-	return %obj == %target.winCondition;
+
+	return %obj == %target.client.winCondition;
 }
 
 // Detectives, Innocents, and Traitors can validly kill anyone with hard validation
@@ -60,15 +61,15 @@ $KillType::Uknown = 2;
 function WinCondition_Basic::getKillType(%obj,%player,%target)
 {
 	//invalid
-	if(%player.isValidState(%target,$ValidState::Invalid))
+	if(%target.isValidState(%player,$ValidState::Invalid))
 	{
-		return $IsValidKill::Invalid;
+		return $KillType::Invalid;
 	}
 
 	//valid
-	if(%player.isValidState($ValidState::Criminal) || %player.isValidState($ValidState::Callout))
+	if(%target.isValidState(%player,$ValidState::Criminal) || %target.isValidState(%player,$ValidState::CriminalCallout))
 	{
-		return $IsValidKill::Valid;
+		return $KillType::Valid;
 	}
 
 	//was a miskill
@@ -78,16 +79,16 @@ function WinCondition_Basic::getKillType(%obj,%player,%target)
 		%soonestCriminal = %player.getSoonestCriminal(%target);
 		if( %soonestCriminal !$= "")
 		{
-			return $IsValidKill::Invalid;
+			return $KillType::Invalid;
 		}
-		return $IsValidKill::Valid;
+		return $KillType::Valid;
 	}
 	
 	//otherwise both players lose an oopsie
 	//this is mostly to handle cases were it's hard to determine player intentions
 	//the target can either refund both of the oopsies or make a vote to only refund their oopsie
 	//hopefully this doesn't happen too often
-	return $IsValidKill::Uknown;
+	return $KillType::Uknown;
 }
 
 WinCondition_new("WinCondition_Innocent");
@@ -99,7 +100,7 @@ function WinCondition_Traitor::getKillType(%obj,%player,%target)
 	// invalid
 	if(%obj.isMisKill(%target) && %player.isValidState(%target,$ValidState::Invalid))
 	{
-		return $IsValidKill::Invalid;
+		return $KillType::Invalid;
 	}
 
 	// was a miskill
@@ -109,11 +110,11 @@ function WinCondition_Traitor::getKillType(%obj,%player,%target)
 		%soonestCriminal = %player.getSoonestCriminal(%target);
 		if( %soonestCriminal !$= "")
 		{
-			return $IsValidKill::Invalid;
+			return $KillType::Invalid;
 		}
-		return $IsValidKill::Valid;
+		return $KillType::Valid;
 	}
 	
 	// all other kills are valid for traitors
-	return $IsValidKill::Valid;
+	return $KillType::Valid;
 }
