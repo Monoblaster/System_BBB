@@ -274,7 +274,7 @@ function BBB_LookLoop()
 				%client.centerPrint(%col.centerPrintData, 0.3);
 		}
 	}
-	$BBB::LookLoop::Schedule = schedule(128, BBB_Minigame, "BBB_LookLoop");
+	$BBB::LookLoop::Schedule = schedule(33, BBB_Minigame, "BBB_LookLoop");
 }
 
 // function BBB_PrintCorpseData(%client, %corpse)

@@ -107,9 +107,7 @@ $KillType::Invalid = 1;
 $KillType::Uknown = 2;
 function Oopsies_KillCheck(%client,%targetclient)
 {
-	talk("kill check");
 	%type = %client.winCondition.getKillType(%client.player,%targetclient.player);
-	talk("type:" SPC %type);
 	if(%type == $KillType::Invalid)
 	{
 		%client.AddOopsies(-1);
@@ -244,7 +242,6 @@ function Player::CriminalDemotionLoop(%player)
 			continue;
 		}
 
-		talk(%target SPC "demoted");
 		%player.setValidState(%target,$ValidState::Previously);
 	}
 
