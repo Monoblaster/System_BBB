@@ -18,6 +18,8 @@ function registerLeaderboard(%name,%ascending)
 
 function LeaderboardGroup::Update(%group)
 {
+    //disabled due to lag (for now)
+    return "";
     //loop through our group and update each of the list then sort it
     %count = %group.getCount();
     for(%i = 0; %i < %count; %i++)
@@ -38,7 +40,7 @@ function LeaderboardGroup::Update(%group)
             if(%row !$= "")
             {
                 //the client is in this list set their value to their current value
-                %board.set(%row,%stat);
+                %board.set(%row,%stat); 
             }
             else
             {

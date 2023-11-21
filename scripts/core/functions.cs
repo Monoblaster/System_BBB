@@ -340,7 +340,7 @@ function BBB_MapVote_P1()
 
 		%displayName = FilePath2MapName(%filename);
 
-		messageAll('', "\c6" @ %i @ ". \c2" @ %displayName);
+		messageAll('', "\c6" @ %i + 1 @ ". \c2" @ %displayName);
 	}
 	messageAll(''," <font:Palatino linotype:20>\c6To vote, type \c3/voteMap [Number].");
 	$BBB::Round::Phase = "MapVote";
@@ -353,13 +353,18 @@ function BBB_MapVote_P1()
 
 function BBB_MapVote_P2()
 {
-	%maxVoted = $BBB::SelectedMaps;
+	%maxVoted = getField($BBB::SelectedMaps,0);
 	%maxVotes = 0;
 	for(%i = 0; %i < $BBB::SelectedCount; %i++)
 	{
+		if($BBB::Map::Votes[%i] > %maxVotes)
+		{
+			%maxVoted = "";
+		}
+
 		if($BBB::Map::Votes[%i] >= %maxVotes)
 		{
-			%maxVoted = %maxVoted TAB getField($BBB::SelectedMaps,%i);
+			%maxVoted = lTrim(%maxVoted TAB getField($BBB::SelectedMaps,%i));
 			%maxVotes = $BBB::Map::Votes[%i];
 		}
 	}
@@ -1930,7 +1935,7 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 // =================================================
 // 7. ServerCMD
 // =================================================
-function BBB_CreditBuy(%client,%item,%price,%stock,%price)
+function BBB_CreditBuy(%client,%item,%price,%stock)
 {
 	%player = %client.player;
 	if(isObject(%item) && isObject(%player))
@@ -2071,13 +2076,14 @@ function serverCmdVoteMap(%client, %n)
 		return;
 	}
 
-	if(%n < 0 || %n >= $BBB::SelectedCount)
+	if(%n < 1 || %n > $BBB::SelectedCount)
 	{
 		messageClient(%client, '', "\c6Choose a valid map!");
 		%client.play2D(BBB_Chat_Sound);
 		return;
 	}
 
+	%n -= 1;
 	$BBB::Vote::Data = $BBB::Vote::Data @ "|" @ %client.getBLID() @ "|";
 	$BBB::Map::Votes[%n] += 1;
 	

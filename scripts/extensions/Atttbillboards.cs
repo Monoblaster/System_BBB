@@ -52,6 +52,15 @@ package tttbillboards
 		return Parent::roundSetup(%so);
 	}
 
+	function Armor::onRemove(%this, %obj, %state)
+    {
+		if(isObject(%obj.roleBBM))
+		{
+			%obj.roleBBM.delete();
+		}
+		parent::onRemove(%this, %obj, %state);
+	}
+
     function Armor::onDisabled(%this, %obj, %state)
     {
 		%client = %obj.origClient || %obj.client;

@@ -43,7 +43,48 @@ package aeAmmo
 	}
 };
 
+package ThrowingKnifePackage
+{
+	function Armor::onTrigger(%this, %player, %slot, %val)
+	{
+		if(%player.getMountedImage(0) $= ThrowingKnifeImage.getID() && %slot $= 4 && %val)
+		{
+			%projectile = ThrowingKnifeThrowProjectile;
+			%vector = %player.getMuzzleVector(0);
+			%objectVelocity = %player.getVelocity();
+			%vector1 = VectorScale(%vector, %projectile.muzzleVelocity);
+			%vector2 = VectorScale(%objectVelocity, %projectile.velInheritFactor);
+			%velocity = VectorAdd(%vector1,%vector2);
+			%p = new Projectile()
+			{
+				dataBlock = %projectile;
+				initialVelocity = %velocity;
+				initialPosition = %player.getMuzzlePoint(0);
+				sourceObject = %player;
+				sourceSlot = 0;
+				client = %player.client;
+		};
+			%currSlot = %player.realCurrTool;
+			%player.tool[%currSlot] = 0;
+			%player.weaponCount--;
+			messageClient(%player.client,'MsgItemPickup','',%currSlot,0);
+			serverCmdUnUseTool(%player.client);
+			%player.unmountImage(0);
+			
+			serverPlay3D(ThrowingKnifeSwingSound,%player.getPosition());
+			%player.playthread("3","Activate");
+			MissionCleanup.add(%p);
+			return %p;
+		}
+		Parent::onTrigger(%this, %player, %slot, %val);
+	}
+};
+
 trap_healthImage.TTT_notWeapon = true;
+grenade_decoyImage.TTT_notWeapon = true;
+grenade_flashbangImage.TTT_notWeapon = true;
+grenade_stimImage.TTT_notWeapon = true;
+grenade_smokeImage.TTT_notWeapon = true;
 
 grenade_mollyImage.TTT_Contraband = true;
 grenade_dynamiteImage.TTT_Contraband = true;
