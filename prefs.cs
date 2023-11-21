@@ -43,4 +43,13 @@ package aeAmmo
 	}
 };
 
+trap_healthImage.TTT_notWeapon = true;
+
+grenade_mollyImage.TTT_Contraband = true;
+grenade_dynamiteImage.TTT_Contraband = true;
+grenade_remoteImage.TTT_Contraband = true;
+mine_proxyImage.TTT_Contraband = true;
+mine_incendiaryImage.TTT_Contraband = true;
+ThrowingKnifeImage.TTT_Contraband = true;
+
 deactivatePackage("WeaponDropCharge");

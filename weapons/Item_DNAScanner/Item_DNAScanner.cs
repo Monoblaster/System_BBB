@@ -74,6 +74,8 @@ datablock ShapeBaseImageData(DNAScannerImage)
    doColorShift = true;
    colorShiftColor = DNAScannerItem.colorShiftColor;//"0.400 0.196 0 1.000";
 
+	TTT_notWeapon = true;
+
    //casing = " ";
 
    // Images have a state system which controls how the animations

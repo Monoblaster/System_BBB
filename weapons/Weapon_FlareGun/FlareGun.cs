@@ -114,6 +114,8 @@ datablock ShapeBaseImageData(FlareImage)
    doColorShift = false;
    colorShiftColor = FlareItem.colorShiftColor;//"0.400 0.196 0 1.000";
 
+   TTT_Contraband = true;
+
    //casing = " ";
 
    // Images have a state system which controls how the animations

@@ -316,10 +316,10 @@ function Oopsies_IsVisible(%veiwer,%target)
 	return false;
 }
 
-function Oopsies_DoCallout(%target,%caller)
+function Oopsies_DoCallout(%target,%caller,%minState)
 {
 	//do not demote 
-	if(!%target.isValidState(%caller,$ValidState::CriminalCallout) && %target.getValidState(%caller) > $ValidState::Invalid)
+	if(!%target.isValidState(%caller,$ValidState::CriminalCallout) && %target.getValidState(%caller) >= %minState)
 	{
 		%newstate = $ValidState::Callout;
 		if(%target.isValidState(%caller,$ValidState::Criminal))
@@ -334,6 +334,15 @@ function Oopsies_DoCallout(%target,%caller)
 // Audible incriminating actions will make the player soft valid to all players
 package TTT_Oopsies
 {
+	function Player::MountImage(%player,%image,%slot)
+	{
+		if(%image.TTT_Contraband)
+		{
+			Oopsies_DoVisibleEvent(%player);
+		}
+		return parent::MountImage(%image,%slot);
+	}
+
 	function Armor::OnTrigger(%db,%player,%trigger,%active)
 	{
 		if(%trigger == 0 && %active)
@@ -402,7 +411,7 @@ package TTT_Oopsies
 
 			if(%dir == -1 && isobject(%target))
 			{
-				Oopsies_DoCallout(%target,%this.player);
+				Oopsies_DoCallout(%target,%this.player,$ValidState::Previously);
 				
 			}
 		}

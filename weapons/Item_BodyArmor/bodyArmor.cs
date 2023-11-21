@@ -2,7 +2,7 @@ datablock ItemData(BodyArmorItem : HammerItem)
 {
 	uiName = "Body Armor";
 	iconName = "./icon_TacticalVest";
-}
+};
 
 datablock AudioProfile(BodyArmorEquipSound)
 {
@@ -16,26 +16,23 @@ function BodyArmorItem::OnPickup(%this,%item,%player,%amount)
 	%client = %player.client;
 	if(isObject(%client))
 	{
-		%client.play2D(XrayOffSound);
+		%client.play2D(BodyArmorEquipSound);
 	}
 	
 	%player.DamageMultiplier = 0.50 ;
 
-	%item.delete();
+	%item.schedule(0,"delete");
 }
 
-package BodyArmorPackage
+//outside of a pacakge to prevent package ordering weirdness
+function Armor::Damage(%db, %target, %source, %pos, %damage, %damageType)
 {
-	function Armor::Damage(%db, %target, %source, %pos, %damage, %damageType)
+	%multiplier = 1;
+	if(%target.DamageMultiplier !$= "")
 	{
-		%multiplier = 1;
-		if(%target.DamageMultiplier !$= "")
-		{
-			%multiplier = %target.DamageMultiplier;
-		}
-
-		%damage *= %damage;
-		parent::Damage(%db, %target, %source, %pos, %damage, %damageType);
+		%multiplier = %target.DamageMultiplier;
 	}
-};
-activatePackage("BodyArmorPackage");
+
+	%damage *= %multiplier;
+	parent::Damage(%db, %target, %source, %pos, %damage, %damageType);
+}

@@ -95,6 +95,10 @@ function BBB_RebuildItemTable()
 					%item = $uiNameTable_items[getField(%str,0)];
 					%price = getField(%str,1);
 					%stock = getField(%str,2);
+					if(getField(%str,0) $= "Body Armor")
+					{
+						talk(%price SPC %stock);
+					}
 
 					if(isObject(%item))
 					{

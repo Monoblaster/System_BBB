@@ -92,8 +92,8 @@ function TTTInventory_ShopItemPrompt(%client,%slot,%select)
     {
         %item = %client.TTTInventory_Shop.get(%slot);
         %name = %item.uiName;
-        %price = %item.price;
-        %stock = %item.stock;
+        %price = %client.TTTInventory_Shop.price[%slot];
+        %stock = %client.TTTInventory_Shop.stock[%slot];
         %currStock = %stock - %client.player.bought[%item.getId()];
 
         %prompt = "\c3" @ %price @ "c";
@@ -124,7 +124,7 @@ function TTTInventory_ShopItemBuy(%client,%slot)
 
     if(isObject(%player))
     {
-        %success = BBB_CreditBuy(%client,%item);
+        %success = BBB_CreditBuy(%client,%item,%client.TTTInventory_Shop.price[%slot],%client.TTTInventory_Shop.stock[%slot]);
         if(%success)
         {
             %client.chatMessage("\c6Item bought.");
@@ -347,6 +347,8 @@ function TTTInventoryV2_makeShop(%tablename)
         {
             %currItem = getWord(%table,%itemsUsed + %j);
             %currPage.set(%j,%currItem);
+            %currPage.price[%j] = $BBB::WeaponPrice[%tablename,%currItem.getName()];
+            %currPage.stock[%j] = $BBB::WeaponStock[%tablename,%currItem.getName()];
         }
         %itemsUsed += %itemsOnThisPage;
 

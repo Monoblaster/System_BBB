@@ -256,7 +256,7 @@ function BBB_LookLoop()
 				%obj.targetName = %col.displayName;
 			}
 
-			Oopsies_DoCallout(%col,%obj);
+			Oopsies_DoCallout(%col,%obj,$ValidState::Criminal);
 
 			if(isObject(%col) && %col.getDataBlock().maxDamage)
 				%col.health = %col.getDataBlock().maxDamage - %col.getDamageLevel();
@@ -1930,14 +1930,12 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 // =================================================
 // 7. ServerCMD
 // =================================================
-function BBB_CreditBuy(%client,%item)
+function BBB_CreditBuy(%client,%item,%price,%stock,%price)
 {
 	%player = %client.player;
 	if(isObject(%item) && isObject(%player))
 	{
 		%credits = %client.credits;
-		%price = %item.price;
-		%stock = %item.stock;
 		
 
 		if(%price $= "")
@@ -1975,7 +1973,7 @@ function serverCmdBuy(%client, %num)
 		return;
 	}
 
-	%success = BBB_CreditBuy(%client,%item);
+	%success = BBB_CreditBuy(%client,%item,$BBB::WeaponPrice[%role,%item.getName()],$BBB::WeaponStock[%role,%item.getName()]);
 
 	if(%success)
 	{

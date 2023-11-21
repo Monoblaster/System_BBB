@@ -38,6 +38,8 @@ datablock ShapeBaseImageData(DisguiserImage)
   doColorShift = true;
   colorShiftColor = "1 1 1 1";
 
+  TTT_notWeapon = true;
+
   stateName[0] = "Activate";
   stateTimeoutValue[0] = 0.1;
   stateTransitionOnTimeout[0] = "Ready";

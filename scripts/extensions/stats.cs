@@ -691,9 +691,9 @@ package StatSaver
 		return Parent::roundSetup(%so);
 	}
 
-	function BBB_CreditBuy(%client,%item)
+	function BBB_CreditBuy(%client,%item,%price,%stock)
 	{
-		%success = parent::BBB_CreditBuy(%client,%item);
+		%success = parent::BBB_CreditBuy(%client,%item,%price,%stock);
 
 		if(isObject(%item) && %success)
 		{
