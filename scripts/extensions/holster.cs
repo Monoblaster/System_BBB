@@ -24,9 +24,8 @@ datablock PlayerData(GunBackPlayer)
     footPuffRadius = 0.25;
 };
 
-function GunBackPlayer::onUnMount(%obj)
+function GunBackPlayer::onUnMount(%db,%obj)
 {
-	parent::onUnMount(%obj);
 	%obj.delete();
 }
 
@@ -55,7 +54,7 @@ function Player::GunImages_Update(%player)
 
 	%gunMount.clearScopeToClient(%player.client);
 
-	if(%player.getMountedImage(0) != %player.tool[0].image.getid()) 
+	if(%player.getMountedImage(0) != nameToID(%player.tool[0].image)) 
 	{
 		%gunMount.mountImage(%player.tool[0].image,0);
 		return;

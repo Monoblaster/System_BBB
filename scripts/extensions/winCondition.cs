@@ -57,7 +57,8 @@ function WinCondition_Basic::isMiskill(%obj,%target)
 // Detectives and Innocents can never validly kill detectives
 $KillType::Valid = 0;
 $KillType::Invalid = 1;
-$KillType::Uknown = 2;
+$KillType::CriminalInvalid = 2;
+$KillType::Uknown = 3;
 function WinCondition_Basic::getKillType(%obj,%player,%target)
 {
 	//invalid
@@ -79,7 +80,7 @@ function WinCondition_Basic::getKillType(%obj,%player,%target)
 		%soonestCriminal = %player.getSoonestCriminal(%target);
 		if( %soonestCriminal !$= "")
 		{
-			return $KillType::Invalid;
+			return $KillType::CriminalInvalid;
 		}
 		return $KillType::Valid;
 	}

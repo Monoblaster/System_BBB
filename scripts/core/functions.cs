@@ -297,28 +297,28 @@ function FilePath2MapName(%file)
 	return %displayName;
 }
 
-function SelectMaps(%n)
+function SelectMaps(%n,%ignore)
 {
-	%remaining = %n;
+	%selected = "";
+	%temp = "";
 	for(%i = 0; %i < $BBB::numMaps; %i++)
 	{
-		%mod = getMin(%i + 1,$BBB::numMaps);
-		if((%i + %remaining + 1) >= $BBB::numMaps)
+		%map = $BBB::Map[%i];
+		if(%map $= %ignore)
 		{
-			%mod = $BBB::numMaps;
+			continue;
 		}
-		if(getRandom() <= %mod / $BBB::numMaps)
-		{
-			%selected = %selected TAB $BBB::Map[%i];
-			%remaining--;
-
-			if(%remaining == 0)
-			{
-				break;
-			}
-		}
+		%temp = %temp TAB %map;
 	}
-	return trim(%selected);
+	%temp = ltrim(%temp);
+
+	for(%i = 0; %i < %n; %i++)
+	{
+		%choice = getRandom(0,getFieldCount(%temp) - 1);
+		%selected = %selected TAB getField(%temp,%choice);
+		%temp = removeField(%temp,%choice);
+	}
+	return ltrim(%selected);
 }
 
 function BBB_MapVote_P1()
@@ -331,8 +331,8 @@ function BBB_MapVote_P1()
 	messageAll('', "<font:Palatino linotype:35>\c6[\c4MAP VOTE LIST\c6]");
 	///choose 3 random maps and have a vote between them
 	$BBB::SelectedCount = 3;
-	$BBB::SelectedMaps = SelectMaps($BBB::SelectedCount);
-
+	$BBB::SelectedMaps = SelectMaps($BBB::SelectedCount,$BBB:CurrentMap);
+	$BBB::SelectedCount = getFieldCount($BBB::SelectedMaps);
 	for(%i = 0; %i < $BBB::SelectedCount; %i++)
 	{
 		%filename = getField($BBB::SelectedMaps,%i);
@@ -371,7 +371,7 @@ function BBB_MapVote_P2()
 	%file = getField(%maxVoted,getRandom(0,getFieldCount(%maxVoted) - 1));
 
 	%displayName = FilePath2MapName(%file);
-
+	$BBB:CurrentMap = %file;
 	messageAll('', "<font:Palatino linotype:35>\c6 " @ %displayName @ " <font:Palatino linotype:30>\c4WON WITH \c6" @ %maxVotes @ " \c4" @ (%maxVoted > 1 ? "VOTES" : "VOTE") @ ".");
 	BBB_Minigame.playGlobalSound(BBB_Chat_Sound);
 	BBB_LoadMap(%file);

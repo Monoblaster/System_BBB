@@ -82,7 +82,6 @@ package ThrowingKnifePackage
 
 trap_healthImage.TTT_notWeapon = true;
 grenade_decoyImage.TTT_notWeapon = true;
-grenade_flashbangImage.TTT_notWeapon = true;
 grenade_stimImage.TTT_notWeapon = true;
 grenade_smokeImage.TTT_notWeapon = true;
 

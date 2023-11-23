@@ -47,12 +47,13 @@
 function Oopsies_EndRound()
 {
 	%minigame = BBB_Minigame;
-	%count = %minigame.numPlayers;
+	%group = ClientGroup;
+	%count = ClientGroup.getCount();
 	for(%i = 0; %i < %count; %i++)
 	{
-		%client = %minigame.players[%i];
+		%client = %group.getobject(%i);
 
-		if(!isObject(%client))
+		if(!isObject(%client) || getMiniGameFromObject(%client) != %minigame)
 		{
 			continue;
 		}
@@ -74,29 +75,27 @@ function Oopsies_EndRound()
 
 		if(%amount <= 0)
 		{
-			%slayAmount = (-%amount) + 1 + %client.slayed;
-			%message = '%1 ran out of oopsies. They are out for %2 Round.';
-			if(%slayAmount > 1)
-			{
-				%message = '%1 ran out of oopsies. They are out for %2 Rounds.';
-			}
-
-			messageAll('MsgAdminForce', %message, %client.getPlayerName(), %slayAmount);
-
-			%client.slayed = %slayAmount;
+			%client.slayed = 2;
+			
+			%message = '%1 is out of oopsies. They have a balance of %2 Oopsies.';
+			messageAll('', %message, %client.getPlayerName(),%amount);
 
 			%player = %client.player;
 			if(isObject(%player))
 			{
 				%player.kill();
 			}
-			
-			%client.dataInstance($TTT::Data).oopsies = 1;
 		}
 		else
 		{
 			%client.chatMessage("You have" SPC %amount SPC "oopsies left. Good luck!");
 		}
+
+		if(%amount == 1 && %client.slayed > 0)
+		{
+			%client.slayed = 1;
+		}
+			
 
 		%client.roundOopsies = 0;
 	}
@@ -104,13 +103,20 @@ function Oopsies_EndRound()
 
 $KillType::Valid = 0;
 $KillType::Invalid = 1;
-$KillType::Uknown = 2;
+$KillType::CriminalInvalid = 2;
+$KillType::Uknown = 3;
 function Oopsies_KillCheck(%client,%targetclient)
 {
 	%type = %client.winCondition.getKillType(%client.player,%targetclient.player);
 	if(%type == $KillType::Invalid)
 	{
-		%client.AddOopsies(-1);
+		if(%client == %targetclient || %tpye == $KillType::CriminalInvalid )
+		{
+			%client.AddOopsies(-1);
+			return;
+		}
+		
+		%client.AddOopsies(-2);
 		return;
 	}
 
@@ -135,11 +141,11 @@ function GameConnection::AddOopsies(%client,%amount)
 	{
 		%client.roundOopsies += %amount;
 
-		if(%client.roundOopsies >= 3)
+		if(%client.roundOopsies <= -4)
 		{
-			messageAll('MsgAdminForce', '%1 went on an oopsie driven rampage. They are out for 3 Rounds.', %client.getPlayerName());
+			messageAll('MsgAdminForce', '%1 went on an oopsie driven rampage.', %client.getPlayerName());
 
-			%client.slayed = 4;
+			%client.slayed = 2;
 
 			%player = %client.player;
 			if(isObject(%player))
@@ -294,6 +300,21 @@ function Oopsies_DoVisibleEvent(%source)
 	}
 }
 
+
+function Oopsies_DoLoopingVisibleEvent(%player,%name)
+{
+	Oopsies_DoVisibleEvent(%player);
+	%player._[%name] = schedule(100,%player,"Oopsies_DoLoopingVisibleEvent",%player,%name);	
+}
+
+
+
+function Oopsies_StopLoopingVisibleEvent(%player,%name)
+{
+	cancel(%player._[%name]);
+}
+
+
 function Oopsies_IsVisible(%veiwer,%target)
 {
 	//can see feet
@@ -338,9 +359,18 @@ package TTT_Oopsies
 	{
 		if(%image.TTT_Contraband)
 		{
-			Oopsies_DoVisibleEvent(%player);
+			Oopsies_DoLoopingVisibleEvent(%player,"Contraband");
 		}
-		return parent::MountImage(%image,%slot);
+		return parent::MountImage(%player,%image,%slot);
+	}
+
+	function Player::UnmountImage(%player,%slot)
+	{
+		if(%player.getMountedImage(%slot).TTT_Contraband)
+		{
+			Oopsies_StopLoopingVisibleEvent(%player,"Contraband");
+		}
+		return parent::UnmountImage(%player,%slot);
 	}
 
 	function Armor::OnTrigger(%db,%player,%trigger,%active)
@@ -383,9 +413,25 @@ package TTT_Oopsies
 
 	function Armor::Damage(%db, %target, %source, %pos, %damage, %damageType)
 	{
+		%player = %source.client.player;
+
+		if(!isObject(%player))
+		{
+			%player = %source;
+		}
+		
+		while(%player.getClassName() !$= "Player")
+		{
+			%player = %player.sourceObject;
+			if(%player $= "")
+			{
+				return parent::Damage(%db, %target, %source, %pos, %damage, %damageType);
+			}
+		}
+
 		if($BBB::Round::Phase $= "Round")
 		{
-			Oopsies_DoVisibleEvent(%source);
+			Oopsies_DoVisibleEvent(%player);
 		}
 		
 		return parent::Damage(%db, %target, %source, %pos, %damage, %damageType);
