@@ -423,7 +423,7 @@ package TTT_Oopsies
 		while(%player.getClassName() !$= "Player")
 		{
 			%player = %player.sourceObject;
-			if(%player $= "")
+			if(!isObject(%player))
 			{
 				return parent::Damage(%db, %target, %source, %pos, %damage, %damageType);
 			}
