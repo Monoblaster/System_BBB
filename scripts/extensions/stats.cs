@@ -436,46 +436,20 @@ function serverCmdStats(%client,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a1
 }
 
 $c = -1;
-//#kill stats (DONE)
-//traitors killed
-registerStat("T Killed",0);
-//innocents killed
-registerStat("I Killed",0);
-//detectives killed
-registerStat("D Killed",0);
-//total kills
-registerStat("Kills",0);
+//kill stats
+// 1 stat for each roll showing how many times you have killed that role
 //miskills
 registerStat("Miskills",0);
-//post round kills
-registerStat("PR Kills",0);
 
-//#round stats (DONE)
-//total rounds played
-registerStat("Rounds",0);
-//traitor rounds played
-registerStat("T Rounds",0);
-//innocent rounds played
-registerStat("I Rounds",0);
-//detective rounds played
-registerStat("D Rounds",0);
-//total rounds won
-registerStat("Wins",0);
-//traitor wins
-registerStat("T Wins",0);
-//innocent wins
-registerStat("I Wins",0);
-//detective wins
-registerStat("D Wins",0);
-//rounds survived
-registerStat("Survived",0);
+//win stats
+//1 stat for each win condition showing how many times you have won with it
 
 //#favorites stats (need to save a lot of stats for these)
-//favorite traitor item
-registerStat("T Item","None",true,"");
-//favorite detective item
-registerStat("D Item","None",true,"");
-//favorite gun
+//favorite item from shop for each role
+//favorite primary gun
+//favorite secondary gun
+//favorite melee
+//favorite grenade
 registerStat("Gun","None",true,"");
 //favorite target
 registerStat("Target","None",true,"");
@@ -489,26 +463,13 @@ registerStat("Melee Kills",0);
 registerStat("Throwing Knife Kills",0);
 
 //#generic stats
-//credits spent
-registerStat("Credits Spent",0);
-//items dropped
-registerStat("Items Dropped",0);
 //bullets fired
 registerStat("Bullets Fired",0);
 //bullets hit
 registerStat("Bullets Hit",0);
 //grenades thrown
 registerStat("Grenades Thrown",0);
-//jumps
-registerStat("Jumps",0);
-//bodies discovered
-registerStat("Bodies Discovered",0);
-//times flashbanged
-registerStat("Flashbanged",0);
-//times laser pointed
-registerStat("Laser Pointed",0);
-//times exploded
-registerStat("Exploded",0);
+
 
 //load all player stats into global variables
 //these global variables will be used for stat displays and leaderboards
