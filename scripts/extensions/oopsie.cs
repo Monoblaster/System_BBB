@@ -59,44 +59,51 @@ function Oopsies_EndRound()
 		}
 
 		%amount = %client.dataInstance($TTT::Data).oopsies;
-
-		if(%client.lostOopsies !$= "")
+		
+		if(%minigame.numPlayers <= 4)
 		{
-			%client.chatMessage("You lost" SPC %client.lostOopsies SPC "oopsies :(");
-			%client.lostOopsies = "";
+			%amount = %client.dataInstance($TTT::Data).oopsies = 3;
+			%client.chatMessage("Free oopsie rounds!");
 		}
-
-		if(!%client.dataInstance($TTT::Data).oopsiesChange && %amount < 3)
+		else 
 		{
-			%client.chatMessage("You gained an oopsie!");
-			%amount = %client.dataInstance($TTT::Data).oopsies = %amount + 1;
-		}
-		%client.dataInstance($TTT::Data).oopsiesChange = false;
-
-		if(%amount <= 0)
-		{
-			%client.slayed = 2;
-			
-			%message = '%1 is out of oopsies. They have a balance of %2 Oopsies.';
-			messageAll('', %message, %client.getPlayerName(),%amount);
-
-			%player = %client.player;
-			if(isObject(%player))
+			if(%client.lostOopsies !$= "")
 			{
-				%player.kill();
+				%client.chatMessage("You lost" SPC %client.lostOopsies SPC "oopsies :(");
+				%client.lostOopsies = "";
+			}
+
+			if(!%client.dataInstance($TTT::Data).oopsiesChange && %amount < 3)
+			{
+				%client.chatMessage("You gained an oopsie!");
+				%amount = %client.dataInstance($TTT::Data).oopsies = %amount + 1;
+			}
+
+			if(%amount <= 0)
+			{
+				%client.slayed = 2;
+				
+				%message = '%1 is out of oopsies. They have a balance of %2 oopsies.';
+				messageAll('', %message, %client.getPlayerName(),%amount);
+
+				%player = %client.player;
+				if(isObject(%player))
+				{
+					%player.kill();
+				}
+			}
+			else
+			{
+				%client.chatMessage("You have" SPC %amount SPC "oopsies left. Good luck!");
+			}
+
+			if(%amount == 1 && %client.slayed > 0)
+			{
+				%client.slayed = 1;
 			}
 		}
-		else
-		{
-			%client.chatMessage("You have" SPC %amount SPC "oopsies left. Good luck!");
-		}
 
-		if(%amount == 1 && %client.slayed > 0)
-		{
-			%client.slayed = 1;
-		}
-			
-
+		%client.dataInstance($TTT::Data).oopsiesChange = false;
 		%client.roundOopsies = 0;
 	}
 }
@@ -141,7 +148,7 @@ function GameConnection::AddOopsies(%client,%amount)
 	{
 		%client.roundOopsies += %amount;
 
-		if(%client.roundOopsies <= -4)
+		if(%client.roundOopsies <= -4 && BBB_Minigame.numPlayers <= 4)
 		{
 			messageAll('MsgAdminForce', '%1 went on an oopsie driven rampage.', %client.getPlayerName());
 

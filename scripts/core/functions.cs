@@ -1507,7 +1507,7 @@ function BBB_Minigame::assignRoles(%so)
 	for(%i = 0; %i < %so.numMembers; %i++)
 	{
 		%client = %so.member[%i];
-		if(isObject(%client.player))
+		if(isObject(%client.player) && %client.slayed <= 0)
 		{
 			%so.players[%playerCount] = %client;
 			%playerCount++;
@@ -1869,7 +1869,7 @@ function BBB_Minigame::roundStart(%so)
 	BBB_TimerLoop();
 
 	messageAll("", "<font:Palatino Linotype:35>\c4B<font:Palatino Linotype:34>\c4EGINNING ROUND \c6" @ $BBB::Round);
-	messageAll("", "<font:Palatino Linotype:28>\c4T<font:Palatino Linotype:27>\c4HERE ARE\c6" SPC %so.numMembers SPC "\c4PLAYERS THIS ROUND...");
+	messageAll("", "<font:Palatino Linotype:28>\c4T<font:Palatino Linotype:27>\c4HERE ARE\c6" SPC %so.numPlayers SPC "\c4PLAYERS THIS ROUND...");
 	%so.playGlobalSound(BBB_Chat_Sound);
 }
 
