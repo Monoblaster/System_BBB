@@ -191,7 +191,7 @@ function BBB() // -- The only non-packaged function not in functions.cs! Wow! (I
 		BBB_BuildMapList();
 		BBB_BuildShopList();
 
-		BBB_LoadMap($BBB::Start::Map);
+		BBB_LoadMap(SelectMaps(1));
 
 		for(%a = 0; %a < ClientGroup.getCount(); %a++)
 			BBB_Minigame.addMember(ClientGroup.getObject(%a));
