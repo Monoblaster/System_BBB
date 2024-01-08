@@ -11,10 +11,10 @@ function ComponentHolder_Create(%components)
 			return "";
 		}
 
-		%componenets = setWord(%componenets,%i,%comp.getid());
+		%components = setWord(%components,%i,%comp.getid());
 	}
 
-	return = new ScriptObject()
+	return new ScriptObject()
 	{
 		class = "ComponentHolder";
 		components = %components;
@@ -79,7 +79,7 @@ function ComponentHolder::IsComponent(%obj,%comp)
 
 function ComponentHolder::StartCallback(%obj,%name,%target,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j,%k,%l)
 {
-	if(%obj.doingCallback !$= "")
+	if(%obj.callback !$= "")
 	{
 		error("Cannot start another callback on the same instance");
 		return "";
@@ -95,7 +95,7 @@ function ComponentHolder::StartCallback(%obj,%name,%target,%a,%b,%c,%d,%e,%f,%g,
 
 function ComponentHolder::Continue(%obj,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j,%k,%l)
 {
-	if(%obj.doingCallback $= "")
+	if(%obj.callback $= "")
 	{
 		error("Cannot continue without starting a callback");
 		return "";
@@ -128,7 +128,7 @@ function Component_Create(%name)
 	if(nameToID(%name) > 0)
 	{
 		%name.ClearCallbacks();
-		return;
+		return (%name).getId();
 	}
 
 	%obj = new ScriptObject()
@@ -151,7 +151,7 @@ function Component::Callback(%obj,%name,%func)
 
 function Component::GetFunction(%obj,%name)
 {
-	return getWord(%obj._[%name]);
+	return %obj._[%name];
 }
 
 
@@ -165,4 +165,3 @@ function Component::ClearCallbacks(%obj)
 	}
 	%obj.CallbackList = "";
 }
-

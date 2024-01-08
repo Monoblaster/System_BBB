@@ -11,11 +11,11 @@ package BBBDeathLogs
                return;
           fcbn(zin).chatMessage("passed round check");
 
-          %dlmsg = "<color:" @ (%kCl.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %kCl.name SPC "(" @ %kCl.role @ ") \c6killed <color:" @ (%cl.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" SPC %cl.name SPC "(" @ %cl.role @ ")\c6 at" SPC getStringFromTime($BBB::rTimeLeft);
+          %dlmsg = "<color:" @ (%kCl.role.name $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %kCl.name SPC "(" @ %kCl.role.name @ ") \c6killed <color:" @ (%cl.role.name $= "Traitor" ? "FF7744" : "4477FF") @ ">" SPC %cl.name SPC "(" @ %cl.role.name @ ")\c6 at" SPC getStringFromTime($BBB::rTimeLeft);
           fcbn(zin).chatMessage(%dlmsg);
 
           if(%kCl == %cl || !isObject(%kCl))
-               %dlmsg = "<color:" @ (%cl.role $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %cl.name SPC "(" @  %cl.role @ ")" SPC "has died.";
+               %dlmsg = "<color:" @ (%cl.role.name $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %cl.name SPC "(" @  %cl.role.name @ ")" SPC "has died.";
 
           $DeathLog[$DeathLogCount] = %dlmsg;
           $DeathLogCount++;

@@ -120,7 +120,7 @@ function Player::updateRadarPositions(%player)
 		%role = %radarRole[%i];
 		if(%pos !$= "")
 		{
-			if(%role $= "Traitor" && %player.client.role $= "Traitor")
+			if(%role $= "Traitor" && %player.client.role.name $= "Traitor")
 			{
 				%client.AddXrayBillboard(traitorSilhouetteAVBillboard,%pos);
 				continue;

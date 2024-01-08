@@ -263,7 +263,7 @@ function Oopsies_DoAudibleEvent(%source)
 	%count = %minigame.numPlayers;
 	for(%i = 0; %i < %count; %i++)
 	{
-		%player = %minigame.players[%i].player;
+		%player = %minigame.playingClients[%i].player;
 		if(isObject(%player) && %player != %source)
 		{
 			//make sure this isn't demoting a state
@@ -281,7 +281,7 @@ function Oopsies_DoVisibleEvent(%source)
 	%count = %minigame.numPlayers;
 	for(%i = 0; %i < %count; %i++)
 	{
-		%player = %minigame.players[%i].player;
+		%player = %minigame.playingClients[%i].player;
 		if(isObject(%player) && %player != %source)
 		{	
 			//make sure we aren't demoting a callout
