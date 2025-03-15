@@ -529,7 +529,7 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 	//	return Parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
 	if(!%client.inBBB || $BBB::Round::Phase !$= "Round")
 	{
-		return GameConnection_onDeath (%client, %sourceObject, %sourceClient, %damageType, %damLoc)
+		return GameConnection_onDeath (%client, %sourceObject, %sourceClient, %damageType, %damLoc);
 	}
 
 	if (%sourceObject.sourceObject.isBot)
