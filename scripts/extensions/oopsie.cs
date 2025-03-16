@@ -94,7 +94,7 @@ function Oopsies_EndRound()
 			}
 			else
 			{
-				%client.chatMessage("You have" SPC %amount SPC "oopsies left. Good luck!");
+				%client.chatMessage("You have" SPC %amount SPC "oopsies (RDM mistakes) left. Good luck!");
 			}
 
 			if(%amount == 1 && %client.slayed > 0)
@@ -117,7 +117,7 @@ function Oopsies_KillCheck(%client,%targetclient)
 	%type = %client.winCondition.getKillType(%client.player,%targetclient.player);
 	if(%type == $KillType::Invalid)
 	{
-		if(%client == %targetclient || %tpye == $KillType::CriminalInvalid )
+		if(%client == %targetclient || %type == $KillType::CriminalInvalid )
 		{
 			%client.AddOopsies(-1);
 			return;
