@@ -1,5 +1,10 @@
 $DataInstance::FilePath = "Config/Server/DataInstance";
 
+if (!isObject($DataInstance::MasterGroup))
+{
+	$DataInstance::MasterGroup = new SimSet();
+}
+
 function DataInstance_ListDelete(%list)
 {
 	%count = getWordCount(%list);
@@ -45,6 +50,14 @@ function SimObject::DataInstance(%obj,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a
 		{
 			%d = new ScriptObject(){class = "DataInstance";DataInstance_Parent = %obj;};
 			%obj.DataInstance_List = setWord(%obj.DataInstance_List,%a[%c],%d);
+			if (MissionCleanup.isMember(%d))
+			{
+				MissionCleanup.remove(%d);
+			}
+			if (!$DataInstance::MasterGroup.isMember(%d))
+			{
+				$DataInstance::MasterGroup.add(%d);
+			}
 		}
 		%obj = %d;
 		%c++;
