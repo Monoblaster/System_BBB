@@ -87,10 +87,12 @@ function BBB_LoadMap(%filename)
 	  %camera.setFlyMode();
 	  %camera.mode = "Observer";
 
-	  if(%client.getControlObject().getDatablock().getName() !$= "BillboardLoadingCamera")
+	  if(isObject(%client.getControlObject()) && %client.getControlObject().getDatablock().getName() $= "BillboardLoadingCamera")
 	  {
-		%client.setControlObject(%camera);
+		continue;
 	  }
+
+	  %client.setControlObject(%camera);
 	}
 
 	//clear all bricks

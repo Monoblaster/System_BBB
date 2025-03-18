@@ -44,6 +44,50 @@
 // This causes both A and B to lose an oopsie
 // B becomes soft valid
 
+function servercmdsetOopsies(%client,%a,%b,%c,%d,%e,%f,%g)
+{
+	if(!%client.isSuperAdmin)
+	{
+		return;
+	}
+
+	%input = trim(%a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %g);
+	%name = getWords(%input,0,getWordCount(%input)-2);
+	%amount = getWord(%input,getWordCount(%input)-1);
+
+	if(%amount $= "")
+	{
+		%client.chatMessage("Invalid ammount");
+		return;
+	}
+
+	%target = findClientByName(%name);
+	if(!isObject(%target))
+	{
+		%client.chatMessage("Invalid name");
+		return;
+	}
+
+	%target.dataInstance($TTT::Data).oopsies = %amount;
+	%client.chatMessage("You have set" SPC %target.getPlayerName() @ "'s oopsies to" SPC %amount);
+}
+
+function Oopsies_AdminNotification(%msg)
+{
+	%group = ClientGroup.getId();
+	%count = ClientGroup.getCount();
+	for(%i = 0; %i < %count; %i++)
+	{
+		%client = %group.getObject(%i);
+		if(!%client.isAdmin)
+		{
+			continue;
+		}
+
+		%client.ChatMessage(%msg);
+	}
+}
+
 function Oopsies_EndRound()
 {
 	%minigame = BBB_Minigame;
@@ -70,6 +114,8 @@ function Oopsies_EndRound()
 			if(%client.lostOopsies !$= "")
 			{
 				%client.chatMessage("You lost" SPC %client.lostOopsies SPC "oopsies :(");
+				Oopsies_AdminNotification(%client.getPlayername() SPC "lost" SPC %client.lostOopsies SPC "oopsies. They are now at" 
+				SPC %client.dataInstance($TTT::Data).oopsies @ ".");
 				%client.lostOopsies = "";
 			}
 
@@ -117,7 +163,7 @@ function Oopsies_KillCheck(%client,%targetclient)
 	%type = %client.winCondition.getKillType(%client.player,%targetclient.player);
 	if(%type == $KillType::Invalid)
 	{
-		if(%client == %targetclient || %tpye == $KillType::CriminalInvalid )
+		if(%client == %targetclient || %type == $KillType::CriminalInvalid )
 		{
 			%client.AddOopsies(-1);
 			return;
@@ -148,7 +194,7 @@ function GameConnection::AddOopsies(%client,%amount)
 	{
 		%client.roundOopsies += %amount;
 
-		if(%client.roundOopsies <= -4 && BBB_Minigame.numPlayers <= 4)
+		if(%client.roundOopsies <= -3 && BBB_Minigame.numPlayers <= 4)
 		{
 			messageAll('MsgAdminForce', '%1 went on an oopsie driven rampage.', %client.getPlayerName());
 
@@ -172,8 +218,9 @@ function GameConnection::SetOopsies(%client,%amount)
 $ValidState::Invalid = 0;
 $ValidState::Previously = 1;
 $ValidState::Callout = 2;
-$ValidState::Criminal = 3;
-$ValidState::CriminalCallout = 4;
+$ValidState::CriminalInvisible = 3;
+$ValidState::Criminal = 4;
+$ValidState::CriminalCallout = 5;
 
 function Player::SetValidState(%player,%target,%state)
 {
@@ -200,8 +247,9 @@ function Player::SetValidState(%player,%target,%state)
 
 	%player.validStatePlayers[%state] = ltrim(%player.validStatePlayers[%state] SPC %target);
 	%player.validStateFor[%target] = %state SPC getSimTime();
-	if(%state == $ValidState::Criminal && !isEventPending(%player.CriminalDemotionLoop))
+	if(%state == $ValidState::Criminal || %state == $ValidState::CriminalInvisible && !isEventPending(%player.CriminalDemotionLoop))
 	{
+		%player.lastLOS[%target] = getSimTime();
 		%player.CriminalDemotionLoop();
 	}
 }
@@ -209,6 +257,16 @@ function Player::SetValidState(%player,%target,%state)
 function Player::isValidState(%player,%target,%state)
 {
 	return getWord(%player.validStateFor[%target],0) == %state;
+}
+
+function Player::isValidStateOrHigher(%player,%target,%state)
+{
+	return getWord(%player.validStateFor[%target],0) >= %state;
+}
+
+function Player::isValidStateOrLower(%player,%target,%state)
+{
+	return getWord(%player.validStateFor[%target],0) <= %state;
 }
 
 function Player::getSoonestCriminal(%player,%target)
@@ -232,11 +290,37 @@ function Player::getValidState(%player,%target)
 
 function Player::CriminalDemotionLoop(%player)
 {
-	%stateList = %player.validStatePlayers[$ValidState::Criminal];
-	%count = getWordCount(%statelist);
+	%inivisibleStateList = %player.validStatePlayers[$ValidState::CriminalInvisible];
+	%count = getWordCount(%inivisibleStateList);
 	for(%i = 0; %i < %count; %i++)
 	{
-		%target = getWord(%stateList, %i);
+		%target = getWord(%inivisibleStateList, %i);
+
+		// sanity
+		if(!isObject(%target))
+		{
+			continue;
+		}
+
+		if(%target.isDisabled())
+		{
+			%player.setValidState(%target,$ValidState::Previously);
+			continue;
+		}
+
+		if(getSimTime()-%player.lastLOS[%target] <= 30000)
+		{
+			continue;
+		}
+
+		%player.setValidState(%target,$ValidState::Previously);
+	}
+
+	%criminalStateList = %player.validStatePlayers[$ValidState::Criminal];
+	%count = getWordCount(%criminalStateList);
+	for(%i = 0; %i < %count; %i++)
+	{
+		%target = getWord(%criminalStateList, %i);
 
 		// sanity
 		if(!isObject(%target))
@@ -252,13 +336,19 @@ function Player::CriminalDemotionLoop(%player)
 
 		if(Oopsies_IsVisible(%target,%player))
 		{
+			%player.lastLOS[%target] = getSimTime();
+			continue;
+		}
+
+		if(getSimTime()-%player.lastLOS[%target] <= 5000)
+		{
 			continue;
 		}
 
 		%player.setValidState(%target,$ValidState::Previously);
 	}
 
-	if(getWordCount(%statelist) > 0)
+	if(getWordCount(%criminalStateList SPC %inivisibleStateList) > 0)
 	{
 		%player.CriminalDemotionLoop = %player.schedule(100,"CriminalDemotionLoop");
 	}
@@ -274,9 +364,9 @@ function Oopsies_DoAudibleEvent(%source)
 		if(isObject(%player) && %player != %source)
 		{
 			//make sure this isn't demoting a state
-			if(%source.isValidState(%player,$ValidState::Invalid))
+			if(%source.isValidStateOrLower(%player,$ValidState::Previously))
 			{
-				%source.SetValidState(%player,$ValidState::Previously);
+				%source.SetValidState(%player,$ValidState::CriminalInvisible);
 			}
 		}
 	}
@@ -314,8 +404,6 @@ function Oopsies_DoLoopingVisibleEvent(%player,%name)
 	%player._[%name] = schedule(100,%player,"Oopsies_DoLoopingVisibleEvent",%player,%name);	
 }
 
-
-
 function Oopsies_StopLoopingVisibleEvent(%player,%name)
 {
 	cancel(%player._[%name]);
@@ -341,6 +429,44 @@ function Oopsies_IsVisible(%veiwer,%target)
 	{
 		return true;
 	}
+	return false;
+}
+
+$Oopsies::MeleeRange = 5;
+$Oopsies::MeleeAngle = mDegToRad(45);
+function Oopsies_MeleeCheck(%player)
+{
+	%group = ClientGroup.getId();
+	%count = %group.getCount();
+	%range = $Oopsies::MeleeRange;
+	%angle = $Oopsies::MeleeAngle;
+	for(%i = 0; %i < %count; %i++)
+	{
+		%target = %group.getObject(%i).player;
+		if(!isObject(%player))
+		{
+			continue;
+		}
+
+		if(VectorDist(%player.position, %target.position) > $Oopsies::MeleeRange)
+		{
+			continue;
+		}
+
+		%localPos = vectorSub(%player.position,%target.position);
+		if(mAcos(vectorDot(%player.getEyeVector(),%localPos)/VectorLen(%localPos)) > $Oopsies::MeleeAngle)
+		{
+			continue;
+		}
+
+		if(!Oopsies_IsVisible(%player,%target))
+		{
+			continue;
+		}
+
+		return true;
+	}
+
 	return false;
 }
 
@@ -385,8 +511,9 @@ package TTT_Oopsies
 		if(%trigger == 0 && %active)
 		{
 			%image = %player.getMountedImage(0);
-			if($BBB::Round::Phase $= "Round" && isObject(%image) && !%image.TTT_notWeapon)
+			if($BBB::Round::Phase $= "Round" && isObject(%image) && !%image.TTT_notWeapon && %image.item.AEAmmo !$= "")
 			{
+				
 				%currState = %player.getImageState(0);
 				%count = 0;
 				while(%count < 32)
@@ -402,11 +529,10 @@ package TTT_Oopsies
 					{
 						if(%image.stateTransitionOnTriggerDown[%count] !$= "")
 						{
-							if(!%image.TTT_isSilent)
+							if(!%image.Melee || Oopsies_MeleeCheck(%player))
 							{
-								Oopsies_DoAudibleEvent(%player);
+								Oopsies_DoVisibleEvent(%player);
 							}
-							Oopsies_DoVisibleEvent(%player);
 						}
 						break;
 					}
@@ -439,6 +565,7 @@ package TTT_Oopsies
 		if($BBB::Round::Phase $= "Round")
 		{
 			Oopsies_DoVisibleEvent(%player);
+			Oopsies_DoAudibleEvent(%player);
 		}
 		
 		return parent::Damage(%db, %target, %source, %pos, %damage, %damageType);
@@ -449,6 +576,7 @@ package TTT_Oopsies
 		if(%client.inBBB && $BBB::Round::Phase $= "Round")
 		{
 			Oopsies_KillCheck(%sourceClient,%client);
+			Oopsies_DoAudibleEvent(%sourceClient.player);
 		}
 		
 		return parent::onDeath(%client, %sourceObject, %sourceClient, %damageType, %damLoc);
@@ -473,4 +601,60 @@ package TTT_Oopsies
 };
 activatePackage("TTT_Oopsies");
 
+function AESuppressArea(%pos, %dir, %shape, %img)
+{
+	%super = %img.whizzSupersonic;
+
+	if(%super == 0)
+		%sfx = AESubsonicWhizz @ getRandom(1, 4) @ Sound;
+	else if(%super == 1)
+		%sfx = AESupersonicCrack @ getRandom(1, 4) @ Sound;
+	else if(%super == 2)
+		%sfx = AESupersonicBigCrack @ getRandom(1, 4) @ Sound;
+	
+	%angle = 1 - (%img.whizzAngle / 90);
+	%chance = mClampF(%img.whizzChance / 100, 0, 1);
+	%through = %img.whizzThrough;
+
+	%sourceClient = %shape.sourceClient;
+	%sourcePlayer = %sourceClient.player;
+
+	for(%i = 0; %i < ClientGroup.getCount(); %i++)
+	{
+		%cc = ClientGroup.getObject(%i);
+
+		%obj = %cc.getControlObject();
+
+		if(!isObject(%obj) || %shape.suppressed[%obj])
+			continue;
+		
+		%eye = %obj.getEyePoint();
+
+		%dist = vectorDist(%pos, %eye);
+		%dot = vectorDot(%dir, vectorNormalize(vectorSub(%pos, %eye)));
+
+		if(%dist < %img.whizzDistance && %dot <= %angle && getRandom() <= %chance)
+		{
+			if(%through || !isObject(containerRayCast(%pos, %eye, $TypeMasks::fxBrickObjectType | $TypeMasks::StaticObjectType)))
+			{
+				%shape.suppressed[%obj] = true;
+				%cc.play3D(%sfx, %pos);
+
+				Oopsies_DoVisibleEvent(%sourcePlayer);
+
+				%p = new Projectile()
+				{
+					dataBlock = R_ShotgunRecoilProjectile;
+					initialPosition = %eye;
+				};
+
+				%p.setScale("0.1 0.1 0.1");
+
+				MissionCleanup.add(%p);
+
+				%p.explode();
+			}
+		}
+	}
+}
 

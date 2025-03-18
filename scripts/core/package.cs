@@ -1100,7 +1100,7 @@ package BBB_ServerCMD
 
 		%mg = BBB_Minigame;
 		// Regular Chat
-		if(isObject(%client.player))
+		if(isObject(%client.player) && isObject(getMiniGameFromObject(%client)))
 		{
 			// for(%i = 0; %i < %mg.numMembers; %i++)
 			// {

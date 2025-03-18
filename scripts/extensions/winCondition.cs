@@ -68,7 +68,7 @@ function WinCondition_Basic::getKillType(%obj,%player,%target)
 	}
 
 	//valid
-	if(%target.isValidState(%player,$ValidState::Criminal) || %target.isValidState(%player,$ValidState::CriminalCallout))
+	if(%target.isValidStateOrHigher(%player,$ValidState::CriminalInvisible))
 	{
 		return $KillType::Valid;
 	}
@@ -77,12 +77,11 @@ function WinCondition_Basic::getKillType(%obj,%player,%target)
 	if(%obj.isMisKill(%target))
 	{
 		//the player who was soonest to be criminal loses an oopsie
-		%soonestCriminal = %player.getSoonestCriminal(%target);
-		if( %soonestCriminal !$= "")
+		if(%player.getSoonestCriminal(%target) != %player)
 		{
 			return $KillType::CriminalInvalid;
 		}
-		return $KillType::Valid;
+		return $KillType::Invalid;
 	}
 	
 	//otherwise both players lose an oopsie
@@ -107,13 +106,12 @@ function WinCondition_Traitor::getKillType(%obj,%player,%target)
 	// was a miskill
 	if(%obj.isMisKill(%target))
 	{
-		//the player who was soonest to be criminal loses an oopsie
-		%soonestCriminal = %player.getSoonestCriminal(%target);
-		if( %soonestCriminal !$= "")
+		//the player who was soonest to be criminal loses an oopsiec
+		if(%player.getSoonestCriminal(%target) != %player)
 		{
-			return $KillType::Invalid;
+			return $KillType::Valid;
 		}
-		return $KillType::Valid;
+		return $KillType::Invalid;
 	}
 	
 	// all other kills are valid for traitors
