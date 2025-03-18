@@ -62,10 +62,10 @@ $KillType::Uknown = 3;
 function WinCondition_Basic::getKillType(%obj,%player,%target)
 {
 	//bypass for innos killing traitors correctly without a callout
-	if (!%obj.isMisKill(%target))
-	{
-		return $KillType::Valid;
-	}
+	// if (!%obj.isMisKill(%target)) //commented out just for testing
+	// {
+	// 	return $KillType::Valid;
+	// }
 
 	//invalid
 	if(%target.isValidState(%player,$ValidState::Invalid))
