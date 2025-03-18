@@ -140,7 +140,7 @@ function Oopsies_EndRound()
 			}
 			else
 			{
-				%client.chatMessage("You have" SPC %amount SPC "oopsies left. Good luck!");
+				%client.chatMessage("You have" SPC %amount SPC "oopsies (RDM mistakes) left. Good luck!");
 			}
 
 			if(%amount == 1 && %client.slayed > 0)

@@ -1,5 +1,10 @@
 $DataInstance::FilePath = "Config/Server/DataInstance";
 
+if (!isObject($DataInstance::MasterGroup))
+{
+	$DataInstance::MasterGroup = new SimSet();
+}
+
 function DataInstance_ListDelete(%list)
 {
 	%count = getWordCount(%list);
@@ -12,6 +17,36 @@ function DataInstance_ListDelete(%list)
 		}
 	}
 }
+
+function DataInstance_CleanupLoop(%index)
+{
+	cancel($DataInstance::MasterCleanupLoop);
+
+	if (%index < 0)
+	{
+		%index = $DataInstance::MasterGroup.getCount();
+	}
+
+	for (%i = 0; %i < 128; %i++)
+	{
+		%index--;
+
+		if (%index < 0)
+		{
+			break;
+		}
+
+		%obj = $DataInstance::MasterGroup.getObject(%index);
+
+		if (!isObject(%obj.DataInstance_Parent))
+		{
+			%obj.delete();
+		}
+	}
+
+	$DataInstance::MasterCleanupLoop = schedule(1000, 0, DataInstance_CleanupLoop, %index);
+}
+DataInstance_CleanupLoop(0);
 
 function DataInstance_ListStringSerialize(%list)
 {
@@ -45,6 +80,14 @@ function SimObject::DataInstance(%obj,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a
 		{
 			%d = new ScriptObject(){class = "DataInstance";DataInstance_Parent = %obj;};
 			%obj.DataInstance_List = setWord(%obj.DataInstance_List,%a[%c],%d);
+			if (MissionCleanup.isMember(%d))
+			{
+				MissionCleanup.remove(%d);
+			}
+			if (!$DataInstance::MasterGroup.isMember(%d))
+			{
+				$DataInstance::MasterGroup.add(%d);
+			}
 		}
 		%obj = %d;
 		%c++;
@@ -123,7 +166,7 @@ function DataInstance_ListLoad(%path,%parent)
 		while(!%fo.isEOF())
 		{
 			%o = eval(%fo.readLine());
-			%o.DataInstance_parent = %parent;
+			%o.DataInstance_Parent = %parent;
 			%data[%c] = %o;
 			%c++;
 		}
@@ -231,7 +274,7 @@ function DataInstance_GetFromThrower(%item)
     if(isObject(%p))
     {
 		%datablock = %item.getDatablock().getId();
-		%list = %p.dataInstance($DataInstance::Item).dataInstance_List;
+		%list = %p.dataInstance($DataInstance::Item).DataInstance_List;
         %count = getWordCount(%list);
         for(%i = 0; %i < %count; %i++)
         {
@@ -262,7 +305,7 @@ package DataInstance
 {
 	function SimObject::OnRemove(%data,%obj)
 	{
-		DataInstance_ListDelete(%obj.dataInstance($DataInstance::Item).DataInstance_List);
+		DataInstance_ListDelete(%obj.DataInstance_List);
 		parent::OnRemove(%data,%obj);
 	}
 
