@@ -266,7 +266,6 @@ function Player::SetValidState(%player,%target,%state)
 	{
 		%player.validStateFor[%target] = %state SPC getSimTime();
 	}
-	talk((%state == $ValidState::Criminal) SPC (%state == $ValidState::CriminalInvisible) SPC (!isEventPending(%player.CriminalDemotionLoop)));
 	if(%state == $ValidState::Criminal || %state == $ValidState::CriminalInvisible)
 	{	
 		%player.lastLOS[%target] = getSimTime();
