@@ -161,6 +161,14 @@ $KillType::Uknown = 3;
 function Oopsies_KillCheck(%client,%targetclient)
 {
 	%type = %client.winCondition.getKillType(%client.player,%targetclient.player);
+	if(%type == $KillType::Uknown)
+	{
+		Oopsies_AdminNotification("an uknown oopsie event occured");
+	}
+	if(%type $= "")
+	{
+		return;
+	}	
 	if(%type == $KillType::Invalid)
 	{
 		if(%client == %targetclient || %type == $KillType::CriminalInvalid )
@@ -173,11 +181,11 @@ function Oopsies_KillCheck(%client,%targetclient)
 		return;
 	}
 
-	if(%type == $KillType::Uknown)
-	{
-		%client.AddOopsies(-1);
-		%targetclient.AddOopsies(-1);
-	}
+	// if(%type == $KillType::Uknown)
+	// {
+	// 	%client.AddOopsies(-1);
+	// 	%targetclient.AddOopsies(-1);
+	// }
 }
 
 function GameConnection::AddOopsies(%client,%amount)
@@ -194,7 +202,7 @@ function GameConnection::AddOopsies(%client,%amount)
 	{
 		%client.roundOopsies += %amount;
 
-		if(%client.roundOopsies <= -3 && BBB_Minigame.numPlayers <= 4)
+		if(%client.roundOopsies <= -4 && BBB_Minigame.numPlayers > 4)
 		{
 			messageAll('MsgAdminForce', '%1 went on an oopsie driven rampage.', %client.getPlayerName());
 
@@ -511,32 +519,30 @@ package TTT_Oopsies
 		if(%trigger == 0 && %active)
 		{
 			%image = %player.getMountedImage(0);
-			if($BBB::Round::Phase $= "Round" && isObject(%image) && !%image.TTT_notWeapon && %image.item.AEAmmo !$= "")
+			if($BBB::Round::Phase $= "Round" && isObject(%image) && !%image.TTT_notWeapon && %image.item.AEAmmo $= "")
 			{
-				
-				%currState = %player.getImageState(0);
-				%count = 0;
+				%count = -1;
 				while(%count < 32)
 				{
+					%count++;
 					%statename = %image.stateName[%count];
+					
 					if(%statename $= "")
 					{
-						%count++;
 						continue;
 					}
 
-					if(%statename $= %currState)
+					if(%image.stateTransitionOnTriggerDown[%count] $= "")
 					{
-						if(%image.stateTransitionOnTriggerDown[%count] !$= "")
-						{
-							if(!%image.Melee || Oopsies_MeleeCheck(%player))
-							{
-								Oopsies_DoVisibleEvent(%player);
-							}
-						}
-						break;
+						continue;
 					}
-					%count++;
+
+					if(%image.Melee && !Oopsies_MeleeCheck(%player))
+					{
+						continue;
+					}
+					Oopsies_DoVisibleEvent(%player);
+					break;
 				}
 			}
 		}
@@ -640,7 +646,10 @@ function AESuppressArea(%pos, %dir, %shape, %img)
 				%shape.suppressed[%obj] = true;
 				%cc.play3D(%sfx, %pos);
 
-				Oopsies_DoVisibleEvent(%sourcePlayer);
+				if(isObject(%sourcePlayer))
+				{
+					Oopsies_DoVisibleEvent(%sourcePlayer);
+				}
 
 				%p = new Projectile()
 				{

@@ -61,22 +61,16 @@ $KillType::CriminalInvalid = 2;
 $KillType::Uknown = 3;
 function WinCondition_Basic::getKillType(%obj,%player,%target)
 {
-	//bypass for innos killing traitors correctly without a callout
-	// if (!%obj.isMisKill(%target)) //commented out just for testing
-	// {
-	// 	return $KillType::Valid;
-	// }
+	// bypass for innos killing traitors correctly without a callout
+	if (!%obj.isMisKill(%target)) //commented out just for testing
+	{
+		return $KillType::Valid;
+	}
 
 	//invalid
 	if(%target.isValidState(%player,$ValidState::Invalid))
 	{
 		return $KillType::Invalid;
-	}
-
-	//valid
-	if(%target.isValidStateOrHigher(%player,$ValidState::CriminalInvisible))
-	{
-		return $KillType::Valid;
 	}
 
 	//was a miskill
@@ -90,6 +84,12 @@ function WinCondition_Basic::getKillType(%obj,%player,%target)
 		return $KillType::Invalid;
 	}
 	
+	//valid
+	if(%target.isValidStateOrHigher(%player,$ValidState::CriminalInvisible))
+	{
+		return $KillType::Valid;
+	}
+
 	//otherwise both players lose an oopsie
 	//this is mostly to handle cases were it's hard to determine player intentions
 	//the target can either refund both of the oopsies or make a vote to only refund their oopsie
@@ -103,12 +103,6 @@ WinCondition_new("WinCondition_Traitor");
 // Traitors can invalidly kill innocents and detectives
 function WinCondition_Traitor::getKillType(%obj,%player,%target)
 {
-	// invalid
-	if(%obj.isMisKill(%target) && %player.isValidState(%target,$ValidState::Invalid))
-	{
-		return $KillType::Invalid;
-	}
-
 	// was a miskill
 	if(%obj.isMisKill(%target))
 	{
@@ -119,6 +113,13 @@ function WinCondition_Traitor::getKillType(%obj,%player,%target)
 		}
 		return $KillType::Invalid;
 	}
+
+	// invalid
+	if(%obj.isMisKill(%target) && %player.isValidState(%target,$ValidState::Invalid))
+	{
+		return $KillType::Invalid;
+	}
+
 	
 	// all other kills are valid for traitors
 	return $KillType::Valid;
