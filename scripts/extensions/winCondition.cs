@@ -49,7 +49,6 @@ function WinCondition_set(%player,%condition)
 // Innocents and Detectives miskill Innocents and Detectives
 function WinCondition_Basic::isMiskill(%obj,%target)
 {
-
 	return %obj == %target.client.winCondition;
 }
 
@@ -62,7 +61,7 @@ $KillType::Uknown = 3;
 function WinCondition_Basic::getKillType(%obj,%player,%target)
 {
 	// bypass for innos killing traitors correctly without a callout
-	if (!%obj.isMisKill(%target)) //commented out just for testing
+	if (!%obj.isMisKill(%target))
 	{
 		return $KillType::Valid;
 	}
@@ -77,11 +76,15 @@ function WinCondition_Basic::getKillType(%obj,%player,%target)
 	if(%obj.isMisKill(%target))
 	{
 		//the player who was soonest to be criminal loses an oopsie
-		if(%player.getSoonestCriminal(%target) != %player)
+		%soonest = %player.getSoonestCriminal(%target);
+		if(%soonest == %player)
 		{
 			return $KillType::CriminalInvalid;
 		}
-		return $KillType::Invalid;
+		else if(%soonest = %target)
+		{
+			return $KillType::Invalid;
+		}
 	}
 	
 	//valid
@@ -106,12 +109,16 @@ function WinCondition_Traitor::getKillType(%obj,%player,%target)
 	// was a miskill
 	if(%obj.isMisKill(%target))
 	{
-		//the player who was soonest to be criminal loses an oopsiec
-		if(%player.getSoonestCriminal(%target) != %player)
+		//the player who was soonest to be criminal loses an oopsie
+		%soonest = %player.getSoonestCriminal(%target);
+		if(%soonest == %player)
 		{
 			return $KillType::Valid;
 		}
-		return $KillType::Invalid;
+		else if(%soonest = %target)
+		{
+			return $KillType::Invalid;
+		}
 	}
 
 	// invalid

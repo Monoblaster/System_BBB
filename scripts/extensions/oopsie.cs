@@ -140,7 +140,7 @@ function Oopsies_EndRound()
 			}
 			else
 			{
-				%client.chatMessage("You have" SPC %amount SPC "oopsies (RDM mistakes) left. Good luck!");
+				%client.chatMessage("You have" SPC %amount SPC "oopsies (" @ %amount / 2 @ " RDM credits) left. Good luck!");
 			}
 
 			if(%amount == 1 && %client.slayed > 0)
@@ -202,7 +202,7 @@ function GameConnection::AddOopsies(%client,%amount)
 	{
 		%client.roundOopsies += %amount;
 
-		if(%client.roundOopsies <= -4 && BBB_Minigame.numPlayers > 4)
+		if(%client.roundOopsies <= -6 && BBB_Minigame.numPlayers > 4)
 		{
 			messageAll('MsgAdminForce', '%1 went on an oopsie driven rampage.', %client.getPlayerName());
 
@@ -235,6 +235,10 @@ function Player::SetValidState(%player,%target,%state)
 	%oldState = getWord(%player.validStateFor[%target],0);
 	if(%oldState == %state)
 	{
+		if(%state == $ValidState::CriminalInvisible)
+		{
+			%player.lastLOS[%target] = getSimTime();
+		}
 		return;
 	}
 
@@ -254,11 +258,22 @@ function Player::SetValidState(%player,%target,%state)
 	}
 
 	%player.validStatePlayers[%state] = ltrim(%player.validStatePlayers[%state] SPC %target);
-	%player.validStateFor[%target] = %state SPC getSimTime();
-	if(%state == $ValidState::Criminal || %state == $ValidState::CriminalInvisible && !isEventPending(%player.CriminalDemotionLoop))
+	if(%oldState !$= "" && %state == $ValidState::CriminalCallout)
 	{
+		%player.validStateFor[%target] = %state SPC getWord(%player.validStateFor[%target],1);
+	}
+	else
+	{
+		%player.validStateFor[%target] = %state SPC getSimTime();
+	}
+	talk((%state == $ValidState::Criminal) SPC (%state == $ValidState::CriminalInvisible) SPC (!isEventPending(%player.CriminalDemotionLoop)));
+	if(%state == $ValidState::Criminal || %state == $ValidState::CriminalInvisible)
+	{	
 		%player.lastLOS[%target] = getSimTime();
-		%player.CriminalDemotionLoop();
+		if(!isEventPending(%player.CriminalDemotionLoop))
+		{
+			%player.CriminalDemotionLoop();
+		}
 	}
 }
 
@@ -279,10 +294,11 @@ function Player::isValidStateOrLower(%player,%target,%state)
 
 function Player::getSoonestCriminal(%player,%target)
 {
-	%playerState = getWord(%player.validStateFor[%target],0);
-	if(%playerState == getWord(%target.validStateFor[%player],0) && %playerState == $ValidState::Criminal)
+	SPC %target.validStateFor[%player] SPC %player.validStateFor[%target] SPC "at" SPC getSimTime());
+	if(%player.isValidStateOrHigher(%target,$ValidState::Criminal) && %target.isValidStateOrHigher(%player,$ValidState::Criminal))
 	{
-		if(getWord(%player.validStateFor[%target],0) - getWord(%target.validStateFor[%player],0) < 0)
+		SPC (getWord(%player.validStateFor[%target],1) < getWord(%target.validStateFor[%player],1)));
+		if(getWord(%player.validStateFor[%target],1) < getWord(%target.validStateFor[%player],1))
 		{
 			return %player;
 		}
@@ -350,6 +366,7 @@ function Player::CriminalDemotionLoop(%player)
 
 		if(getSimTime()-%player.lastLOS[%target] <= 5000)
 		{
+			echo("lost los");
 			continue;
 		}
 
@@ -387,7 +404,7 @@ function Oopsies_DoVisibleEvent(%source)
 	for(%i = 0; %i < %count; %i++)
 	{
 		%player = %minigame.players[%i].player;
-		if(isObject(%player) && %player != %source)
+		if(isObject(%player) && %player != %source && %player.isValidStateOrLower(%target,$ValidState::Criminal))
 		{	
 			//make sure we aren't demoting a callout
 			%newState = $ValidState::Criminal;
@@ -519,7 +536,7 @@ package TTT_Oopsies
 		if(%trigger == 0 && %active)
 		{
 			%image = %player.getMountedImage(0);
-			if($BBB::Round::Phase $= "Round" && isObject(%image) && !%image.TTT_notWeapon && %image.item.AEAmmo $= "")
+			if($BBB::Round::Phase $= "Round" && isObject(%image) && !%image.TTT_notWeapon &&  $= "")
 			{
 				%count = -1;
 				while(%count < 32)
@@ -537,7 +554,7 @@ package TTT_Oopsies
 						continue;
 					}
 
-					if(%image.Melee && !Oopsies_MeleeCheck(%player))
+					if((%image.Melee || %image.item.AEAmmo) && !Oopsies_MeleeCheck(%player))
 					{
 						continue;
 					}
@@ -622,8 +639,8 @@ function AESuppressArea(%pos, %dir, %shape, %img)
 	%chance = mClampF(%img.whizzChance / 100, 0, 1);
 	%through = %img.whizzThrough;
 
-	%sourceClient = %shape.sourceClient;
-	%sourcePlayer = %sourceClient.player;
+	%sourcePlayer = %shape.sourceObject;
+	%sourceClient = %sourcePlayer.client;
 
 	for(%i = 0; %i < ClientGroup.getCount(); %i++)
 	{
@@ -645,7 +662,6 @@ function AESuppressArea(%pos, %dir, %shape, %img)
 			{
 				%shape.suppressed[%obj] = true;
 				%cc.play3D(%sfx, %pos);
-
 				if(isObject(%sourcePlayer))
 				{
 					Oopsies_DoVisibleEvent(%sourcePlayer);
