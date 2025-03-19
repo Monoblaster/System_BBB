@@ -293,10 +293,8 @@ function Player::isValidStateOrLower(%player,%target,%state)
 
 function Player::getSoonestCriminal(%player,%target)
 {
-	SPC %target.validStateFor[%player] SPC %player.validStateFor[%target] SPC "at" SPC getSimTime());
 	if(%player.isValidStateOrHigher(%target,$ValidState::Criminal) && %target.isValidStateOrHigher(%player,$ValidState::Criminal))
 	{
-		SPC (getWord(%player.validStateFor[%target],1) < getWord(%target.validStateFor[%player],1)));
 		if(getWord(%player.validStateFor[%target],1) < getWord(%target.validStateFor[%player],1))
 		{
 			return %player;
