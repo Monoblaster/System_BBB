@@ -533,7 +533,7 @@ package TTT_Oopsies
 		if(%trigger == 0 && %active)
 		{
 			%image = %player.getMountedImage(0);
-			if($BBB::Round::Phase $= "Round" && isObject(%image) && !%image.TTT_notWeapon &&  $= "")
+			if($BBB::Round::Phase $= "Round" && isObject(%image) && !%image.TTT_notWeapon $= "")
 			{
 				%count = -1;
 				while(%count < 32)
