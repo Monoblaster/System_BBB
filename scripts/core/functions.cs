@@ -306,7 +306,7 @@ function SelectMaps(%n,%ignore)
 	for(%i = 0; %i < $BBB::numMaps; %i++)
 	{
 		%map = $BBB::Map[%i];
-		if(%map $= %ignore)
+		if(%map $= %ignore && $BBB::numMaps > 1)
 		{
 			continue;
 		}
