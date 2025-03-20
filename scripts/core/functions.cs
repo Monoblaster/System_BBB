@@ -95,6 +95,8 @@ function BBB_LoadMap(%filename)
 	  %client.setControlObject(%camera);
 	}
 
+	$BBB::CurrentMap = %filename;
+
 	//clear all bricks
 	// note: this function is deferred, so we'll have to set a callback to be triggered when it's done
 	BrickGroup_888888.chaindeletecallback = "BBB_LoadMapP2(\"" @ %filename @ "\");";
@@ -377,7 +379,6 @@ function BBB_MapVote_P2()
 	%file = getField(%maxVoted,getRandom(0,getFieldCount(%maxVoted) - 1));
 
 	%displayName = FilePath2MapName(%file);
-	$BBB:CurrentMap = %file;
 	messageAll('', "<font:Palatino linotype:35>\c6 " @ %displayName @ " <font:Palatino linotype:30>\c4WON WITH \c6" @ %maxVotes @ " \c4" @ (%maxVoted > 1 ? "VOTES" : "VOTE") @ ".");
 	BBB_Minigame.playGlobalSound(BBB_Chat_Sound);
 	BBB_LoadMap(%file);
