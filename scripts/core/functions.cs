@@ -337,7 +337,7 @@ function BBB_MapVote_P1()
 	messageAll('', "<font:Palatino linotype:35>\c6[\c4MAP VOTE LIST\c6]");
 	///choose 3 random maps and have a vote between them
 	$BBB::SelectedCount = 3;
-	$BBB::SelectedMaps = SelectMaps($BBB::SelectedCount,$BBB:CurrentMap);
+	$BBB::SelectedMaps = SelectMaps($BBB::SelectedCount, $BBB::CurrentMap);
 	$BBB::SelectedCount = getFieldCount($BBB::SelectedMaps);
 	for(%i = 0; %i < $BBB::SelectedCount; %i++)
 	{
