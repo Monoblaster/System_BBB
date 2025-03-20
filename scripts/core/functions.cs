@@ -379,7 +379,7 @@ function BBB_MapVote_P2()
 	%file = getField(%maxVoted,getRandom(0,getFieldCount(%maxVoted) - 1));
 
 	%displayName = FilePath2MapName(%file);
-	messageAll('', "<font:Palatino linotype:35>\c6 " @ %displayName @ " <font:Palatino linotype:30>\c4WON WITH \c6" @ %maxVotes @ " \c4" @ (%maxVoted > 1 ? "VOTES" : "VOTE") @ ".");
+	messageAll('', "<font:Palatino linotype:35>\c6 " @ %displayName @ " <font:Palatino linotype:30>\c4WON WITH \c6" @ %maxVotes @ " \c4" @ (%maxVotes > 1 ? "VOTES" : "VOTE") @ ".");
 	BBB_Minigame.playGlobalSound(BBB_Chat_Sound);
 	BBB_LoadMap(%file);
 }
