@@ -314,6 +314,10 @@ function SelectMaps(%n,%ignore)
 	}
 	%temp = ltrim(%temp);
 
+	%totalMaps = getFieldCount(%temp);
+	if (%n > %totalMaps)
+		%n = %totalMaps;
+
 	for(%i = 0; %i < %n; %i++)
 	{
 		%choice = getRandom(0,getFieldCount(%temp) - 1);
