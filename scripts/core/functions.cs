@@ -95,6 +95,8 @@ function BBB_LoadMap(%filename)
 	  %client.setControlObject(%camera);
 	}
 
+	$BBB::CurrentMap = %filename;
+
 	//clear all bricks
 	// note: this function is deferred, so we'll have to set a callback to be triggered when it's done
 	BrickGroup_888888.chaindeletecallback = "BBB_LoadMapP2(\"" @ %filename @ "\");";
@@ -233,7 +235,7 @@ function BBB_LookLoop()
 				%obj.setShapeNameColor("1 0.5 0");
 			else
 				%obj.setShapeNameColor("1 0 0");
-
+Update functions.cs
 			checkForTPS(%client, %obj);
 
 			%obj.setShapeNameDistance(12);
@@ -303,16 +305,19 @@ function SelectMaps(%n,%ignore)
 {
 	%selected = "";
 	%temp = "";
-	for(%i = 0; %i < $BBB::numMaps; %i++)
+	%count = $BBB::numMaps
+	for(%i = 0; %i < %count; %i++)
 	{
 		%map = $BBB::Map[%i];
-		if(%map $= %ignore)
+		if(%map $= %ignore && %count > 1)
 		{
 			continue;
 		}
 		%temp = %temp TAB %map;
 	}
 	%temp = ltrim(%temp);
+	
+	%n = getMin(%n, getFieldCount(%temp));
 
 	for(%i = 0; %i < %n; %i++)
 	{
@@ -333,7 +338,7 @@ function BBB_MapVote_P1()
 	messageAll('', "<font:Palatino linotype:35>\c6[\c4MAP VOTE LIST\c6]");
 	///choose 3 random maps and have a vote between them
 	$BBB::SelectedCount = 3;
-	$BBB::SelectedMaps = SelectMaps($BBB::SelectedCount,$BBB:CurrentMap);
+	$BBB::SelectedMaps = SelectMaps($BBB::SelectedCount, $BBB::CurrentMap);
 	$BBB::SelectedCount = getFieldCount($BBB::SelectedMaps);
 	for(%i = 0; %i < $BBB::SelectedCount; %i++)
 	{
@@ -373,8 +378,7 @@ function BBB_MapVote_P2()
 	%file = getField(%maxVoted,getRandom(0,getFieldCount(%maxVoted) - 1));
 
 	%displayName = FilePath2MapName(%file);
-	$BBB:CurrentMap = %file;
-	messageAll('', "<font:Palatino linotype:35>\c6 " @ %displayName @ " <font:Palatino linotype:30>\c4WON WITH \c6" @ %maxVotes @ " \c4" @ (%maxVoted > 1 ? "VOTES" : "VOTE") @ ".");
+	messageAll('', "<font:Palatino linotype:35>\c6 " @ %displayName @ " <font:Palatino linotype:30>\c4WON WITH \c6" @ %maxVotes @ " \c4" @ (%maxVotes > 1 ? "VOTES" : "VOTE") @ ".");
 	BBB_Minigame.playGlobalSound(BBB_Chat_Sound);
 	BBB_LoadMap(%file);
 }
