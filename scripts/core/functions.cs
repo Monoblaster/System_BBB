@@ -235,7 +235,7 @@ function BBB_LookLoop()
 				%obj.setShapeNameColor("1 0.5 0");
 			else
 				%obj.setShapeNameColor("1 0 0");
-Update functions.cs
+				
 			checkForTPS(%client, %obj);
 
 			%obj.setShapeNameDistance(12);
