@@ -235,7 +235,7 @@ function BBB_LookLoop()
 				%obj.setShapeNameColor("1 0.5 0");
 			else
 				%obj.setShapeNameColor("1 0 0");
-
+Update functions.cs
 			checkForTPS(%client, %obj);
 
 			%obj.setShapeNameDistance(12);
@@ -305,20 +305,19 @@ function SelectMaps(%n,%ignore)
 {
 	%selected = "";
 	%temp = "";
-	for(%i = 0; %i < $BBB::numMaps; %i++)
+	%count = $BBB::numMaps
+	for(%i = 0; %i < %count; %i++)
 	{
 		%map = $BBB::Map[%i];
-		if(%map $= %ignore && $BBB::numMaps > 1)
+		if(%map $= %ignore && %count > 1)
 		{
 			continue;
 		}
 		%temp = %temp TAB %map;
 	}
 	%temp = ltrim(%temp);
-
-	%totalMaps = getFieldCount(%temp);
-	if (%n > %totalMaps)
-		%n = %totalMaps;
+	
+	%n = getMin(%n, getFieldCount(%temp));
 
 	for(%i = 0; %i < %n; %i++)
 	{
