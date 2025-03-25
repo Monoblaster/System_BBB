@@ -305,7 +305,7 @@ function SelectMaps(%n,%ignore)
 {
 	%selected = "";
 	%temp = "";
-	%count = $BBB::numMaps
+	%count = $BBB::numMaps;
 	for(%i = 0; %i < %count; %i++)
 	{
 		%map = $BBB::Map[%i];
