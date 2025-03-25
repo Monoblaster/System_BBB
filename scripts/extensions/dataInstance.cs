@@ -304,6 +304,7 @@ function DataInstance_GetFromThrower(%item)  //item support
 		if(!isObject(%player.tool[%i]) && getWord(%itemDataList,%i) !$= "")
 		{
 			%itemData.DataInstance_MoveTo(%i,%item,0);
+			return "";
 		}
 	}
 }
@@ -384,7 +385,6 @@ package DataInstance
 				return %r;
 			}
 		}
-        
         return %r;
     }
 
