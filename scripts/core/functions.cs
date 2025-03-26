@@ -1531,81 +1531,25 @@ function BBB_Minigame::assignRoles(%so)
 
 		// And swap it with the current element.
 		%temp = getWord(%roleList,%currIndex);
-		%roleList = setWord(%roleList,getWord(%roleList,%randIndex),%currIndex);
-		%roleList = setWord(%roleList,%temp,%randIndex);
+		%roleList = setWord(%roleList,%currIndex,getWord(%roleList,%randIndex));
+		%roleList = setWord(%roleList,%randIndex,%temp);
 		%currIndex--;
 	}
 	// =============================================
-	// Source: http://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
 
-	
 	for(%a = 0; %a < %playerCount; %a++)
 	{
 		%client = %so.playingClients[%a];
+		%player = %client.player;
+		if(!isObject(%player.roleBBM))
+		{
+			%player.roleBBM = OverheadBillboardMount.Make();
+		}
+		%player.mountObject(%player.roleBBM,8);
 		
-		%role = %client.player.role = $TTT::RoleGroup.get(getWord(%roleList,%i)).instance();
-
-		if(%role.name $= "Traitor")
-		{
-			%client.BBB_Give_Role("Traitor");
-			$BBB::Traitors = %client.name TAB $BBB::Traitors;
-			%assignedTraitors++;
-			WinCondition_set(%client,"WinCondition_Traitor");
-			//reset name to normal
-			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
-		}
-		else if(%role.name $= "Detective")
-		{
-			%client.BBB_Give_Role("Detective");
-			$BBB::Detectives = %client.name TAB $BBB::Detectives;
-			%assignedDetectives++;
-
-			WinCondition_set(%client,"WinCondition_Innocent");
-			//Show this player is detective in the player list
-			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin', "[D]" @ %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
-		}
-		else
-		{
-			%client.BBB_Give_Role("Innocent");
-			//reset name to normal
-
-			WinCondition_set(%client,"WinCondition_Innocent");
-			secureCommandToAllTS ("zbR4HmJcSY8hdRhr", 'ClientJoin',%client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
-		}
+		%client.TTT_SetRole($TTT::RoleGroup.nameget(getWord(%roleList,%a)));
 	}
-
-
-
-	for(%a = 0; %a < %playerCount; %a++)
-	{
-		%client = %so.playingClients[%a];
-		if(%client.role.name $= "Traitor" && getFieldCount($BBB::Traitors) > 1)
-		{
-			//ghost this traitor's billboard to other traitors
-			for(%i = 0; %i < %playerCount; %i++)
-			{
-				%checkTraitor = %so.playingClients[%i];
-				if(%checkTraitor.role.name $= "Traitor" && %checkTraitor != %client)
-				{
-					
-					//make always visible traitor billboard
-					BillboardMount_AddAVBillboard(%checkTraitor.player.roleBBM,%client.AVBillboardGroup,traitorAVBillboard,%checkTraitor.getBLID());
-					//mark them as traitor in the player list
-					secureCommandToClient ("zbR4HmJcSY8hdRhr",%checkTraitor ,'ClientJoin', "[T]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
-				}
-			}	
-			
-			%members = strReplace($BBB::Traitors, %client.name @ "\t", "");
-			messageClient(%client, '', "<color:FFD0D0>Your fellow \c0Traitors <color:FFD0D0>are: \c0" @ bbb_addListSeperators(%members));
-			%client.play2D(BBB_Chat_Sound);
-		}
-		if(%client.role.name $= "Detective" && getFieldCount($BBB::Detectives) > 1)
-		{
-			%members = strReplace($BBB::Detectives, %client.name @ "\t", "");
-			messageClient(%client, '', "<color:7DD4FF>Your fellow \c3Detectives <color:7DD4FF>are: \c1" @ bbb_addListSeperators(%members));
-			%client.play2D(BBB_Chat_Sound);
-		}
-	}
+	TTT_SetupRoles();
 }
 
 function secureCommandToAllTS (%code, %command, %a1, %a2,%a3, %a4, %a5, %a6,%a7)

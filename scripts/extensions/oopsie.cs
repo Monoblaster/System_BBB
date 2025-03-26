@@ -160,32 +160,40 @@ $KillType::CriminalInvalid = 2;
 $KillType::Uknown = 3;
 function Oopsies_KillCheck(%client,%targetclient)
 {
-	%type = %client.winCondition.getKillType(%client.player,%targetclient.player);
-	if(%type == $KillType::Uknown)
-	{
-		Oopsies_AdminNotification("an uknown oopsie event occured");
-	}
-	if(%type $= "")
+	%player = %client.player;
+	%targetplayer = %targetclient.player;
+	if(!%client.winCondition.isMiskill(%targetclient.winCondition))
 	{
 		return;
-	}	
-	if(%type == $KillType::Invalid)
+	}
+
+	if(%client == %targetclient)
 	{
-		if(%client == %targetclient || %type == $KillType::CriminalInvalid )
-		{
-			%client.AddOopsies(-1);
-			return;
-		}
-		
+		%client.AddOopsies(1);
+		return;
+	}
+
+	//invalid
+	if(%player.isValidState(%targetplayer,$ValidState::Invalid))
+	{
 		%client.AddOopsies(-2);
 		return;
 	}
 
-	// if(%type == $KillType::Uknown)
-	// {
-	// 	%client.AddOopsies(-1);
-	// 	%targetclient.AddOopsies(-1);
-	// }
+	//the player who was soonest to be criminal loses an oopsie
+	%soonest = %player.getSoonestCriminal(%targetplayer);
+	if(%soonest == %player)
+	{
+		return;
+	}
+
+	if(%soonest == %targetplayer)
+	{
+		%client.AddOopsies(-2);
+		return;
+	}
+
+	Oopsies_AdminNotification("an uknown oopsie event occured");
 }
 
 function GameConnection::AddOopsies(%client,%amount)
