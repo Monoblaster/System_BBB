@@ -265,17 +265,7 @@ function BBB_LookLoop()
 			if(isObject(%col) && %col.getDataBlock().maxDamage)
 				%col.health = %col.getDataBlock().maxDamage - %col.getDamageLevel();
 
-			if(%col.client.role.name !$= "")
-				%client.centerPrint("<br><br><br><br><br>\c6" @ %col.displayName @ "<br>\c2HP: \c6" @ mCeil(%col.health), 0.3);
-
-			if(%client.role.name $= "Traitor" && %col.client.role.name $= "Traitor")
-				%client.centerPrint("<br><br><br>\c0/   \<br>\c0\   /<br>\c0Fellow Traitor<br>" @ %col.displayName @ "<br>\c0HP:\c6" @ mCeil(%col.health), 0.3);
-
-			if(%col.client.role.name $= "Detective")
-				%client.centerPrint("<br><br><br>\c1/   \<br>\c1\   /<br>\c1Detective<br>" @ %col.displayName @ "<br>\c1HP: \c6" @ mCeil(%col.health), 0.3);
-
-			if(strLen(%col.centerPrintData) > 0)
-				%client.centerPrint(%col.centerPrintData, 0.3);
+			%client.centerPrint(%col.client.inspectInfo[%client] @ %col.displayName @ "<br>\c2HP: \c6" @ mCeil(%col.health), 0.3);
 		}
 	}
 	$BBB::LookLoop::Schedule = schedule(33, BBB_Minigame, "BBB_LookLoop");
@@ -458,14 +448,14 @@ function BBB_TimerLoop(%rCounter)
 		else
 			%health = 0;
 
-		if($BBB::Round::Phase $= "Round" && isobject(%client.player) && (%client.role.name $= "Traitor" || %client.role.name $= "Detective"))
+		if($BBB::Round::Phase $= "Round" && isobject(%client.player) %client.credits > 0)
 			%tip = "<just:right><font:Palatino Linotype:34>\c3" @ %client.credits @ "c";
 		else
 			%tip = " ";
 
 		if($BBB::Round::Phase $= "Round" && isObject(%client.player))
 		{
-			if(%showRTime && %client.role.name $= "Traitor")
+			if(%showRTime && %client.role.data.hasteMode)
 				%timeString = "\c0" @ %rTimeString;
 			else if(!isObject(%client.player))
 				%timeString = %rTimeString;
@@ -810,31 +800,30 @@ function GameConnection::BBB_DisplayShop(%this, %type)
 	%this.play2D(BBB_Chat_Sound);
 }
 
-function GameConnection::BBB_Give_Role(%client, %role)
-{
-	// %client.role = %role;
-	%player = %client.player;
-	if(!isObject(%player.roleBBM))
-	{
-		%player.roleBBM = OverheadBillboardMount.Make();
-	}
-	%player.mountObject(%player.roleBBM,8);
-	switch$(%role)
-	{
-	    case "Detective":
-			Billboard_ClearGhost(BillboardMount_AddBillboard(%player.roleBBM,detectiveBillboard),%client);
-			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c1D<font:Palatino Linotype:43>\c1ETECTIVE";
-			%client.credits = $BBB::Detective::StartingCredits;
-	    case "Traitor":
-			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c0T<font:Palatino Linotype:43>\c0RAITOR";
-			%client.credits = $BBB::Traitor::StartingCredits;
-		case "Innocent":
-			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c2I<font:Palatino Linotype:43>\c2NNOCENT";
-			%client.credits = 0;
-	    default:
-			return;
-	}
-}
+// function GameConnection::BBB_Give_Role(%client, %role)
+// {
+// 	%player = %client.player;
+// 	if(!isObject(%player.roleBBM))
+// 	{
+// 		%player.roleBBM = OverheadBillboardMount.Make();
+// 	}
+// 	%player.mountObject(%player.roleBBM,8);
+// 	switch$(%role)
+// 	{
+// 	    case "Detective":
+// 			Billboard_ClearGhost(BillboardMount_AddBillboard(%player.roleBBM,detectiveBillboard),%client);
+// 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c1D<font:Palatino Linotype:43>\c1ETECTIVE";
+// 			%client.credits = $BBB::Detective::StartingCredits;
+// 	    case "Traitor":
+// 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c0T<font:Palatino Linotype:43>\c0RAITOR";
+// 			%client.credits = $BBB::Traitor::StartingCredits;
+// 		case "Innocent":
+// 			%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>\c2I<font:Palatino Linotype:43>\c2NNOCENT";
+// 			%client.credits = 0;
+// 	    default:
+// 			return;
+// 	}
+// }
 // =================================================
 // 5. Player
 // =================================================
@@ -1165,7 +1154,7 @@ function Player::grabCorpse(%obj, %corpse)
 
 	//loot credits if availible
 	%client = %obj.client;
-	if(%client.role.name $= "Detective" || %client.role.name $= "Traitor" && isObject(%client))
+	if(isObject(%client))
 	{
 		%credits = %corpse.credits;
 		%corpse.credits = 0;
@@ -1546,7 +1535,14 @@ function BBB_Minigame::assignRoles(%so)
 			%player.roleBBM = OverheadBillboardMount.Make();
 		}
 		%player.mountObject(%player.roleBBM,8);
-		
+		//reset inspectInfo
+		%defaultcolor = hsv2rgb(120,0.5,1)
+		for(%b = 0; %b < %playerCount; %b++)
+		{
+			%targetclient = %so.playingClients[%b];
+			%client.inspectInfo[%targetclient] = "\c6";
+			%client.namecolor[%targetclient] = %defaultcolor;
+		}
 		%client.TTT_SetRole($TTT::RoleGroup.nameget(getWord(%roleList,%a)));
 	}
 	TTT_SetupRoles();
@@ -1572,14 +1568,17 @@ function BBB_Minigame::CleanUp(%so)
 	$BBB::bTimeLeft = 0;
 	$BBB::rTimeLeft = 0;
 	$BBB::Round::Phase = "";
-	$BBB::Traitors = "";
-	$BBB::Detectives = "";
 
 	%so.setGlobalPrint("Waiting...");
 
 	for(%i = 0; %i < %so.numMembers; %i++)
 	{
 		%client = %so.member[%i];
+		%role = %client.role;
+		if(isObject(%role))
+		{
+			%role.delete();
+		}
 		%client.role = "";
 	}
 
@@ -1589,40 +1588,9 @@ function BBB_Minigame::CleanUp(%so)
 	BBB_TimerLoop();
 }
 
-function BBB_Minigame::clearRoles(%so)
-{
-	$BBB::Detectives = "";
-	$BBB::Traitors = "";
-	for(%i = 0; %i < %so.numMembers; %i++)
-	{
-		%client = %so.member[%i];
-		%client.role = "";
-		%client.credits = 0;
-	}
-}
-
 function BBB_Minigame::doWinCheck(%so, %scheduled)
 {
-	if($BBB::Round::Phase !$= "Round")
-		return;
-
-	cancel($BBB::WinCheck::Schedule);
-	if(!%scheduled)
-	{
-		$BBB::WinCheck::Schedule = %so.schedule(10, "doWinCheck", %so, true);
-		return;
-	}
-
-	%NumAlive["Detective"] = %so.getNumAlive("Detective");
-	%NumAlive["Innocent"] = %so.getNumAlive("Innocent");
-	%NumAlive["Traitor"] = %so.getNumAlive("Traitor");
-
-	if(%NumAlive["Innocent"] == 0 && %NumAlive["Detective"] == 0)
-		%so.roundEnd("TWin");
-	else if(%NumAlive["Traitor"] == 0)
-		%so.roundEnd("IWin");
-	else if($BBB::rTimeLeft <= 0)
-		%so.roundEnd("IWin");
+	%so.roundEnd(TTT_WinCheck());
 }
 // function BBB_Minigame::doWinCheck(%so, %scheduled)
 // {
@@ -1661,7 +1629,7 @@ function BBB_Minigame::getNumAlive(%so, %role)
 	{
 		%client = %so.member[%i];
 		%player = %client.player;
-		if(isObject(%player) && %client.role.name $= %role)
+		if(isObject(%player) && %client.role.data.name $= %role)
 			%counter++;
 	}
 
@@ -1701,25 +1669,6 @@ function BBB_Minigame::playGlobalSound(%so, %db)
 	}
 }
 
-function BBB_Minigame::messageRole(%so, %role, %msg)
-{
-	// for(%a = 0; %a < ClientGroup.getCount(); %a++)
-	// {
-		// %client = ClientGroup.getObject(%a);
-		// if(%client.inBBB)
-			// %client.play2D(%db);
-	// }
-	for(%i = 0; %i < %so.numMembers; %i++)
-	{
-		%client = %so.member[%i];
-		if(%client.role.name $= %role)
-		{
-			messageClient(%client, '', %msg);
-			%client.play2D(BBB_Chat_Sound);
-		}
-	}
-}
-
 function BBB_Minigame::roundEnd(%so, %type)
 {
 	if(!$BBB::Round::Active)
@@ -1728,17 +1677,22 @@ function BBB_Minigame::roundEnd(%so, %type)
 	BBB_StopGlobalMusic();
 	serverPlay2D(BBB_EndRound_Sound);
 
-	switch$(%type)
+	%count = getWordCount(%type);
+	for(%i = 0; %i < %count; %i++)
 	{
-		case "IWin":
-			%text = "<br><br><font:Palatino Linotype:90>\c2INNOCENTS WIN";
-			// %so.schedule($BBB::Time::Shock, announce, "<br><br><font:Palatino Linotype:90>\c2INNOCENTS WIN!");
-		case "TWin":
-			%text = "<br><br><font:Palatino Linotype:90>\c0TRAITORS WIN";
-			// %so.schedule($BBB::Time::Shock, announce, "<br><br><font:Palatino Linotype:90>\c0TRAITORS WIN!");
-		default:
-			%text = "";
+		switch$(getWord(%type,%i).name)
+		{
+			case "Innocent":
+				%text = "<br><br><font:Palatino Linotype:90>\c2INNOCENTS WIN";
+			case "Detective":
+				%text = "<br><br><font:Palatino Linotype:90>\c2INNOCENTS WIN";
+			case "Traitor":
+				%text = "<br><br><font:Palatino Linotype:90>\c0TRAITORS WIN";
+			default:
+				%text = "";
+		}
 	}
+	
 	$BBB::Round::Phase = "PostRound";
 
 	//item popping time baby!
@@ -2054,7 +2008,7 @@ function serverCmdRole(%cl, %t)
 	
 	%u = findClientByName(%t);
 	if(isObject(%u))
-		messageClient(%cl, '', "<font:Palatino Linotype:22><color:494949>" @ %u.name SPC "is a(n)" SPC %u.role.name @ ".");
+		messageClient(%cl, '', "<font:Palatino Linotype:22><color:494949>" @ %u.name SPC "is a(n)" SPC %u.role.data.name @ ".");
 }
 
 function serverCmdLog(%cl, %t, %tk)

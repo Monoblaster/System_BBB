@@ -218,22 +218,11 @@ package BBB_Armor
 							// We use this instead of the function because if my specific unnecessary need for 'an' 'a' etc.
 
 							messageClient(%client, '', "\c6[\c4Corpse Data\c6]");
-							switch$(%corpse.role)
-							{
-								case "Detective":
-									%rolePrint = "\c1DETECTIVE";
-									%rolecolor = "\c1";
-								case "Innocent":
-									%rolePrint = "\c2INNOCENT";
-									%rolecolor = "\c2";
-								case "Traitor":
-									%rolePrint = "\c0TRAITOR";
-									%rolecolor = "\c0";
-								default:
-									%rolePrint = "???";
-							}
+							
+							%rolecolor = %corpse.role.data.color;
+							%rolename =  %corpse.role.data.name;
 							messageClient(%client, '', "\c6 > \c3Name\c6: " @ %corpse.name);
-							messageClient(%client, '', "\c6 > \c3Role\c6: " @ %rolePrint);
+							messageClient(%client, '', "\c6 > \c3Role\c6: <color:"@%rolecolor@">" @ %rolename);
 							messageClient(%client, '', "\c6 > \c3Cause of death\c6: [" @ %corpse.SOD @ "\c6]");
 							if(%corpse.deadTime !$= "")
 							{
@@ -254,13 +243,13 @@ package BBB_Armor
 								%corpse.unIDed = false;
 								if($BBB::Announce::BodyFound)
 								{
-									chatMessageAll("", "\c6" @ %obj.client.name SPC "\c4found\c6" SPC %corpse.displayName @ "\c4!" SPC "They were" @ (%corpse.role.name $= "Traitor" || %corpse.role.name $= "Detective" ? " a " : " ") @ %roleprint @ "\c4!");
+									chatMessageAll("", "\c6" @ %obj.client.name SPC "\c4found\c6" SPC %corpse.displayName @ "\c4!" SPC "They were" @ (%rolename $= "Innocent" ? " " : " a ") @ "<color:"@%rolecolor@">" @ %rolename@ "\c4!");
 									
 									%client = findClientByName(%corpse.name);
 									if(isObject(%client))
 									{
 										//mark them as dead in the player list
-										secureCommandToAllTS("zbR4HmJcSY8hdRhr", 'ClientJoin',%rolecolor @ "[Dead]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+										secureCommandToAllTS("zbR4HmJcSY8hdRhr", 'ClientJoin', "[Dead]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 									}
 								}
 							}
@@ -347,7 +336,7 @@ package BBB_fxDTSBrick
 {
 	function fxDTSBrick::onActivate(%this, %obj, %client)
 	{
-		if(%client.role.name $= "Traitor")
+		if(%client.role.data.name $= "Traitor")
 			%this.onTraitorActivate(%client);
 		else
 			%this.onInnocentActivate(%client);
@@ -359,9 +348,9 @@ package BBB_fxDTSBrick
 		%client = %obj.client;
 		if(isObject(%client))
 		{
-			if(%client.role.name $= "Detective" || %client.role.name $= "Innocent")
+			if(%client.role.data.name $= "Detective" || %client.role.data.name $= "Innocent")
 				%this.onInnocentTouch(%obj);
-			else if(%client.role.name $= "Traitor")
+			else if(%client.role.data.name $= "Traitor")
 				%this.onTraitorTouch(%obj);
 		}
 
@@ -540,11 +529,6 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 
 	%client.play2D(BBB_Death_Sound);
 
-	%role = %client.role;
-	//$BBB::Round::NumAlive[%role]--;
-	if(%role $= "Innocent" || %role $= "Detective")
-		$BBB::rTimeLeft += $BBB::Time::Bonus;
-
 	%player = %client.player;
 
 	if(isObject(%player))
@@ -657,39 +641,38 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 
 	%client.print = "<just:left><font:Palatino Linotype:22><font:Palatino Linotype:45><color:808080>D<font:Palatino Linotype:43><color:808080>EAD";
 
-	%colr = "ffffff";
-	if(%sourceClient.role.name $= "Traitor")
-		%colr = "ff7744";
-	else if(%sourceClient.role.name $= "Innocent")
-		%colr = "44ff44";
-	else if(%sourceClient.role.name $= "Detective")
-		%colr = "4477ff";
-	
-	%client.chatMessage("<font:Palatino Linotype:22><color:494949>You were killed by <color:" @ %colr @ ">" @ %sourceClient.name @ ", a(n)" SPC %sourceClient.role.name @ "<color:494949>.");
+	%hsv = rgb2hsv(%sourceClient.role.data.color);
+	%sourcecolor = hsv2rgb(getWord(%hsv,0)+15,getWord(%hsv,1)*0.75,getWord(%hsv,2));
+	%sourcerolename = %sourceClient.role.data.name;
+	%client.chatMessage("<font:Palatino Linotype:22><color:494949>You were killed by <color:" @ %sourcecolor @ ">" @ %sourceClient.name @ ", a(n)" SPC  @ "<color:494949>.");
 
 	//deathlogs//
 
 	if($BBB::Round::Phase $= "Round")
 	{
-		%dlmsg = "<color:" @ (%sourceclient.role.name $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %sourceclient.name SPC "(" @ %sourceclient.role.name
-		@ ") \c6killed<color:" @ (%client.role.name $= "Traitor" ? "FF7744" : "4477FF") @ ">" SPC %client.name SPC "(" @ %client.role.name @ ")\c6 at" SPC getStringFromTime($BBB::rTimeLeft);
+		%hsv = rgb2hsv(%client.role.data.color);
+		%clientcolor = hsv2rgb(getWord(%hsv,0)+15,getWord(%hsv,1)*0.75,getWord(%hsv,2));
+		%clientrolename = %sourceClient.role.data.name;
+
+		%dlmsg = "<color:" @ %sourcecolor @ ">" @ %sourceclient.name SPC "(" @ %sourcerolename
+		@ ") \c6killed<color:" @ %clientcolor @ ">" SPC %client.name SPC "(" @ %clientrolename @ ")\c6 at" SPC getStringFromTime($BBB::bTimeLeft) SPC "("@getStringFromTime($BBB::rTimeLeft)@")";
 
 		if(!isObject(%sourceclient))
-			%dlmsg = "<color:" @ (%cl.role.name $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %client.name SPC "(" @  %client.role.name @ ")" SPC "died.";
+			%dlmsg = "<color:" @ %clientcolor @ ">" @ %client.name SPC "(" @  %clientrolename @ ")" SPC "died.";
 		
 		if(%sourceclient == %client)
-			%dlmsg = "<color:" @ (%cl.role.name $= "Traitor" ? "FF7744" : "4477FF") @ ">" @ %client.name SPC "(" @  %client.role.name @ ")" SPC "suicided.";
+			%dlmsg = "<color:" @ %clientcolor @ ">" @ %client.name SPC "(" @  %clientrolename @ ")" SPC "suicided.";
+
+		echo("\c4" SPC %sourceClientName SPC "(" @ %sourcerolename @ ") killed" SPC (%clientName $= %sourceClientName ? "themselves" : %clientName @ "(" @ %clientrolename @ ")"));
 
 		$DeathLog[$DeathLogCount] = %dlmsg;
 		$DeathLogCount++;
 		if(%sourceClient.killLogCount $= "")
 			%sourceClient.killLogCount = 0;
 		
-		%scr = %sourceClient.role;
-		%cr = %client.role;
-		if(%cr $= "Detective")
+		if(%clientrolename $= "Detective")
 			%cr = "Innocent";
-		if(%scr $= "Detective")
+		if(%sourcerolename $= "Detective")
 			%scr = "Innocent";
 
 		if(%sourceClient.killLogCount $= "")
@@ -720,73 +703,72 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 	//traitor/detective rewards
 	//percentage dead reward
 	//get the current percent of dead innocents
-	%mini = BBB_Minigame;
-	%count = %mini.numPlayers;
-	%totalInno = 0;
-	%deadInno = 0;
-	for(%i = 0; %i < %count; %i++)
-	{
-		%currClient = %mini.playingClients[%i];
-		if(%currClient.role.name $= "Innocent")
-		{
-			%totalInno++;
-			//are they dead?
-			if(!isObject(%currClient.player))
-			{
-				%deadInno++;
-			}
-		}
-	}
-	%percentDead = %deadInno / %totalInno;
+	// %mini = BBB_Minigame;
+	// %count = %mini.numPlayers;
+	// %totalInno = 0;
+	// %deadInno = 0;
+	// for(%i = 0; %i < %count; %i++)
+	// {
+	// 	%currClient = %mini.playingClients[%i];
+	// 	if(%currClient.role.name $= "Innocent")
+	// 	{
+	// 		%totalInno++;
+	// 		//are they dead?
+	// 		if(!isObject(%currClient.player))
+	// 		{
+	// 			%deadInno++;
+	// 		}
+	// 	}
+	// }
+	// %percentDead = %deadInno / %totalInno;
 
-	//is it reward time?
-	if(%percentDead > $BBB::Traitor::AwardPercent + $BBB::Round::AwardPercentOffset)
-	{
-		//reward all traitors the amount
-		for(%i = 0; %i < %count; %i++)
-		{
-			%currClient = %mini.playingClients[%i];
-			if(%currClient.role.name $= "Traitor")
-			{
-				//are they dead?
-				if(isObject(%currClient.player))
-				{
-					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::AwardSize SPC "Credit\c6 for your hard work.");
-					%currClient.credits += $BBB::Traitor::AwardSize;
-				}
-			}
-		}
+	// //is it reward time?
+	// if(%percentDead > $BBB::Traitor::AwardPercent + $BBB::Round::AwardPercentOffset)
+	// {
+	// 	//reward all traitors the amount
+	// 	for(%i = 0; %i < %count; %i++)
+	// 	{
+	// 		%currClient = %mini.playingClients[%i];
+	// 		if(%currClient.role.name $= "Traitor")
+	// 		{
+	// 			//are they dead?
+	// 			if(isObject(%currClient.player))
+	// 			{
+	// 				%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::AwardSize SPC "Credit\c6 for your hard work.");
+	// 				%currClient.credits += $BBB::Traitor::AwardSize;
+	// 			}
+	// 		}
+	// 	}
 
-		$BBB::Round::AwardPercentOffset += $BBB::Traitor::AwardPercent;
-	}
+	// 	$BBB::Round::AwardPercentOffset += $BBB::Traitor::AwardPercent;
+	// }
 
 	//did a traitor kill the detective?
-	if(%client.role.name $= "Detective" && %sourceClient.role.name $= "Traitor")
-	{
-		%sourceClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::DetectiveKill SPC "Credit\c6 for your hard work.");
-		%sourceClient.credits += $BBB::Traitor::DetectiveKill;
-	}
+	// if(%client.role.name $= "Detective" && %sourceClient.role.name $= "Traitor")
+	// {
+	// 	%sourceClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::DetectiveKill SPC "Credit\c6 for your hard work.");
+	// 	%sourceClient.credits += $BBB::Traitor::DetectiveKill;
+	// }
 
 	//did a traitor die?
-	if(%client.role.name $= "Traitor")
-	{
-		//reward all detectives the amount
-		for(%i = 0; %i < %count; %i++)
-		{
-			%currClient = %mini.playingClients[%i];
-			if(%currClient.role.name $= "Detective")
-			{
-				//are they dead?
-				if(isObject(%currClient.player))
-				{
-					%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Detective::TraitorDead SPC "Credit\c6 for your hard work.");
-					%currClient.credits += $BBB::Detective::TraitorDead;
-				}
-			}
-		}
-	}
+	// if(%client.role.name $= "Traitor")
+	// {
+	// 	//reward all detectives the amount
+	// 	for(%i = 0; %i < %count; %i++)
+	// 	{
+	// 		%currClient = %mini.playingClients[%i];
+	// 		if(%currClient.role.name $= "Detective")
+	// 		{
+	// 			//are they dead?
+	// 			if(isObject(%currClient.player))
+	// 			{
+	// 				%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Detective::TraitorDead SPC "Credit\c6 for your hard work.");
+	// 				%currClient.credits += $BBB::Detective::TraitorDead;
+	// 			}
+	// 		}
+	// 	}
+	// }
 
-	echo("\c4" SPC %sourceClientName SPC "(" @ %sourceClient.role.name @ ") killed" SPC (%clientName $= %sourceClientName ? "themselves" : %clientName @ "(" @ %client.role.name @ ")"));
 	// removed mini-game checks here
 	// removed death message print here
 	// removed %message and %sourceClientName arguments
@@ -1253,14 +1235,19 @@ package BBB_ServerCMD
 				// messageClient(%tarClient, "", %client.Icon SPC "<color:9EE09C>" @ %client.getPlayerName() @ "\c6: " @ %msg);
 			// }
 			//messageAll("", %client.Icon SPC "<color:9EE09C>" @ %client.getPlayerName() @ "\c6: " @ %msg);
-			%type = %client.role.name $= "Detective" ? "<color:7DD4FF>" : "<color:9EE09C>";
 			%icon = $BBB::Round::Phase $= "Round" ? "" : %client.Icon;
 			//messageAll("", ($BBB::Round::Phase $= "Round" ? "" : %client.Icon) @ " " @ (%client.role.name $= "Detective" ? "<color:7DD4FF>" : "<color:9EE09C>") @ %client.getPlayerName() @ "\c6: " @ %msg);
-			chatMessageAll (%client, '%5%6%2\c6: %4', %client.clanPrefix, %client.getPlayerName(), %client.clanSuffix, %msg, %type, %icon, %a7, %a8, %a9, %a10);
+			%group = ClientGroup.getId();
+			%count = %group.getCount();
+			for(%i = 0; %i < %group; %i++)
+			{
+				%targetClient = %group.getObject(%i);
+				%color = %client[%targetClient].chatColor;
+				chatMessageClient(%targetClient, %client,'','' ,'%5%6%2\c6: %4', %client.clanPrefix, %client.getPlayerName(), %client.clanSuffix, %msg, "<color:"@%color@">", %icon, %a7, %a8, %a9, %a10);
+				%tarClient.play2D(BBB_Chat_Sound);
+			}
 			%client.player.lastMsg = %msg;
 			%client.player.lastMsgTime = getSimTime();
-
-			%mg.playGlobalSound(BBB_Chat_Sound);
 		}
 		else // Dead Chat
 		{
@@ -1303,6 +1290,12 @@ package BBB_ServerCMD
 			return;
 		}
 
+		if(!%client.role.data.teamchat)
+		{
+			serverCmdMessageSent(%client, %msg);
+			return;
+		}
+
 		if(%msg $= "")
 		{
 			return;
@@ -1321,44 +1314,20 @@ package BBB_ServerCMD
 			%msg = trim("<a:" @ %link @ ">" @ %link @ "</a>" SPC %rest);
 		}
 
-		%mg = BBB_Minigame;
-
-		if(%client.role.name $= "Traitor" || %client.role.name $= "Detective")
+		%color = %client.role.data.color;
+		%hsv = rgb2hsv(%color);
+		%s = "<color:"@hsv2rgb(getWord(%hsv,0),getWord(%hsv * 0.2,1),getWord(%hsv,2))@">";
+		%t = "<color:"@%color@">";
+		%team = %client.role.data.winCondition.hasSameWinCondition();
+		%count = getWordCount(%team);
+		%type = "\c7[" @ %t @ %client.role.data.name @ "\c7] ";
+		for(%i = 0; %i < %count; %i++)
 		{
-			if(%client.role.name $= "Traitor")
-			{
-				%color = "\c0";
-				%chatColor = "<color:FFD0D0>";
-			}
-			else
-			{
-				%color = "\c1";
-				%chatColor = "<color:D0D0FF>";
-			}
-			for(%i = 0; %i < %mg.numMembers; %i++)
-			{
-				%tarClient = %mg.member[%i];
-				%player = %tarClient.player;
-				if(isObject(%player))
-				{
-					if(%tarClient.role.name $= %client.role)
-					{
-						%type = "\c7[" @ %color @ %client.role @ "\c7] ";
-						%icon = %color;
-						chatMessageClient (%tarClient, %client,'','' , '%5\c4%2%7: %4', %client.clanPrefix, %client.getPlayerName(), %client.clanSuffix, %msg, %type, %client.icon, %chatColor, %a8, %a9, %a10);
-						//messageClient(%tarClient, "", "\c7[" @ %color @ %client.role @ "\c7] " @ %color @ %client.getPlayerName() @ %chatColor @ ": " @ %msg);
-						%tarClient.play2D(BBB_Chat_Sound);
-					}
-				}
-			}
-		}
-		else
-		{
-			serverCmdMessageSent(%client, %msg);
+			%teamclient = getWord(%team,%i);
+			chatMessageClient (%tarClient, %client,'','' , '%5\c4%2%7: %4', %client.clanPrefix, %client.getPlayerName(), %client.clanSuffix, %msg, %team, %client.icon, %t, %a8, %a9, %a10);
+			%teamclient.play2D(BBB_Chat_Sound);
 		}
 	}
-
-
 
 	function serverCmdShiftBrick(%this, %x, %y, %z)
 	{
