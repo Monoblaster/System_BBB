@@ -22,7 +22,7 @@ $BBB::Start::Map		= "Add-Ons/BBB_Roy_The_Shipper/save.bls";
 $BBB::Map::Rounds		= 6;
 
 // Time
-$BBB::Time::Base		= "300000"; // In MS
+$BBB::Time::Base		= 3 * 60 * 1000; // In MS
 $BBB::Time::PreRound 	= "30000";
 $BBB::Time::PostRound	= "12000";
 $BBB::Time::Shock		= "1500"; // The time between the round ends and the winner is shown. Should be lower than Time::PostRound.

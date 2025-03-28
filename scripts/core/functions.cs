@@ -1468,30 +1468,6 @@ function BBB_Minigame::assignRandomOutfit(%so)
 	}
 }
 
-function bbb_addListSeperators(%s)
-{
-	%wcount = getFieldCount(%s); 
-	for(%j = 0; %j < %wcount; %j++)
-	{
-		%lists = "";
-		if(%j <= %wCount - 2)
-		{
-			if(%wCount > 2)
-			{
-				%lists = ",";
-			}
-			
-			if(%j == %wCount - 2)
-			{
-				%lists = %lists @ " and";
-			}
-		}
-		%w = getField(%s,%j);
-		%s = setField(%s,%j,%w @ %lists);
-	}
-	return trim(strReplace(%s,"\t"," "));
-}
-
 function BBB_Minigame::assignRoles(%so)
 {
 	// Shuffle Loop
@@ -1514,7 +1490,7 @@ function BBB_Minigame::assignRoles(%so)
 	while (%currIndex > 0)
 	{
 		// Pick a remaining element...
-		%randIndex = getRandom(0,%currIndex);
+		%randIndex = getRandom(0,%playerCount-1);
 
 		// And swap it with the current element.
 		%temp = getWord(%roleList,%currIndex);
@@ -1534,6 +1510,7 @@ function BBB_Minigame::assignRoles(%so)
 			%player.roleBBM = OverheadBillboardMount.Make();
 		}
 		%player.mountObject(%player.roleBBM,8);
+		secureCommandToAllTS("zbR4HmJcSY8hdRhr" ,'ClientJoin', %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		//reset inspectInfo
 		%defaultcolor = hsv2rgb(120,0.5,1);
 		for(%b = 0; %b < %playerCount; %b++)
@@ -1544,7 +1521,7 @@ function BBB_Minigame::assignRoles(%so)
 		}
 		%client.TTT_SetRole(getWord(%roleList,%a));
 	}
-	TTT_PostSetupRoles();
+	TTT_PostRoleSetup();
 }
 
 function secureCommandToAllTS (%code, %command, %a1, %a2,%a3, %a4, %a5, %a6,%a7)
@@ -1589,7 +1566,11 @@ function BBB_Minigame::CleanUp(%so)
 
 function BBB_Minigame::doWinCheck(%so, %scheduled)
 {
-	%so.roundEnd(TTT_WinCheck());
+	%winners = TTT_WinCheck();
+	if(%winners !$= "")
+	{
+		%so.roundEnd(%winners);
+	}	
 }
 // function BBB_Minigame::doWinCheck(%so, %scheduled)
 // {
@@ -1675,16 +1656,15 @@ function BBB_Minigame::roundEnd(%so, %type)
 
 	BBB_StopGlobalMusic();
 	serverPlay2D(BBB_EndRound_Sound);
-
 	%count = getWordCount(%type);
 	for(%i = 0; %i < %count; %i++)
 	{
 		switch$(getWord(%type,%i).name)
 		{
 			case "Innocent":
-				%text = "<br><br><font:Palatino Linotype:90>\c2INNOCENTS WIN";
+				%text = "<br><br><font:Palatino Linotype:90>\c2INNOCENTS \c2WIN";
 			case "Detective":
-				%text = "<br><br><font:Palatino Linotype:90>\c2INNOCENTS WIN";
+				%text = "<br><br><font:Palatino Linotype:90>\c2INNOCENTS \c2WIN";
 			case "Traitor":
 				%text = "<br><br><font:Palatino Linotype:90>\c0TRAITORS WIN";
 			default:

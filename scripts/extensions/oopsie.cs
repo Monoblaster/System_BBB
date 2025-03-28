@@ -169,27 +169,28 @@ function Oopsies_KillCheck(%client,%targetclient)
 
 	if(%client == %targetclient)
 	{
-		%client.AddOopsies(1);
+		%client.AddOopsies(-1);
 		return;
 	}
 
 	//invalid
-	if(%player.isValidState(%targetplayer,$ValidState::Invalid))
+	if(%targetPlayer.isValidState(%player,$ValidState::Invalid))
 	{
 		%client.AddOopsies(-2);
 		return;
 	}
 
-	//the player who was soonest to be criminal loses an oopsie
+	//the player who was latest to be criminal loses an oopsie
 	%soonest = %player.getSoonestCriminal(%targetplayer);
 	if(%soonest == %player)
 	{
+		%targetClient.AddOopsies(-1);
 		return;
 	}
 
 	if(%soonest == %targetplayer)
 	{
-		%client.AddOopsies(-2);
+		%client.AddOopsies(-1);
 		return;
 	}
 
@@ -371,7 +372,6 @@ function Player::CriminalDemotionLoop(%player)
 
 		if(getSimTime()-%player.lastLOS[%target] <= 5000)
 		{
-			echo("lost los");
 			continue;
 		}
 
@@ -629,9 +629,53 @@ package TTT_Oopsies
 };
 activatePackage("TTT_Oopsies");
 
+function BBB_ClosestPointOnLine(%p1,%p2,%point)
+{
+	%t = vectorDot(vectorSub(%p1,%p2),vectorSub(%p2,%point))/vectorDot(vectorSub(%p1,%p2),vectorSub(%p1,%p2));
+	%g = vectorSub(%p2,vectorScale(vectorSub(%p1,%p2),%t));
+
+	%d = vectorSub(%p1,%p2);
+	%f = vectorSub(%g,%p2);
+	%z = 0;
+	for(%i = 0; %i < 3; %i++)
+	{
+		%a = getWord(%d,%i);
+		%b = getWord(%f,%i);
+		if(%a == 0 || %b == 0)
+		{
+			continue;
+		}
+		%z = %b / %a;
+		break;
+	}
+
+	if(%z > 1)
+	{
+		return %p1;
+	}
+	else if(%z < 0)
+	{
+		return %p2;
+	}
+	else
+	{
+		return %g;
+	}
+}
+
 function AESuppressArea(%pos, %dir, %shape, %img)
 {
 	%super = %img.whizzSupersonic;
+
+	if(%shape.previousPoint $= "")
+	{
+		%shape.previousPoint = %shape.originPoint;
+	}
+
+	if(%shape.previousPoint $= %pos)
+	{
+		return;
+	}
 
 	if(%super == 0)
 		%sfx = AESubsonicWhizz @ getRandom(1, 4) @ Sound;
@@ -658,15 +702,15 @@ function AESuppressArea(%pos, %dir, %shape, %img)
 		
 		%eye = %obj.getEyePoint();
 
-		%dist = vectorDist(%pos, %eye);
-		%dot = vectorDot(%dir, vectorNormalize(vectorSub(%pos, %eye)));
-
-		if(%dist < %img.whizzDistance && %dot <= %angle && getRandom() <= %chance)
+		%linePoint = BBB_ClosestPointOnLine(%shape.previousPoint,%pos,%eye);
+		%dist = vectorDist(%linePoint, %eye);
+		%dot = vectorDot(%dir, vectorNormalize(vectorSub(%shape.previousPoint, %eye)));
+		if(%dist < 6 && %dot <= %angle && getRandom() <= %chance)
 		{
-			if(%through || !isObject(containerRayCast(%pos, %eye, $TypeMasks::fxBrickObjectType | $TypeMasks::StaticObjectType)))
+			if(%through || !isObject(containerRayCast(%linepoint, %eye, $TypeMasks::fxBrickObjectType | $TypeMasks::StaticObjectType)))
 			{
 				%shape.suppressed[%obj] = true;
-				%cc.play3D(%sfx, %pos);
+				%cc.play3D(%sfx, %linePoint);
 				if(isObject(%sourcePlayer))
 				{
 					Oopsies_DoVisibleEvent(%sourcePlayer);
@@ -686,5 +730,6 @@ function AESuppressArea(%pos, %dir, %shape, %img)
 			}
 		}
 	}
+	%shape.previousPoint = %pos;
 }
 

@@ -70,7 +70,7 @@ function TTTInventory_OpenShop(%client,%slot)
 
     if(isObject(%player))
     {
-        %role = %client.role;
+        %role = %client.role.data.name;
         switch$(%role)
         {
         case "Traitor":

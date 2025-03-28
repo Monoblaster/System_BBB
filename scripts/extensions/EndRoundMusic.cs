@@ -106,15 +106,11 @@ function BBB_PlayGlobalMusic(%role)
 {
 	%mg = BBB_Minigame;
 	BBB_StopGlobalMusic();
-
-	if(%role $= "Detective")
-		%role = "Innocent";
-
 	for(%i = 0; %i < ClientGroup.GetCount(); %i++)
 	{
 		%cl = ClientGroup.GetObject(%i);
 
-		%cl.Play2D(%role @ "_Win");
+		%cl.Play2D(%role);
 	}
 }
 
@@ -179,13 +175,14 @@ package BBB_EndRoundMusic
 	function BBB_Minigame::roundEnd(%so, %type)
 	{
 		parent::roundEnd(%so, %type);
-		if(%type $= "TWin")
-			%winner = "Traitor";
-		else
-			%winner = "Innocent";
-
 		%time = $BBB::Time::Shock + 300;
-		schedule(%time, %so, "BBB_PlayGlobalMusic", %winner);
+		%count = getWordCount(%type);
+		for(%i = 0; %i < %count; %i++)
+		{
+			schedule(%time, %so, "BBB_PlayGlobalMusic", getWord(%type,%i).winSound);
+			return;
+		}
+		
 	}
 
 	function BBB_Minigame::roundSetup(%so, %type)
