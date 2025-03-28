@@ -644,7 +644,8 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 	%hsv = rgb2hsv(%sourceClient.role.data.color);
 	%sourcecolor = hsv2rgb(getWord(%hsv,0)+15,getWord(%hsv,1)*0.75,getWord(%hsv,2));
 	%sourcerolename = %sourceClient.role.data.name;
-	%client.chatMessage("<font:Palatino Linotype:22><color:494949>You were killed by <color:" @ %sourcecolor @ ">" @ %sourceClient.name @ ", a(n)" SPC  @ "<color:494949>.");
+	%client.chatMessage("<font:Palatino Linotype:22><color:494949>You were killed by <color:" @ %sourcecolor @ ">" 
+	@ %sourceClient.name @ ", a(n)" SPC %sourcerolename @ "<color:494949>.");
 
 	//deathlogs//
 

@@ -63,7 +63,7 @@ function WinCondition_Basic::hasSameWinCondition(%obj)
 			continue;
 		}
 
-		%clients = %clients SPC %client
+		%clients = %clients SPC %client;
 	}
 	return ltrim(%clients);
 }
@@ -82,7 +82,7 @@ function WinCondition_Basic::hasDifferentWinCondition(%obj)
 			continue;
 		}
 
-		%clients = %clients SPC %client
+		%clients = %clients SPC %client;
 	}
 	return ltrim(%clients);
 }
@@ -207,7 +207,7 @@ function Traitor_OnKill(%obj,%target,%deadclient)
 	//is it reward time?
 	if(%percentDead < %obj.data.creditDeadPercent * (%obj.gainedRewards + 1))
 	{
-		%obj.continue(%target,%deadclient);
+		%obj.Continue(%target,%deadclient);
 		return;
 	}
 
@@ -249,7 +249,7 @@ function TTT_CreateRoles()
 	%role.winOnTimeup = false;
 	%role.hasteMode = true;
 	%role.creditGain = 1;
-	%role.creditDeadPercent = 0.35
+	%role.creditDeadPercent = 0.35;
 	%role.hasteModeAdd = 10000;
 	$TTT::RoleGroup.set(%role,%role.name);
 
@@ -286,7 +286,7 @@ function TTT_PreRoleSetup()
 		$TTT::ActiveRoleGroup.deleteAll();
 		$TTT::ActiveRoleGroup.delete();
 	}
-	$TTT::ActiveRoleGroup = new ScriptGroup(class = "RoleGroup");
+	$TTT::ActiveRoleGroup = new ScriptGroup(){class = "RoleGroup";};
 
 	%group = $TTT::RoleGroup.getId();
 	%count = %group.getCount();
@@ -304,7 +304,8 @@ function GameConnection::TTT_SetRole(%client,%role)
 	%client.credits = %role.credits;
 	%n = %role.name;
 	%c = "<color:"@%role.color@">";
-	%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>"@%c@getSubStr(%n,0,1)"<font:Palatino Linotype:43>"@%c@getSubStr(%n,1,strLen(%n)-2);
+	%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>"@%c@getSubStr(%n,0,1)
+	@"<font:Palatino Linotype:43>"@%c@getSubStr(%n,1,strLen(%n)-2);
 }
 
 function TTT_PostRoleSetup()

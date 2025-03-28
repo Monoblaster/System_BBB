@@ -448,7 +448,7 @@ function BBB_TimerLoop(%rCounter)
 		else
 			%health = 0;
 
-		if($BBB::Round::Phase $= "Round" && isobject(%client.player) %client.credits > 0)
+		if($BBB::Round::Phase $= "Round" && isobject(%client.player) && %client.credits > 0)
 			%tip = "<just:right><font:Palatino Linotype:34>\c3" @ %client.credits @ "c";
 		else
 			%tip = " ";
@@ -1535,7 +1535,7 @@ function BBB_Minigame::assignRoles(%so)
 		}
 		%player.mountObject(%player.roleBBM,8);
 		//reset inspectInfo
-		%defaultcolor = hsv2rgb(120,0.5,1)
+		%defaultcolor = hsv2rgb(120,0.5,1);
 		for(%b = 0; %b < %playerCount; %b++)
 		{
 			%targetclient = %so.playingClients[%b];
