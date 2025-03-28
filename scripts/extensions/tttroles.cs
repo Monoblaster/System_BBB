@@ -386,25 +386,25 @@ function TTT_PostRoleSetup()
 			%ls = hsv2rgb(getWord(%hsv,0),getWord(%hsv,1) * 0.5,getWord(%hsv,2));
 			if(%withrolecount == 1)
 			{
-				%msg = "<color:"@%s@">There is <color:"@%t@">"%withrolecount SPC %rolename;
+				%msg = "<color:"@%s@">There is <color:"@%t@">"@%withrolecount SPC %rolename;
 			}
 			else
 			{
-				%msg = "<color:"@%s@">There are <color:"@%t@">"%withrolecount SPC %rolename@"s";
+				%msg = "<color:"@%s@">There are <color:"@%t@">"@%withrolecount SPC %rolename@"s";
 			}
 			
 			if(!%data.rolechat)//display to non roles
 			{
 				for(%i = 0; %i < %withrolecount; %i++)
 				{
-					%client = getWord(%withrole,%i)
+					%client = getWord(%withrole,%i);
 					%client.chatMessage(%msg);
 				}
 			}
 			
 			for(%i = 0; %i < %withoutrolecount; %i++)
 			{
-				%client = getWord(%withoutrole,%i)
+				%client = getWord(%withoutrole,%i);
 				%client.chatMessage(%msg);
 			}
 		}
@@ -439,7 +439,7 @@ function TTT_WinCheck()
 			continue;
 		}
 		%won[%data.winCondition] = true;
-		%winners = %winners SPC %data.winCondition;;
+		%winners = %winners SPC %data.winCondition;
 	}
 
 	return lTrim(%winners);
