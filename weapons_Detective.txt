@@ -1,5 +1,3 @@
 XRay	2
 Riot Shield	2
-DNA Scanner	0	1
 [T] Health Station	1
-Body Armor	0	1

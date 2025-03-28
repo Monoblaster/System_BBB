@@ -30,18 +30,6 @@ $BBB::Time::Shock		= "1500"; // The time between the round ends and the winner i
 $BBB::Time::MapVote		= "30000"; // Map vote time
 $BBB::Time::Bonus		= "10000"; // Bonus time for every time an innocent is killed.
 
-// Ratios
-$BBB::Detective::MinPlayers = 8; // 1 Detective for X players. ex. if there are 16 players, there are 2 detectives.
-$BBB::Traitor::MinPlayers = 4; // 1 traitor per x players
-
-$BBB::Traitor::StartingCredits = 2; 
-$BBB::Traitor::AwardPercent = 0.35;//what percent of people need to be dead for credits to be awarded (repeats)
-$BBB::Traitor::AwardSize = 1;//how many credits are earned from the award
-$BBB::Traitor::DetectiveKill = 1;//how many credits recieved when they kill the detective
-
-$BBB::Detective::StartingCredits = 1;
-$BBB::Detective::TraitorDead = 1;//number of credits from a traitor's death 
-
 $BBB::FirstShopSlot = 5;
 
 // Other
@@ -95,10 +83,6 @@ function BBB_RebuildItemTable()
 					%item = $uiNameTable_items[getField(%str,0)];
 					%price = getField(%str,1);
 					%stock = getField(%str,2);
-					if(getField(%str,0) $= "Body Armor")
-					{
-						talk(%price SPC %stock);
-					}
 
 					if(isObject(%item))
 					{

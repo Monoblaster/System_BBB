@@ -455,10 +455,8 @@ function BBB_TimerLoop(%rCounter)
 
 		if($BBB::Round::Phase $= "Round" && isObject(%client.player))
 		{
-			if(%showRTime && %client.role.data.hasteMode)
+			if(%showRTime && (%client.role.data.hasteMode || !isObject(%client.player)))
 				%timeString = "\c0" @ %rTimeString;
-			else if(!isObject(%client.player))
-				%timeString = %rTimeString;
 			else
 				%timeString = %bTimeString;
 		}
@@ -1526,6 +1524,7 @@ function BBB_Minigame::assignRoles(%so)
 	}
 	// =============================================
 
+	TTT_PreRoleSetup();
 	for(%a = 0; %a < %playerCount; %a++)
 	{
 		%client = %so.playingClients[%a];
@@ -1543,9 +1542,9 @@ function BBB_Minigame::assignRoles(%so)
 			%client.inspectInfo[%targetclient] = "\c6";
 			%client.namecolor[%targetclient] = %defaultcolor;
 		}
-		%client.TTT_SetRole($TTT::RoleGroup.nameget(getWord(%roleList,%a)));
+		%client.TTT_SetRole(getWord(%roleList,%a));
 	}
-	TTT_SetupRoles();
+	TTT_PostSetupRoles();
 }
 
 function secureCommandToAllTS (%code, %command, %a1, %a2,%a3, %a4, %a5, %a6,%a7)
@@ -1695,7 +1694,7 @@ function BBB_Minigame::roundEnd(%so, %type)
 	
 	$BBB::Round::Phase = "PostRound";
 
-	//item popping time baby!
+	//item popping time baby! (wtf?)
 	$BBB::ItemPop = true;
 
 	announceDeathLogs();
@@ -1872,7 +1871,7 @@ function BBB_CreditBuy(%client,%item,%price,%stock)
 function serverCmdBuy(%client, %num)
 {
 	%player = %client.player;
-	%role = %client.role;
+	%role = %client.role.data.name;
 
 	%item = $BBB::Shop_[%role,%num];
 	if(!isObject(%item))
@@ -1914,7 +1913,7 @@ function serverCmdShop(%client)
 {
 	if(!%client.inBBB || !isObject(%client.player) || $BBB::Round::Phase !$= "Round")
 		return;
-	%client.BBB_DisplayShop(%client.role);
+	%client.BBB_DisplayShop(%client.role.data.name);
 }
 
 function serverCmdSlay(%client, %a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a11,%a12,%a13,%a14,%a15)

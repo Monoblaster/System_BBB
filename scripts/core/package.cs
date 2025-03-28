@@ -698,77 +698,7 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 		}
 	}
 
-	//the end//
-
-	//traitor/detective rewards
-	//percentage dead reward
-	//get the current percent of dead innocents
-	// %mini = BBB_Minigame;
-	// %count = %mini.numPlayers;
-	// %totalInno = 0;
-	// %deadInno = 0;
-	// for(%i = 0; %i < %count; %i++)
-	// {
-	// 	%currClient = %mini.playingClients[%i];
-	// 	if(%currClient.role.name $= "Innocent")
-	// 	{
-	// 		%totalInno++;
-	// 		//are they dead?
-	// 		if(!isObject(%currClient.player))
-	// 		{
-	// 			%deadInno++;
-	// 		}
-	// 	}
-	// }
-	// %percentDead = %deadInno / %totalInno;
-
-	// //is it reward time?
-	// if(%percentDead > $BBB::Traitor::AwardPercent + $BBB::Round::AwardPercentOffset)
-	// {
-	// 	//reward all traitors the amount
-	// 	for(%i = 0; %i < %count; %i++)
-	// 	{
-	// 		%currClient = %mini.playingClients[%i];
-	// 		if(%currClient.role.name $= "Traitor")
-	// 		{
-	// 			//are they dead?
-	// 			if(isObject(%currClient.player))
-	// 			{
-	// 				%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::AwardSize SPC "Credit\c6 for your hard work.");
-	// 				%currClient.credits += $BBB::Traitor::AwardSize;
-	// 			}
-	// 		}
-	// 	}
-
-	// 	$BBB::Round::AwardPercentOffset += $BBB::Traitor::AwardPercent;
-	// }
-
-	//did a traitor kill the detective?
-	// if(%client.role.name $= "Detective" && %sourceClient.role.name $= "Traitor")
-	// {
-	// 	%sourceClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Traitor::DetectiveKill SPC "Credit\c6 for your hard work.");
-	// 	%sourceClient.credits += $BBB::Traitor::DetectiveKill;
-	// }
-
-	//did a traitor die?
-	// if(%client.role.name $= "Traitor")
-	// {
-	// 	//reward all detectives the amount
-	// 	for(%i = 0; %i < %count; %i++)
-	// 	{
-	// 		%currClient = %mini.playingClients[%i];
-	// 		if(%currClient.role.name $= "Detective")
-	// 		{
-	// 			//are they dead?
-	// 			if(isObject(%currClient.player))
-	// 			{
-	// 				%currClient.chatMessage("\c6Well done. You have been awarded\c3" SPC $BBB::Detective::TraitorDead SPC "Credit\c6 for your hard work.");
-	// 				%currClient.credits += $BBB::Detective::TraitorDead;
-	// 			}
-	// 		}
-	// 	}
-	// }
-
+	%sourceClient.role.StartCallback("OnKill",%sourceClient,%client);
 	// removed mini-game checks here
 	// removed death message print here
 	// removed %message and %sourceClientName arguments
