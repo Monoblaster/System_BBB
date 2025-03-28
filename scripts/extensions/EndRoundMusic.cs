@@ -179,8 +179,7 @@ package BBB_EndRoundMusic
 		%count = getWordCount(%type);
 		for(%i = 0; %i < %count; %i++)
 		{
-			schedule(%time, %so, "BBB_PlayGlobalMusic", getWord(%type,%i).winSound);
-			return;
+			schedule(%time, %so, "BBB_PlayGlobalMusic", getWord(%type,%i).sound);
 		}
 		
 	}

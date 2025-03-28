@@ -1,4 +1,4 @@
-function WinCondition_new(%name)
+function WinCondition_new(%name,%displayName,%winSound)
 {
 	if(isObject(%name))
 	{
@@ -8,12 +8,14 @@ function WinCondition_new(%name)
 	%new = new ScriptObject(%name)
 	{
 		superClass = WinCondition_Basic;
+		display = %displayName;
+		sound = %winSound;
 	};
 
 	return %new;
 }
 
-function WinCondition_set(%client,%condition)
+function WinCondition_set(%client,%condition,%winSound)
 {
 	if(%condition.superClass !$= "WinCondition_Basic")
 	{
@@ -87,31 +89,6 @@ function WinCondition_Basic::hasDifferentWinCondition(%obj)
 		%clients = %clients SPC %client;
 	}
 	return ltrim(%clients);
-}
-
-
-// is miskill
-function WinCondition_Innocent::isMiskill(%obj,%target)
-{
-	return %obj == %target;
-}
-
-// If everyone has the same win condition that win condition wins
-function WinCondition_Innocent::hasWon(%obj)
-{
-	%others = %obj.hasDifferentWinCondition();
-	%count = getWordCount(%others);
-	for(%i = 0; %i < %count; %i++)
-	{
-		%client = getWord(%others,%i);
-		if(!isObject(%client.player))
-		{
-			continue;
-		}
-
-		return false;
-	}
-	return true;
 }
 
 function Role_Create(%name,%shortname,%color,%wincondition,%components)
@@ -235,8 +212,8 @@ function Traitor_OnKill(%obj,%target,%deadclient)
 //TODO: something smarter than globals
 function TTT_CreateRoles()
 {
-	WinCondition_new("WinCondition_Innocent");
-	WinCondition_new("WinCondition_Traitor");
+	WinCondition_new("WinCondition_Innocent","\c2INNOCENTS");
+	WinCondition_new("WinCondition_Traitor","\c0TRAITORS","Traitor_Win");
 
 	$TTT::RoleGroup.deleteAll();
 
@@ -250,7 +227,6 @@ function TTT_CreateRoles()
 	%role.publicbillboard = "";
 	%role.startingItems = "";
 	%role.winOnTimeup = false;
-	%role.winSound = "Traitor_Win";
 	%role.hasteMode = true;
 	%role.creditGain = 1;
 	%role.creditDeadPercent = 0.35;
@@ -265,7 +241,6 @@ function TTT_CreateRoles()
 	%role.publicbillboard = "";
 	%role.startingItems = "";
 	%role.winOnTimeup = true;
-	%role.winSound = "Innocent_Win";
 	%role.hasteMode = false;
 	$TTT::RoleGroup.set(%role,%role.name);
 
@@ -277,7 +252,6 @@ function TTT_CreateRoles()
 	%role.publicbillboard = detectiveBillboard;
 	%role.startingItems = "BodyArmorItem DNAScannerItem";
 	%role.winOnTimeup = true;
-	%role.winSound = "Innocent_Win";
 	%role.hasteMode = false;
 	$TTT::RoleGroup.set(%role,%role.name);
 	
@@ -354,7 +328,6 @@ function TTT_PostRoleSetup()
 				if(%withRoleCount > 1)
 				{
 					%client.chatMessage(%msg @ stringList(removeField(%names,%client.getPlayerName()),"\t",", ","and"));
-					%client.play2D(BBB_Chat_Sound);
 				}
 				
 				for(%j = 0; %j < %withrolecount; %j++)
@@ -400,12 +373,40 @@ function TTT_PostRoleSetup()
 				{
 					%currclient = getWord(%withoutrole,%j);
 					%currclient.chatMessage(%msg @ stringList(%names,"\t",", ","and"));
-					%currclient.play2D(BBB_Chat_Sound);
 					%client.inspectInfo[%currclient] = "<br><br><br><br><br><color:"@%t@">"@%rolename@"<br>";
 					%client.namecolor[%currclient] = %ls;
 					secureCommandToClient("zbR4HmJcSY8hdRhr",%currclient ,'ClientJoin', %badge SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 				}
 			}			
+		}
+		else if(%withrolecount > 0)
+		{
+			%hsv = rgb2hsv(%t);
+			%s = hsv2rgb(getWord(%hsv,0),getWord(%hsv,1) * 0.2,getWord(%hsv,2));
+			%ls = hsv2rgb(getWord(%hsv,0),getWord(%hsv,1) * 0.5,getWord(%hsv,2));
+			if(%withrolecount == 1)
+			{
+				%msg = "<color:"@%s@">There is <color:"@%t@">"%withrolecount SPC %rolename;
+			}
+			else
+			{
+				%msg = "<color:"@%s@">There are <color:"@%t@">"%withrolecount SPC %rolename@"s";
+			}
+			
+			if(!%data.rolechat)//display to non roles
+			{
+				for(%i = 0; %i < %withrolecount; %i++)
+				{
+					%client = getWord(%withrole,%i)
+					%client.chatMessage(%msg);
+				}
+			}
+			
+			for(%i = 0; %i < %withoutrolecount; %i++)
+			{
+				%client = getWord(%withoutrole,%i)
+				%client.chatMessage(%msg);
+			}
 		}
 
 		if(%data.startingItems !$= "")
@@ -433,12 +434,12 @@ function TTT_WinCheck()
 	for(%i = 0; %i < %count; %i++)
 	{
 		%data = %group.getObject(%i);
-		if(!%data.winCondition.hasWon() && (!%data.winOnTimeup || $BBB::rTimeLeft > 0))
+		if(%won[%data.winCondition] || (!%data.winCondition.hasWon() && (!%data.winOnTimeup || $BBB::rTimeLeft > 0)))
 		{
 			continue;
 		}
-
-		%winners = %winners SPC %data;
+		%won[%data.winCondition] = true;
+		%winners = %winners SPC %data.winCondition;;
 	}
 
 	return lTrim(%winners);

@@ -1659,19 +1659,11 @@ function BBB_Minigame::roundEnd(%so, %type)
 	%count = getWordCount(%type);
 	for(%i = 0; %i < %count; %i++)
 	{
-		switch$(getWord(%type,%i).name)
-		{
-			case "Innocent":
-				%text = "<br><br><font:Palatino Linotype:90>\c2INNOCENTS \c2WIN";
-			case "Detective":
-				%text = "<br><br><font:Palatino Linotype:90>\c2INNOCENTS \c2WIN";
-			case "Traitor":
-				%text = "<br><br><font:Palatino Linotype:90>\c0TRAITORS WIN";
-			default:
-				%text = "";
-		}
+		%text = %text SPC getWord(%type,%i).displayName;
 	}
-	
+	%text = "<br><br><font:Palatino Linotype:80>" SPC lTrim(%text) SPC "WIN";
+
+
 	$BBB::Round::Phase = "PostRound";
 
 	//item popping time baby! (wtf?)
