@@ -5,8 +5,17 @@ if($TTTInventory::Shop $= "")
 
 function TTTInventory_Prompt(%client,%slot,%select)
 {
+    if($BBB::Round::Phase !$= "Round")
+    {
+        return;
+    }
     if(%client.TTTInventory_Shop)
     {
+        if(%client.TTTInventory_Shop.tool[%slot].getId() == TTTShop_Credit.getId())
+        {
+            TTTInventory_ShopCreditPrompt(%client,%slot,%select);
+            return;
+        }
         if(%slot == 7)
         {
             TTTInventory_ShopNextPrompt(%client,%slot,%select);
@@ -29,11 +38,24 @@ function TTTInventory_Prompt(%client,%slot,%select)
 
 function TTTInventory_Use(%client,%slot)
 {
+    if($BBB::Round::Phase !$= "Round")
+    {
+        return;
+    }
     if(%client.TTTInventory_Shop)
     {
+        if(%client.TTTInventory_Shop.tool[%slot].getId() == TTTShop_Credit.getId())
+        {
+            TTTInventory_ShopCredit(%client,%slot);
+            return;
+        }
         if(%slot == 7)
         {
             TTTInventory_ShopNext(%client,%slot);
+            return;
+        }
+        if(%slot <= 0)
+        {
             return;
         }
         TTTInventory_ShopItemBuy(%client,%slot);
@@ -68,22 +90,19 @@ function TTTInventory_OpenShop(%client,%slot)
 {
     %player = %client.player;
 
-    if(isObject(%player))
+    %shop = %client.role.data.shop;
+    if(!isObject(%player))
     {
-        %role = %client.role.data.name;
-        switch$(%role)
-        {
-        case "Traitor":
-            %client.TTTInventory_Shop = $TTTInventory::TraitorShopMain;
-            $TTTInventory::TraitorShopMain.display(%client,true);
-        case "Detective":
-            %client.TTTInventory_Shop = $TTTInventory::DetectiveShopMain;
-            $TTTInventory::DetectiveShopMain.display(%client,true);
-        default:
-            %client.centerPrint("\c5You do not have a shop");
-        }
-        
+        return;
     }
+
+    if(!isObject(%shop))
+    {
+        %shop = $TTTInventory::DefaultShopMain;
+    }
+
+    %client.TTTInventory_Shop = %shop;
+    %shop.display(%client,true);
 }
 
 function TTTInventory_ShopItemPrompt(%client,%slot,%select)
@@ -99,13 +118,13 @@ function TTTInventory_ShopItemPrompt(%client,%slot,%select)
         %prompt = "\c3" @ %price @ "c";
         if(%stock !$= "")
         {
-            %prompt = %prompt @ "<br>\c4" @ %currStock SPC "left";
+            %prompt = %prompt @ "<br>\c4" @ %currStock SPC "left in private stock";
         }
 
-        %prompt = %prompt @ "<br>\c5Drop this item to select.";
+        %prompt = %prompt @ "<br>\c5Drop this item to purchase.";
         if(%currStock <= 0 && %stock !$= "")
         {
-            %prompt = "\c3Item out of stock";
+            %prompt = "\c3Item out of private stock";
         }
         
         %client.centerPrint("\c6" @ %name @ "<br>"@ %prompt);
@@ -153,7 +172,7 @@ function TTTInventory_ShopNextPrompt(%client,%slot,%select)
     if(%select)
     {
         %name = "Next Page";
-        %client.centerPrint("\c6" @ %name @ "<br>\c5Drop this item to select.");
+        %client.centerPrint("\c6" @ %name @ "<br>\c5Drop this item to go to the next page.");
     }
     else
     {
@@ -170,6 +189,33 @@ function TTTInventory_ShopNext(%client,%slot)
         %client.TTTInventory_Shop = %client.TTTInventory_Shop.nextPage;
         %client.TTTInventory_Shop.display(%client,true);
     }
+}
+
+function TTTInventory_ShopCreditPrompt(%client,%slot,%select)
+{
+    if(%select)
+    {
+        %name = "Drop Credit";
+        %client.centerPrint("\c6" @ %name @ "<br>\c5Drop this item to drop a credit.");
+    }
+    else
+    {
+        %client.centerPrint("");
+    }
+}
+
+function TTTInventory_ShopCredit(%client,%slot)
+{
+    %player = %client.player;
+
+    if(%client.credits <= 0)
+    {
+        return;
+    }
+
+    %client.credits--;
+    %client.player.tool[-1] = BBB_Credit_Item.getId();
+    ServerCmdDropTool(%client, -1);
 }
 
 package WeaponDroping
@@ -320,10 +366,21 @@ datablock ItemData(TTTShop_Next)
     colorShiftColor = "1 1 1 1";
 };
 
+datablock ItemData(TTTShop_Credit)
+{
+    category = "Tools";
+    uiName = "Credit";
+    iconName = "";
+    doColorShift = true;
+    colorShiftColor = "1 1 0 1";
+};
+
+
 function TTTInventoryV2_Init()
 {
     $TTTInventory::TraitorShopMain = TTTInventoryV2_makeShop("Traitor");
     $TTTInventory::DetectiveShopMain = TTTInventoryV2_makeShop("Detective");
+    $TTTInventory::DefaultShopMain = TTTInventoryV2_makeShop("Default");
     $TTTInventory::Shop = Inventory_create().set(7,TTTShop_Shop);
 }
 
@@ -337,20 +394,33 @@ function TTTInventoryV2_makeShop(%tablename)
     %maxItemsPerPage = 7;
     %numberOfPages = mCeil(%itemCount / %maxItemsPerPage);
     %currPage = %main;
+    %creditprompt = false;
+    %currPage.set(0,TTTShop_Credit);
     for(%i = 0; %i < %numberOfPages; %i++)
     {
         %currPage.set(7,TTTShop_Next);
-
+        
         //loop and add the items to the shop page
         %itemsOnThisPage = getMin(%itemCount - %itemsUsed,%maxItemsPerPage);
+        if(%i == 0)
+        {
+            %itemsOnThisPage--;
+        }
+
         for(%j = 0; %j < %itemsOnThisPage;%j++)
         {
-            %currItem = getWord(%table,%itemsUsed + %j);
+            if(%currPage.get(%j) !$= "")
+            {
+                
+                continue;
+            }
+
+            %currItem = getWord(%table,%itemsUsed);
             %currPage.set(%j,%currItem);
             %currPage.price[%j] = $BBB::WeaponPrice[%tablename,%currItem.getName()];
             %currPage.stock[%j] = $BBB::WeaponStock[%tablename,%currItem.getName()];
+            %itemsUsed++;
         }
-        %itemsUsed += %itemsOnThisPage;
 
         if(%itemsUsed != %itemCount)
         {
@@ -571,7 +641,7 @@ package TTTInventory
     function ServerCmdDropTool(%client,%position)
     {
         TTTInventory_Use(%client,%position);
-        if(%client.TTTInventory_Shop $= "" && %client.TTTInventory_Corpse $= "")
+        if(%position < 0 || %client.TTTInventory_Shop $= "" && %client.TTTInventory_Corpse $= "")
         {
             return parent::ServerCmdDropTool(%client,%position);
         }

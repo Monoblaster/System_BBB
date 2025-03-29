@@ -1659,7 +1659,7 @@ function BBB_Minigame::roundEnd(%so, %type)
 	%count = getWordCount(%type);
 	for(%i = 0; %i < %count; %i++)
 	{
-		%text = %text SPC getWord(%type,%i).displayName;
+		%text = %text SPC getWord(%type,%i).display;
 	}
 	%text = "<br><br><font:Palatino Linotype:80>" SPC lTrim(%text) SPC "WIN";
 
@@ -1778,6 +1778,7 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 	for(%i = 0; %i < %so.numMembers; %i++)
 	{
 		%client = %so.member[%i];
+		%client.credits = 0;
 		if(%client.slayed > 0)
 		{
 			if(%override)

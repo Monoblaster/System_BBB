@@ -112,6 +112,43 @@ if(!isObject(BBB_Death_Sound))
 	};
 }
 
+if(!isObject(BBB_Credit_Sound)) //i have no idea why these are coded like this
+{
+	datablock AudioProfile(BBB_Credit_Sound)
+	{
+		filename		= $BBB::Path @ "sounds/pickup_coins.wav";
+		description	= AudioClosest3d;
+		preload		= true;
+	};
+}
+
 // =================================================
-// 3. ScriptObject
+// 3. Shapes
 // =================================================
+
+if(!isObject(BBB_Credit_Item)) //i have no idea why these are coded like this
+{
+	datablock ItemData(BBB_Credit_Item)
+	{
+		category = "Tools";
+		shapeFile = $BBB::Path @ "shapes/coins.dts";
+		mass = 1;
+		density = 0.2;
+		elasticity = 0.2;
+		friction = 0.6;
+		emap = 1;
+		uiName = "Credit";
+		iconName = "";
+		doColorShift = 1;
+		colorShiftColor = "1.0 0.9 0.1 1.0";
+		image = hammerImage;
+		canDrop = 1;
+	};
+}
+
+function BBB_Credit_Item::onPickup(%this,%item,%player,%amount)
+{
+	%player.client.play2d("BBB_Credit_Sound");
+	%player.client.credits += 1;
+	%item.schedule(0,"delete");
+}

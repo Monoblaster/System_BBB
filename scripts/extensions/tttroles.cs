@@ -220,7 +220,7 @@ function TTT_CreateRoles()
 	%component = Component_Create("Traitor");
 	%component.callback("OnKill","Traitor_OnKill");
 	%role = Role_Create("Traitor","T","ff0000","WinCondition_Traitor",%component);
-	%role.shop = "";
+	%role.shop = $TTTInventory::TraitorShopMain;
 	%role.credits = 3;
 	%role.rolechat = true;
 	%role.rolebillboard = traitorAVBillboard;
@@ -245,7 +245,7 @@ function TTT_CreateRoles()
 	$TTT::RoleGroup.set(%role,%role.name);
 
 	%role = Role_Create("Detective","D","0000ff","WinCondition_Innocent");
-	%role.shop = "";
+	%role.shop = $TTTInventory::DetectiveShopMain;
 	%role.credits = 2;
 	%role.rolechat = true;
 	%role.rolebillboard = "";

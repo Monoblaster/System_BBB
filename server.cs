@@ -174,6 +174,7 @@ function BBB() // -- The only non-packaged function not in functions.cs! Wow! (I
 		BBB_RebuildItemTable();
 		BBB_BuildMapList();
 		BBB_BuildShopList();
+		TTT_CreateRoles();
 
 		BBB_LoadMap(SelectMaps(1));
 

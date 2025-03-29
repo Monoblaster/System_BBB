@@ -2,6 +2,8 @@ datablock ItemData(BodyArmorItem : HammerItem)
 {
 	uiName = "Body Armor";
 	iconName = "./icon_TacticalVest";
+	doColorShift = 0;
+	colorShiftColor = "1 1 1 1";
 };
 
 datablock AudioProfile(BodyArmorEquipSound)

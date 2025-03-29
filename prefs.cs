@@ -92,4 +92,65 @@ mine_proxyImage.TTT_Contraband = true;
 mine_incendiaryImage.TTT_Contraband = true;
 ThrowingKnifeImage.TTT_Contraband = true;
 
+trap_healthItem.doColorShift = false; // OXY!!
+
+function silenceWeaponEquip()
+{
+	%group = dataBlockGroup.getId();
+	%count = %group.getCount();
+	for(%i = 0; %i < %count; %i++)
+	{
+		%data = %group.getObject(%i);
+		if(%data.stateSound[0] $= "")
+		{
+			continue;
+		}
+		%name = %data.getName();
+		%newName = "Silenced"@%name;
+		eval("datablock ShapeBaseImageData("@%newName@" : "@%name@"){silenced=true;stateSound[0]=\"\";};"@
+		"function "@%newName@"::onFire(%this,%obj,%slot){return "@%name@"::onFire(%this,%obj,%slot);}"@
+		"function "@%newName@"::onActivate(%this,%obj,%slot){return "@%name@"::onActivate(%this,%obj,%slot);}"@
+		"function "@%newName@"::onPreFire(%this,%obj,%slot){return "@%name@"::onPreFire(%this,%obj,%slot);}"@
+		"function "@%newName@"::TT_isRaycastCritical(%this,%obj,%slot,%col,%pos,%normal,%hit){return "@%name@"::TT_isRaycastCritical(%this,%obj,%slot,%col,%pos,%normal,%hit);}");
+		%data.item.image = %newName;
+	}
+}
+silenceWeaponEquip();
+
 deactivatePackage("WeaponDropCharge");
+function L4BIceAxeImage::onFire(%this, %obj, %slot)
+{
+	if(%obj.getDamagePercent() >= 1.0)
+		return;
+
+	%obj.playThread(2, shiftTo);
+
+	if(getRandom(0,1))
+	{
+		%this.TT_raycastExplosionBrickSound = L4BMacheteHitSoundA;
+	}
+	else
+	{
+		%this.TT_raycastExplosionBrickSound = L4BMacheteHitSoundB;
+	}
+
+	Parent::onFire(%this, %obj, %slot);
+}
+
+function L4BIceAxeImage::onActivate(%this, %obj, %slot)
+{
+	%obj.playthread(2, plant);
+}
+
+function L4BIceAxeImage::onPreFire(%this, %obj, %slot)
+{
+	%obj.playthread(2, shiftAway);
+}
+
+function L4BIceAxeImage::TT_isRaycastCritical(%this,%obj,%slot,%col,%pos,%normal,%hit)
+{
+	if(!isObject(%col))
+		return 0;
+	
+	return TT_isMeleeRaycastCrit(%this,%obj,%slot,%col,%pos,%normal,%hit) || (ae_calculateDamagePosition(%col, %pos) $= "head");
+}
