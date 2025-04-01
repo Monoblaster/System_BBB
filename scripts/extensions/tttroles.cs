@@ -347,11 +347,8 @@ function TTT_PostRoleSetup()
 			for(%i = 0; %i < %withrolecount; %i++)
 			{
 				%client = getWord(%withrole,%i);
-				if(%withRoleCount > 1)
-				{
-					%client.chatMessage(%msg @ stringList(trim(strReplace(%names @ "\t",%client.getPlayerName() @ "\t","")),"\t",", ","and"));
-				}
-				
+				%client.chatMessage(%msg @ stringList(trim(strReplace(%names @ "\t",%client.getPlayerName() @ "\t","You")),"\t",", ","and"));
+
 				for(%j = 0; %j < %withrolecount; %j++)
 				{
 					%roleclient = getWord(%withrole,%j);
