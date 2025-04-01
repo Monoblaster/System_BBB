@@ -1717,8 +1717,8 @@ function BBB_Minigame::roundStart(%so)
 
 	$BBB::Round::Phase = "Round";
 
-	$BBB::bTimeLeft = $BBB::Time::Base;
-	$BBB::rTimeLeft = $BBB::Time::Base;
+	$BBB::bTimeLeft = %so.rolegroup.time;
+	$BBB::rTimeLeft = %so.rolegroup.time;
 
 	BBB_LookLoop();
 	BBB_TimerLoop();
