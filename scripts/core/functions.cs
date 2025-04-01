@@ -1548,7 +1548,7 @@ function BBB_Minigame::CleanUp(%so)
 
 function BBB_Minigame::doWinCheck(%so, %scheduled)
 {
-	%winners = %so.activeRoleGroup.WinCheck();
+	%winners = %so.activeRoleGroup.WinCheck($BBB::rTimeLeft <= 0);
 	if(%winners !$= "")
 	{
 		%so.roundEnd(%winners);
