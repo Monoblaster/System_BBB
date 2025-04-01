@@ -19,6 +19,20 @@ datablock fxLightData(traitorAVBillboard : DefaultAVBillboard)
 	flareColor = "1 0 0 1";
 };
 
+datablock fxLightData(traitorAVBillboard2 : DefaultAVBillboard)
+{
+    flarebitmap = "./traitor.png";
+	ConstantSize = 0.5;
+	flareColor = "0 1 0 1";
+};
+
+datablock fxLightData(traitorAVBillboard3 : DefaultAVBillboard)
+{
+    flarebitmap = "./traitor.png";
+	ConstantSize = 0.5;
+	flareColor = "0 0 1 1";
+};
+
 
 datablock fxLightData(normalSilhouetteAVBillboard : DefaultAVBillboard)
 {

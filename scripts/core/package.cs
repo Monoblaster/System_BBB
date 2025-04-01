@@ -249,7 +249,7 @@ package BBB_Armor
 									if(isObject(%client))
 									{
 										//mark them as dead in the player list
-										secureCommandToAllTS("zbR4HmJcSY8hdRhr", 'ClientJoin', "[Dead]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+										secureCommandToAllTS("zbR4HmJcSY8hdRhr", 'ClientJoin', "[Dead "@%corpse.role.data.badge@"]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 									}
 								}
 							}
@@ -1213,6 +1213,7 @@ package BBB_ServerCMD
 
 	function serverCmdTeamMessageSent(%client, %msg)
 	{
+		%minigame = getMiniGameFromObject(%client);
 		if(!%client.inBBB)
 			return parent::serverCmdTeamMessageSent(%client, %msg);
 
@@ -1256,7 +1257,7 @@ package BBB_ServerCMD
 		%s = "<color:"@hsv2rgb(getWord(%hsv,0),getWord(%hsv,1)* 0.2,getWord(%hsv,2))@">";
 		%t = "<color:"@%color@">";
 		%teamname = %client.role.data.name;
-		%team = $TTT::ActiveRoleGroup.WithRole(%teamname);
+		%team = %minigame.activeRoleGroup.WithRole(%teamname);
 		%count = getWordCount(%team);
 		%type = "\c7[" @ %t @ %teamname @ "\c7] ";
 		for(%i = 0; %i < %count; %i++)

@@ -1484,23 +1484,7 @@ function BBB_Minigame::assignRoles(%so)
 	}
 	%so.numPlayers = %playerCount;
 
-	%roleList = getWords($TTT::DefaultRoleList,0,%playerCount - 1);
-	%currIndex = %playerCount - 1;
-	// While there remain elements to shuffle...
-	while (%currIndex > 0)
-	{
-		// Pick a remaining element...
-		%randIndex = getRandom(0,%playerCount-1);
-
-		// And swap it with the current element.
-		%temp = getWord(%roleList,%currIndex);
-		%roleList = setWord(%roleList,%currIndex,getWord(%roleList,%randIndex));
-		%roleList = setWord(%roleList,%randIndex,%temp);
-		%currIndex--;
-	}
-	// =============================================
-
-	TTT_PreRoleSetup();
+	%defaultcolor = hsv2rgb(120,0.5,1);
 	for(%a = 0; %a < %playerCount; %a++)
 	{
 		%client = %so.playingClients[%a];
@@ -1511,26 +1495,15 @@ function BBB_Minigame::assignRoles(%so)
 		}
 		%player.mountObject(%player.roleBBM,8);
 		secureCommandToAllTS("zbR4HmJcSY8hdRhr" ,'ClientJoin', %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
-		//reset inspectInfo
-		%defaultcolor = hsv2rgb(120,0.5,1);
 		for(%b = 0; %b < %playerCount; %b++)
 		{
 			%targetclient = %so.playingClients[%b];
 			%client.inspectInfo[%targetclient] = "\c6";
 			%client.namecolor[%targetclient] = %defaultcolor;
 		}
-		%r = getRandom(%rolelist,0,getWordCount(%rolelist)-1);
-		%client.TTT_SetRole(getWord(%roleList,%r));
-		%roleList = removeWord(%roleList,%r);
+		%clients = %clients SPC %so.playingClients[%a]
 	}
-	%group = $TTT::ActiveRoleGroup.getId();
-	%count = %group.getCount();
-	for(%i = 0; %i < %count; %i++)
-	{
-		%group.getObject(%i).StartCallback("OnGiven");
-	}
-
-	TTT_PostRoleSetup();
+	%so.activeRoleGroup = %so.rolegroup.setRoles(%clients);
 }
 
 function secureCommandToAllTS (%code, %command, %a1, %a2,%a3, %a4, %a5, %a6,%a7)

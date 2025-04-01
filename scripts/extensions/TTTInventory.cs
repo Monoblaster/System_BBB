@@ -1,8 +1,3 @@
-if($TTTInventory::Shop $= "")
-{
-    schedule(1000,0,"TTTInventoryV2_Init");
-}
-
 function TTTInventory_Prompt(%client,%slot,%select)
 {
     if($BBB::Round::Phase !$= "Round")
