@@ -174,7 +174,7 @@ function BBB() // -- The only non-packaged function not in functions.cs! Wow! (I
 		BBB_BuildShopList();
 		TTTInventoryV2_Init();
 		TTT_CreateRoles();
-		%so.rolegroup = "RoleGroup_Default";
+		%so.rolegroup = RoleGroup_Find("Default");
 
 		BBB_LoadMap(SelectMaps(1));
 

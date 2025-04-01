@@ -1,4 +1,4 @@
-function WinCondition_new(%name,%displayName,%winSound)
+function WinCondition_new(%name,%winBlocking,%winOnTimeup,%displayName,%winSound)
 {
 	if(isObject(%name))
 	{
@@ -8,6 +8,8 @@ function WinCondition_new(%name,%displayName,%winSound)
 	%new = new ScriptObject(%name)
 	{
 		superClass = WinCondition_Basic;
+		winBlocking = %winBlocking;
+		winOnTimeup = %winOnTimeup;
 		display = %displayName;
 		sound = %winSound;
 	};
@@ -41,7 +43,7 @@ function WinCondition_Basic::hasWon(%obj)
 	for(%i = 0; %i < %count; %i++)
 	{
 		%client = getWord(%others,%i);
-		if(!isObject(%client.player))
+		if(!isObject(%client.player) || !%client.winCondition.winBlocking)
 		{
 			continue;
 		}
@@ -51,7 +53,6 @@ function WinCondition_Basic::hasWon(%obj)
 	return true;
 }
 
-//helper for getting clients with the same win condition
 function WinCondition_Basic::hasSameWinCondition(%obj)
 {
 	%obj = %obj.getId();
@@ -71,24 +72,9 @@ function WinCondition_Basic::hasSameWinCondition(%obj)
 	return ltrim(%clients);
 }
 
-//helper for getting clients with a different win condition
-function WinCondition_Basic::hasDifferentWinCondition(%obj)
+function WinCondition_Survivor::isMiskill(%obj,%target)
 {
-	%obj = %obj.getId();
-	%clients = "";
-	%mg = BBB_Minigame.getId();
-	%count = %mg.numPlayers;
-	for(%i = 0; %i < %count; %i++)
-	{
-		%client = %mg.playingClients[%i];
-		if(%client.winCondition.getId() == %obj)
-		{
-			continue;
-		}
-
-		%clients = %clients SPC %client;
-	}
-	return ltrim(%clients);
+	return false;
 }
 
 function Role_Create(%name,%shortname,%color,%wincondition,%components,%description)
@@ -114,15 +100,21 @@ function Role::Instance(%role)
 	return %holder;
 }
 
+if(!isObject($RoleGroups))
+{
+	$RoleGroups = new ScriptGroup();
+}
+
+function RoleGroup_Find(%name)
+{
+	return $RoleGroups.name[%name];
+}
+
 function RoleGroup_Create(%name,%time,%list,%description)
 {
-	if(isObject("RoleGroup_" @ %name))
+	%set = new ScriptGroup()
 	{
-		("RoleGroup_" @ %name).delete();
-	}
-
-	%set = new ScriptGroup("RoleGroup_" @ %name)
-	{
+		name = %name
 		class = "RoleGroup";
 		list = %list;
 		description = %description;
@@ -130,6 +122,22 @@ function RoleGroup_Create(%name,%time,%list,%description)
 	};
 
 	return %set;
+}
+
+function RoleGroup::OnAdd(%obj)
+{
+	if(isObject($RoleGroups.name[%name]))
+	{
+		$RoleGroups.name[%name].delete();
+	}
+	$RoleGroups.name[%obj.name] = %obj;
+	$RoleGroups.add(%obj);
+}
+
+function RoleGroup::OnRemove(%obj)
+{
+	$RoleGroups.name[%obj.name] = "";;
+	$RoleGroups.remove(%obj);
 }
 
 function RoleGroup::Role(%obj,%role)
@@ -363,22 +371,40 @@ function ActiveRoleGroup::WithoutRole(%obj,%name)
 	return ltrim(%clients);
 }
 
-function ActiveRoleGroup::WinCheck(%obj,%name)
+function ActiveRoleGroup::WinCheck(%obj,%timeUp)
 {
 	%count = %obj.getCount();
 	%winners = "";
 	for(%i = 0; %i < %count; %i++)
 	{
-		%data = %obj.getObject(%i).data;
-		if(%won[%data.winCondition] || (!%data.winCondition.hasWon() && (!%data.winOnTimeup || $BBB::rTimeLeft > 0)))
+		%winCondition = %obj.getObject(%i).data.winCondition;
+		if(%won[%winCondition] || (!%winCondition.hasWon() && (!%winCondition.winOnTimeup || %timeUp)))
 		{
 			continue;
 		}
-		%won[%data.winCondition] = true;
-		%winners = %winners SPC %data.winCondition;
+		%won[%winCondition] = true;
+		%winners = %winners SPC %winCondition;
 	}
 
-	return lTrim(%winners);
+	%winners = ltrim(%winners);
+
+	if(%winners $= "")
+	{
+		return "";
+	}
+
+	for(%i = 0; %i < %count; %i++)
+	{
+		%winCondition = %obj.getObject(%i).data.winCondition;
+		if(%won[%winCondition] || %winCondition.winBlocking)
+		{
+			continue;
+		}
+		%won[%winCondition] = true;
+		%winners = %winners SPC %winCondition;
+	}
+
+	return %winners;
 }
 
 function serverCmdGameHelp(%client)
@@ -455,11 +481,11 @@ function Innocent_OnGiven(%obj) //promote people to detective
 
 function TTT_CreateGroups()
 {
-	WinCondition_new("WinCondition_Innocent","\c2INNOCENTS");
-	WinCondition_new("WinCondition_Survivor","\c4SURVIVORS");
-	WinCondition_new("WinCondition_Traitor","\c0TRAITORS","Traitor_Win");
-	WinCondition_new("WinCondition_Traitor2","\c0TRAITORS","Traitor_Win");
-	WinCondition_new("WinCondition_Traitor3","\c0TRAITORS","Traitor_Win");
+	WinCondition_new("WinCondition_Innocent",true,true,"\c2INNOCENTS");
+	WinCondition_new("WinCondition_Survivor",false,true,"\c4SURVIVORS");
+	WinCondition_new("WinCondition_Traitor",true,false,"\c0TRAITORS","Traitor_Win");
+	WinCondition_new("WinCondition_Traitor2",true false,"\c0TRAITORS","Traitor_Win");
+	WinCondition_new("WinCondition_Traitor3",true false,"\c0TRAITORS","Traitor_Win");
 
 	%group = RoleGroup_Create("Default",60000 * 3 ,"0 1 1 1 1 1 1"SPC
 	"1 1 1 0"SPC
@@ -484,7 +510,6 @@ function TTT_CreateGroups()
 	%role.rolebillboard = traitorAVBillboard;
 	%role.publicbillboard = "";
 	%role.startingItems = "";
-	%role.winOnTimeup = false;
 	%role.hasteMode = true;
 	%role.creditGain = 1;
 	%role.creditDeadPercent = 0.35;
@@ -503,7 +528,6 @@ function TTT_CreateGroups()
 	%role.rolebillboard = "";
 	%role.publicbillboard = "";
 	%role.startingItems = "";
-	%role.winOnTimeup = true;
 	%role.hasteMode = false;
 	%group.role(%role);
 
@@ -517,19 +541,18 @@ function TTT_CreateGroups()
 	%role.rolebillboard = "";
 	%role.publicbillboard = detectiveBillboard;
 	%role.startingItems = "BodyArmorItem DNAScannerItem";
-	%role.winOnTimeup = true;
 	%role.hasteMode = false;
 	%group.role(%role);
 
-	%group = RoleGroup_Create("The Great War",60000 * 5,"3 0 1 2 0 1 2 0 1 2 3 0 1 2 0 1 2 0 1 2 3 0 1 2 0 1 2 0 1 2 3 3",
-	"The Great War."NL
-	"3 teams of traitors."NL
-	"You don't exactly know who you're fighting but you know they all must die.");
+	%group = RoleGroup_Create("Traitor War",60000 * 5,"3 0 1 2 0 1 2 0 1 2 3 0 1 2 0 1 2 0 1 2 3 0 1 2 0 1 2 0 1 2 3 3",
+	"Traitor War."NL
+	"3 teams of traitors and neutral survivors."NL
+	"You don't know who you're fighting but you know they all must die.");
 
 	%component = Component_Create("Traitor");
 	%component.callback("OnKill","Traitor_OnKill");
 	%role = Role_Create("Red Traitor","RT","ff0000","WinCondition_Traitor",%component,
-	"You are a red traitor."NL
+	"You are a red traitor one of many."NL
 	"Kill all other teams of traitors."NL
 	"You have access to numerous shop items and some starting credits, drop the shop item in your inventory or us /shop.");
 	%role.shop = $TTTInventory::TraitorShopMain;
@@ -538,7 +561,6 @@ function TTT_CreateGroups()
 	%role.rolebillboard = traitorAVBillboard;
 	%role.publicbillboard = "";
 	%role.startingItems = "";
-	%role.winOnTimeup = false;
 	%role.hasteMode = false;
 	%role.creditGain = 1;
 	%role.creditDeadPercent = 0.35;
@@ -548,7 +570,7 @@ function TTT_CreateGroups()
 	%component = Component_Create("Traitor");
 	%component.callback("OnKill","Traitor_OnKill");
 	%role = Role_Create("Green Traitor","GT","00ff00","WinCondition_Traitor2",%component,
-	"You are a green traitor."NL
+	"You are a green traitor one of many."NL
 	"Kill all other teams of traitors."NL
 	"You have access to numerous shop items and some starting credits, drop the shop item in your inventory or us /shop.");
 	%role.shop = $TTTInventory::TraitorShopMain;
@@ -557,7 +579,6 @@ function TTT_CreateGroups()
 	%role.rolebillboard = traitorAVBillboard2;
 	%role.publicbillboard = "";
 	%role.startingItems = "";
-	%role.winOnTimeup = false;
 	%role.hasteMode = false;
 	%role.creditGain = 1;
 	%role.creditDeadPercent = 0.35;
@@ -567,7 +588,7 @@ function TTT_CreateGroups()
 	%component = Component_Create("Traitor");
 	%component.callback("OnKill","Traitor_OnKill");
 	%role = Role_Create("Blue Traitor","BT","0000ff","WinCondition_Traitor3",%component,
-	"You are a blue traitor."NL
+	"You are a blue traitor one of many."NL
 	"Kill all other teams of traitors."NL
 	"You have access to numerous shop items and some starting credits, drop the shop item in your inventory or us /shop.");
 	%role.shop = $TTTInventory::TraitorShopMain;
@@ -576,24 +597,21 @@ function TTT_CreateGroups()
 	%role.rolebillboard = traitorAVBillboard3;
 	%role.publicbillboard = "";
 	%role.startingItems = "";
-	%role.winOnTimeup = false;
 	%role.hasteMode = false;
 	%role.creditGain = 1;
 	%role.creditDeadPercent = 0.35;
 	%role.hasteModeAdd = 0;
 	%group.role(%role);
 
-	%role = Role_Create("Survivor","S","ffff00","WinCondition_Innocent","",
-	"You are a survivor."NL
-	"Kill all Traitors.");
+	%role = Role_Create("Survivor","S","ffff00","WinCondition_Survivor","",
+	"You are a survivor alone."NL
+	"Survive until the end even at the cost of other survivors.");
 	%role.shop = "";
 	%role.credits = 0;
 	%role.rolechat = false;
 	%role.rolebillboard = "";
 	%role.publicbillboard = "";
 	%role.startingItems = "";
-	%role.winOnTimeup = true;
 	%role.hasteMode = false;
 	%group.role(%role);
 }
-//TTT_CreateRoles();

@@ -1548,42 +1548,13 @@ function BBB_Minigame::CleanUp(%so)
 
 function BBB_Minigame::doWinCheck(%so, %scheduled)
 {
-	%winners = TTT_WinCheck();
+	%winners = %so.activeRoleGroup.WinCheck();
 	if(%winners !$= "")
 	{
 		%so.roundEnd(%winners);
 	}	
 }
-// function BBB_Minigame::doWinCheck(%so, %scheduled)
-// {
-	// cancel($BBB::WinCheck::Schedule);
-	// if(!%scheduled)
-	// {
-		// $BBB::WinCheck::Schedule = %so.schedule(10, "doWinCheck", %so, true);
-		// return;
-	// }
 
-	// if($BBB::Round::NumAlive["Innocent"] == 0 && $BBB::Round::NumAlive["Detective"] == 0)
-		// %so.roundEnd("TWin");
-	// else if($BBB::Round::NumAlive["Traitor"] == 0)
-		// %so.roundEnd("IWin");
-	// else if($BBB::TimeLeft <= 0)
-		// %so.roundEnd("IWin");
-	// %win = true;
-// }
-
-// function BBB_Minigame::getPlayerCount(%so)
-// {
-	// %count = 0;
-	// for(%a = 0; %a < ClientGroup.getCount(); %a++)
-	// {
-		// %client = ClientGroup.getObject(%a);
-		// if(%client.inBBB)
-			// %count++;
-	// }
-
-	// return %count;
-// }
 function BBB_Minigame::getNumAlive(%so, %role)
 {
 	%counter = 0;
