@@ -170,6 +170,8 @@ function RoleGroup::WithoutRole(%obj,%name)
 function Traitor_OnKill(%obj,%target,%deadclient)
 {
 	//check if credits are earned and add to the timer
+ 	$BBB::rTimeLeft += %obj.data.hasteModeAdd;
+
 	%mini = BBB_Minigame;
 	%non = $TTT::ActiveRoleGroup.WithoutRole(%obj.data.name);
 	%count = getWordCount(%non);
@@ -206,7 +208,25 @@ function Traitor_OnKill(%obj,%target,%deadclient)
 	}
 	
 	%obj.gainedRewards++;
-	$BBB::rTimeLeft += %obj.data.hasteModeAdd;
+}
+
+function Innocent_OnGiven(%obj) //promote people to detective
+{
+	%minigame = BBB_Minigame.getId();
+	%players = %minigame.numPlayers;
+	%detectives = mFloor(%players / 8);
+
+	%innos = $TTT::ActiveRoleGroup.WithRole(%obj.data.name);
+	%innocount = getWordCount(%innos);
+	for(%i = 0; %i < %detectives; %i++)
+	{
+		%r = getRandom(0,%innocount-1);
+		%innocount--;
+		%selection = getWord(%innos,%r);
+		%innos = removeWord(%innos,%r);
+		
+		%selection.TTT_SetRole("Detective");
+	}
 }
 
 //TODO: something smarter than globals
@@ -230,10 +250,12 @@ function TTT_CreateRoles()
 	%role.hasteMode = true;
 	%role.creditGain = 1;
 	%role.creditDeadPercent = 0.35;
-	%role.hasteModeAdd = 12000;
+	%role.hasteModeAdd = 20000;
 	$TTT::RoleGroup.set(%role,%role.name);
 
-	%role = Role_Create("Innocent","I","00ff00","WinCondition_Innocent");
+	%component = Component_Create("Innocent");
+	%component.callback("OnGiven","Innocent_OnGiven");
+	%role = Role_Create("Innocent","I","00ff00","WinCondition_Innocent",%component);
 	%role.shop = "";
 	%role.credits = 0;
 	%role.rolechat = false;
@@ -246,7 +268,7 @@ function TTT_CreateRoles()
 
 	%role = Role_Create("Detective","D","0000ff","WinCondition_Innocent");
 	%role.shop = $TTTInventory::DetectiveShopMain;
-	%role.credits = 2;
+	%role.credits = 1;
 	%role.rolechat = true;
 	%role.rolebillboard = "";
 	%role.publicbillboard = detectiveBillboard;
@@ -255,7 +277,7 @@ function TTT_CreateRoles()
 	%role.hasteMode = false;
 	$TTT::RoleGroup.set(%role,%role.name);
 	
-	$TTT::DefaultRoleList = "Traitor Innocent Innocent Innocent Traitor Innocent Innocent Detective Traitor Innocent Innocent Innocent Traitor Innocent Innocent Detective Traitor Innocent Innocent Innocent Traitor Innocent Innocent Detective";
+	$TTT::DefaultRoleList = "Traitor Innocent Innocent Innocent Innocent Innocent Innocent Traitor Innocent Innocent Innocent Traitor Innocent Innocent Innocent Traitor Innocent Innocent Innocent Traitor Innocent Innocent Innocent Traitor";
 }
 //TTT_CreateRoles();
 
@@ -327,7 +349,7 @@ function TTT_PostRoleSetup()
 				%client = getWord(%withrole,%i);
 				if(%withRoleCount > 1)
 				{
-					%client.chatMessage(%msg @ stringList(removeField(%names,%client.getPlayerName()),"\t",", ","and"));
+					%client.chatMessage(%msg @ stringList(trim(strReplace(%names @ "\t",%client.getPlayerName() @ "\t","")),"\t",", ","and"));
 				}
 				
 				for(%j = 0; %j < %withrolecount; %j++)
@@ -372,12 +394,20 @@ function TTT_PostRoleSetup()
 				for(%j = 0; %j < %withoutrolecount; %j++)
 				{
 					%currclient = getWord(%withoutrole,%j);
-					%currclient.chatMessage(%msg @ stringList(%names,"\t",", ","and"));
 					%client.inspectInfo[%currclient] = "<br><br><br><br><br><color:"@%t@">"@%rolename@"<br>";
 					%client.namecolor[%currclient] = %ls;
 					secureCommandToClient("zbR4HmJcSY8hdRhr",%currclient ,'ClientJoin', %badge SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 				}
-			}			
+			}
+
+			if(%withRoleCount > 0)
+			{
+				for(%j = 0; %j < %withoutrolecount; %j++)
+				{
+					%currclient = getWord(%withoutrole,%j);
+					%currclient.chatMessage(%msg @ stringList(%names,"\t",", ","and"));
+				}		
+			}
 		}
 		else if(%withrolecount > 0)
 		{
@@ -393,7 +423,7 @@ function TTT_PostRoleSetup()
 				%msg = "<color:"@%s@">There are <color:"@%t@">"@%withrolecount SPC %rolename@"s";
 			}
 			
-			if(!%data.rolechat)//display to non roles
+			if(!%data.rolechat)//display to people with the role
 			{
 				for(%i = 0; %i < %withrolecount; %i++)
 				{

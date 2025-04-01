@@ -54,7 +54,7 @@ function TTTInventory_Use(%client,%slot)
             TTTInventory_ShopNext(%client,%slot);
             return;
         }
-        if(%slot <= 0)
+        if(%slot < 0)
         {
             return;
         }
@@ -392,24 +392,19 @@ function TTTInventoryV2_makeShop(%tablename)
     %itemCount = getWordCount(%table);
     %itemsUsed = 0;
     %maxItemsPerPage = 7;
-    %numberOfPages = mCeil(%itemCount / %maxItemsPerPage);
     %currPage = %main;
-    %creditprompt = false;
     %currPage.set(0,TTTShop_Credit);
-    for(%i = 0; %i < %numberOfPages; %i++)
+    for(%i = 0; %i < 5; %i++)
     {
         %currPage.set(7,TTTShop_Next);
         
         //loop and add the items to the shop page
-        %itemsOnThisPage = getMin(%itemCount - %itemsUsed,%maxItemsPerPage);
-        if(%i == 0)
-        {
-            %itemsOnThisPage--;
-        }
+        %itemsOnPage = 0;
 
-        for(%j = 0; %j < %itemsOnThisPage;%j++)
+        for(%j = 0; %j < %maxItemsPerPage;%j++)
         {
-            if(%currPage.get(%j) !$= "")
+            %itemsOnPage++;
+            if(isObject(%currPage.get(%j)))
             {
                 
                 continue;
@@ -420,16 +415,23 @@ function TTTInventoryV2_makeShop(%tablename)
             %currPage.price[%j] = $BBB::WeaponPrice[%tablename,%currItem.getName()];
             %currPage.stock[%j] = $BBB::WeaponStock[%tablename,%currItem.getName()];
             %itemsUsed++;
+
+            if(%itemsUsed >= %itemCount)
+            {
+                
+                break;
+            }
         }
 
-        if(%itemsUsed != %itemCount)
+        if(%itemsUsed >= %itemCount)
         {
-            //create the next page
-            %nextPage = Inventory_Create();
-            %currPage.nextPage = %nextPage;
-            %currPage = %nextPage;
+            break;
         }
-        
+
+        //create the next page
+        %nextPage = Inventory_Create();
+        %currPage.nextPage = %nextPage;
+        %currPage = %nextPage;
     }
     %currPage.nextPage = %main;
     return %main;

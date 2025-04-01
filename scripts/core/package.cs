@@ -1160,21 +1160,21 @@ package BBB_ServerCMD
 		// Regular Chat
 		if(isObject(%client.player) && isObject(getMiniGameFromObject(%client)))
 		{
-			// for(%i = 0; %i < %mg.numMembers; %i++)
-			// {
-				// %tarClient = %mg.member[%i];
-				// messageClient(%tarClient, "", %client.Icon SPC "<color:9EE09C>" @ %client.getPlayerName() @ "\c6: " @ %msg);
-			// }
-			//messageAll("", %client.Icon SPC "<color:9EE09C>" @ %client.getPlayerName() @ "\c6: " @ %msg);
-			%icon = $BBB::Round::Phase $= "Round" ? "" : %client.Icon;
-			//messageAll("", ($BBB::Round::Phase $= "Round" ? "" : %client.Icon) @ " " @ (%client.role.name $= "Detective" ? "<color:7DD4FF>" : "<color:9EE09C>") @ %client.getPlayerName() @ "\c6: " @ %msg);
-			%group = ClientGroup.getId();
+
+			if($BBB::Round::Phase !$= "Round")
+			{
+				%icon = %client.Icon;
+				%color = hsv2rgb(120,0.5,1);
+			}
+			else
+			{
+				%color = %client.nameColor[%targetClient];
+			}
 			%count = %group.getCount();
 			for(%i = 0; %i < %count; %i++)
 			{
 				%targetClient = %group.getObject(%i);
-				%color = %client.nameColor[%targetClient];
-				chatMessageClient(%targetClient, %client,'','' ,'%5%6%2\c6: %4', %client.clanPrefix, %client.getPlayerName(), 
+				chatMessageClient(%targetClient, %client,'','' ,'%6%5%2\c6: %4', %client.clanPrefix, %client.getPlayerName(), 
 				%client.clanSuffix, %msg, "<color:"@%color@">", %icon, %a7, %a8, %a9, %a10);
 				%targetClient.play2D(BBB_Chat_Sound);
 			}

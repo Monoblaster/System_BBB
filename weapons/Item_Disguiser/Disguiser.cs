@@ -31,7 +31,7 @@ datablock ShapeBaseImageData(DisguiserImage)
   eyeOffset = "0 0 0";
   rotation = eulerToMatrix("0 0 0");
   className = "WeaponImage";
-  item = XrayItem;
+  item = DisguiserItem;
   melee = false;
   doReaction = false;
   armReady = false;

@@ -1519,8 +1519,17 @@ function BBB_Minigame::assignRoles(%so)
 			%client.inspectInfo[%targetclient] = "\c6";
 			%client.namecolor[%targetclient] = %defaultcolor;
 		}
-		%client.TTT_SetRole(getWord(%roleList,%a));
+		%r = getRandom(%rolelist,0,getWordCount(%rolelist)-1);
+		%client.TTT_SetRole(getWord(%roleList,%r));
+		%roleList = removeWord(%roleList,%r);
 	}
+	%group = $TTT::ActiveRoleGroup.getId();
+	%count = %group.getCount();
+	for(%i = 0; %i < %count; %i++)
+	{
+		%group.getObject(%i).StartCallback("OnGiven");
+	}
+
 	TTT_PostRoleSetup();
 }
 

@@ -101,7 +101,7 @@ function silenceWeaponEquip()
 	for(%i = 0; %i < %count; %i++)
 	{
 		%data = %group.getObject(%i);
-		if(%data.stateSound[0] $= "")
+		if(%data.stateSound[0] $= "" || striPos(%data.shapefile,"TierTacMelee") == -1)
 		{
 			continue;
 		}
@@ -111,6 +111,8 @@ function silenceWeaponEquip()
 		"function "@%newName@"::onFire(%this,%obj,%slot){return "@%name@"::onFire(%this,%obj,%slot);}"@
 		"function "@%newName@"::onActivate(%this,%obj,%slot){return "@%name@"::onActivate(%this,%obj,%slot);}"@
 		"function "@%newName@"::onPreFire(%this,%obj,%slot){return "@%name@"::onPreFire(%this,%obj,%slot);}"@
+		"function "@%newName@"::onStabFire(%this,%obj,%slot){return "@%name@"::onStabFire(%this,%obj,%slot);}"@
+		"function "@%newName@"::onCharge(%this,%obj,%slot){return "@%name@"::onCharge(%this,%obj,%slot);}"@
 		"function "@%newName@"::TT_isRaycastCritical(%this,%obj,%slot,%col,%pos,%normal,%hit){return "@%name@"::TT_isRaycastCritical(%this,%obj,%slot,%col,%pos,%normal,%hit);}");
 		%data.item.image = %newName;
 	}
