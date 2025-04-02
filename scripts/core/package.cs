@@ -1277,3 +1277,26 @@ package BBB_ServerCMD
 	// }
 };
 activatePackage(BBB_ServerCMD);
+
+function ProjectileData::Damage(%this, %obj, %col, %fade, %pos, %normal)
+{
+	if (%this.directDamage <= 0)
+	{
+		return;
+	}
+	%damageType = $DamageType::Direct;
+	if (%this.DirectDamageType)
+	{
+		%damageType = %this.DirectDamageType;
+	}
+	%scale = getWord(%obj.getScale(), 2);
+	%directDamage = %this.directDamage * %scale;
+	if (%col.getType() & $TypeMasks::PlayerObjectType)
+	{
+		%col.Damage(%obj, %pos, %directDamage, %damageType);
+	}
+	else
+	{
+		%col.Damage(%obj, %pos, %directDamage, %damageType);
+	}
+}

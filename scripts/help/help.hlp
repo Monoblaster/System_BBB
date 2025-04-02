@@ -1,77 +1,134 @@
 [main]
-\c6Type \c4/help \c6followed by one of the commands to access a category.
-\c6Press \c3pageUp \c6or \c3pageDown \c6to scroll this box.
+General info on the gamemode
 
-\c6- \c4general \c6- Get the TL:DR of BBB.
-\c6- \c4role \c6- Information about specific roles.
-\c6- \c4corpses \c6- How corpses work.
-\c6- \c4quickchat \c6- Quick chat commands.
+[admin]
+Admin commands
 
-[main_adminline]
-\c6- \c4admin \c6- Admin only ocmmands.
+[main_info]
+Get the TL:DR of TTT.
+<t>TTT or Trouble in Terrorist Town is a remake of the Garry's Mod game of the same name.
+<t>There are multiple games included in this gamemode but they all follow similar themes.
+<l>- <t>Everyone gets a random role at round start
+<l>- <t>Some roles know who are on their team and some roles don't
+<l>- <t>You must gather your weapons from the map
+<t>For example in the default gamemode there is a team of Traitors and a team of Innocents.
+<t>The Traitors are the minority but know who eachother are.
+<t>The innocents do not but must kill all the traitors and the traitors must do the same.
 
-[category_general]
-\c3Betrayal on Block Boulevard \c4is an exact remake of \c3Trouble in Terrorist Town \c4from \c6Garry's Mod\c4.
-\c4There are three roles: \c2Innocent\c4, \c0Traitor\c4, and \c1Detective\c4.
-\c0Traitors know who all the \c2Innocent \c4players are.
-\c2Innocents \c4and \c1Detectives \c4do not know who the \c0Traitors \c4are and must work together to defeat
-\c4them without harming eachother.
-\c0Traitors \c4and \c1Detectives \c4 get a shop to buy special items.
-\c4The round ends under these conditions:
-\c4 - All \c2Innocents \c4and \c1Detectives \c4are dead. (\c0Traitors Win\c4)
-\c4 - All \c1Traitors \c4are dead, but there are still \c2Innocents \c4or \c1Detectives \c4alive. (\c2Innocents Win\c4)
-\c4 - The timer runs out. (\c2Innocents Win\c4)
+[main_info_playerlist]
+The player list is very useful
+<t>The player list has information about the game in progress.
+<t>The player list can be accessed by default by using TAB
+<l>- <t>The names in the current match
+<l>- <t>Your known roles in shortened form
+<l>- <t>If a player is alive "O" or dead "X"
+<l>- <t>And after the round is over the revealed information
 
-[category_roles]
-\c6Type \c3/help role \c6followed by one of the commands below to access a subcategory.
-\c6- \c2Innocent
-\c6- \c0Traitor
-\c6- \c1Detective 
+[main_info_corpses]
+What you can do with corpses
+<t>When you die your corpse will be unidentified and your death will be uknown until someone inspects it.
+<t>As an innocent role it is a good idea to identify corpses to gain information and in general loot them for items.
+<t>To inspect a body LEFT CLICK it.
+<l>- <t>It will show you useful information about the dead player
+<l>- <t>It will also announce the dead player's role to everyone
+<l>- <t>If the corpse is burned then none of this information will be present
+<t>To pick up a body RIGHT CLICK it.
+<l>- <t>You will get any credits on the corpse
+<l>- <t>Your inventory will be swapped with the items on the corpse
+<l>- <t>Use CTRL + W to move the item into your inventory
+<l>- <t>To drop the corpse left click
 
-[sub_Innocent]
-\c2Innocent\c4 is the standard role. 
-\c4Their goal is to find out who the \c0Traitors \c4are without harming other \c2Innocents\c4. 
-\c4You don't have access to a shop or team chat, but you can use any weapon found throughout the map.
+[main_info_quickchat]
+Quick chat commands
+<t>You can use your Building Keys (numpad by default) for quick chat.
+<l>- <t>Numpad1 / Shift Brick Up 1x <l>- <t>"Yes."
+<l>- <t>Numpad2 / Shift Brick Towards 1x <l>- <t>"No."
+<l>- <t>Numpad3 / Shift Brick Down 1x <l>- <t>"Help!"
+<l>- <t>Numpad4 / Shift Brick Left 1x <l>- <t>"I'm with [TARGET]."
+<l>- <t>Numpad5 / Shift Brick Down 3x <l>- <t>I see [TARGET]."
+<l>- <t>Numpad6 / Shift Brick Right 1x <l>- <t>"[TARGET] acts suspicious."
+<l>- <t>Numpad7 / Rotate Counter-Clockwise 90° <l>- <t>"[TARGET] is a Traitor!"
+<l>- <t>Numpad8 / Shift Brick Away 1x <l>- <t>"[TARGET] is Innocent!"
+<l>- <t>Numpad9 / Rotate Clockwise 90° <l>- <t>"Anyone still alive?"
 
-[sub_Traitor]
-\c0Traitors\c4 must eliminate all \c2Innocents\c4 and \c1Detectives \c4before the round time runs out. 
-\c4You have access to a shop [\c3/shop\c4] and team chat. 
-\c4You are able to recognize fellow \c0Traitors \c4by looking at their player.
-\c4 + A list of their names are also printed at the beginning of every round. 
-\c4The bottom-right of your screen shows the time that \c2Innocents\c4/\c1Detectives \c4see and the actual 
-\c4round time by toggling the display every five seconds. 
-\c4Two colors signify the type of timer shown:
-\c4 - \c0Red\c6: Actual Round Time
-\c4 - \c3Yellow\c6: Time visible to \c2Innocents
-\c4When the \c3Yellow timer runs out, only the \c0Red timer will be shown.
+[main_info_shop]
+How to use the shop
+<t>All roles have access to a shop but not all roles have items to buy.
+<t>To open your shop drop the shop item at the bottom of your inventory.
+<l>- <t>To buy an item or use a menu option use CTRL + W
+<l>- <t>To close the shop use Q
+<l>- <t>There will always be an item that allows you to drop credits you have
+<l>- <t>If your role has shop items you will see items availible for purchase
+<l>- <t>If your role has a second page of items you will see a next page button at the bottom
+<t>If you don't like this UI there is the alternative /shop commands.
 
-[sub_Detective]
-\c1Detectives\c4 are \c2Innocents\c4, but with more power at their disposal.
-\c4Your goal is to help \c2Innocents \c4find out who the \c0Traitors \c4are. 
-\c4You have access to a shop [\c3/shop\c4] and team chat. 
-\c2Innocents \c4can recognize \c1Detectives \c4by looking at them.
+[main_info_oopsies]
+What are oopsies
+<t>Oopsies are RDM credits although it is not suggested to use them this way
+<l>- <t>You will start with 3 oopsies
+<l>- <t>If you kill someone you shouldn't have your will lose oopsies
+<l>- <t>The amount you lose is dependant on the context of the kill
+<l>- <t>The most you can lose from 1 kill is 3 oopsies
+<l>- <t>If you lose all of your oopsies you will be slayed until you regain them
+<l>- <t>You will only regain oopsies if you didn't lose any from the previous round
 
-[category_corpses]
-\c4To investigate a corpse, click it with \c3Left Click\c4.
-\c4Corpses can be picked up with \c3Right Click\c4.
-\c4You can let go of them by throwing them with \c3Right Click \c4or setting them down with \c3Left Click\c4.
-\c4Corpse names are not visible over long distances.
-\c4When a person initially dies, their corpse is labled as \c6Unidentified\c4.
-\c4If investigated, the corpse name will show the person's identity.
+[main_games]
+The games and roles availible in TTT
 
-[category_quickchat]
-\c4You can use your \c3Building Keys \c4(numpad by default) for quick chat.
-\c4Numpad1 / Shift Brick Up 1x \c6- "Yes."
-\c4Numpad2 / Shift Brick Towards 1x \c6- "No."
-\c4Numpad3 / Shift Brick Down 1x \c6- "Help!"
-\c4Numpad4 / Shift Brick Left 1x \c6- "I'm with [TARGET]."
-\c4Numpad5 / Shift Brick Down 3x \c6- "I see [TARGET]."
-\c4Numpad6 / Shift Brick Right 1x \c6- "[TARGET] acts suspicious."
-\c4Numpad7 / Rotate Counter-Clockwise 90° \c6- "[TARGET] is a Traitor!"
-\c4Numpad8 / Shift Brick Away 1x \c6- "[TARGET] is Innocent!"
-\c4Numpad9 / Rotate Clockwise 90° \c6- "Anyone still alive?"
- 
-[category_admin]
-\c3slaynr <target> <amount>\c4 - Slays a target for a specified number of rounds.
-\c3slay <target>\c4 - Slays a target.
-\c3endRound\c4 - Forcefully ends the round.
+[main_games_default]
+The default TTT experience
+<t>This is a hidden role TDM: the Innocents vs the Traitors.
+<t>The Innocent team consists of Detectives and Innocents.
+<l>- <t>The goal is to eliminate all traitors or time the game out
+<l>- <t>There will be 1 detective per 8 players
+<t>The Traitor team consists of Traitors.
+<l>- <t>The goal is to eliminate all innocents before the time runs out
+<l>- <t>You will gain a credit everytime you kill a third of all Innocents
+<l>- <t>20 seconds will be added onto the timer everytime you kill an Innocent
+<l>- <t>There will be 1 Traitor per 4 players
+
+[main_games_default_innocent]
+The usually dead
+<t>Your goal is to survive and try to reveal traitors in the process.
+<t>You don't have any special items but you do have numbers over the traitors.
+<t>If you gain any credits make sure to give them to your Detective.
+
+[main_games_default_detective]
+The loved and loathed
+<t>Your goal is to survive and try to reveal traitors in the process.
+<t>All players know who the Detectives are and the Detectives have their own team chat.
+<t>The Detective starts with Armor Vest, a DNA Scanner, and 1 Credit.
+<t>Although you can't gain more credits you can always loot them off of dead Traitors
+<t>You can use your DNA Scanner on a corpse to see who has picked up the corpse and the killer of the corpse.
+<l>- <t>While this can sometimes be problematic usually this will pinpoint you to your target.
+<t>You also have a shop.
+<l>- <t>If you take damage you can heal yourself and others using the health station from the shop
+<l>- <t>The Xray lets you see the location of all players
+<l>- <t>The Riot Shield is good protection and a great melee weapon
+
+[main_games_default_traitor]
+Don't be a tator
+<t>Your goal is to kill all Innocents and Detectives.
+<t>The Traitors know who eachother are and have their own team chat.
+<t>You start with 3 Credits.
+<t>While you can gain more credits from killing its also a good idea to recover credits from dead traitors and Detectives.
+<t>If you want to be useful to your team you need to start looking out for people to kill.
+<t>You also have a shop.
+<l>- <t>A good Item to buy is an Xray because it helps you pinpoint good targets and will be helpful later on
+<l>- <t>Also armor is important as it makes your survival much more likely
+<l>- <t>Feel free to experiement
+
+[main_commands]
+Commands
+<l>- <a>/shop <l>- <t>Shows buyable items
+<l>- <a>/buy number <l>- <t>Buys the numbered item
+<l>- <a>/rtv <l>- <t>Vote to start a map vote next round
+<l>- <a>/votemap number <l>- <t>Votes for the numbered map
+
+[admin_commands]
+Commands for admins
+<l>- <a>/slay name [Rounds] <l>- <t>slays a player for the number of rounds
+<l>- <a>/role name <l>- <t>Displays the role of the player
+<l>- <a>/log name <l>- <t>Shows the kill log for a player
+<l>- <a>/setoopsies name number <l>- <t>Sets the player's oopsies to the number
+<l>- <a>/endround <l>- <t>Ends the current round
