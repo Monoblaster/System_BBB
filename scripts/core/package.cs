@@ -243,14 +243,17 @@ package BBB_Armor
 								%corpse.unIDed = false;
 								if($BBB::Announce::BodyFound)
 								{
-									chatMessageAll("", "\c6" @ %obj.client.name SPC "\c4found\c6" SPC %corpse.displayName @ "\c4!" SPC "They were" @ (%rolename $= "Innocent" ? " " : " a ") @ "<color:"@%rolecolor@">" @ %rolename@ "\c4!");
+									chatMessageAll("", "\c6" @ %obj.client.fakeName SPC "\c4found\c6" SPC %corpse.displayName @ "\c4!" SPC "They were" @ (%rolename $= "Innocent" ? " " : " a ") @ "<color:"@%rolecolor@">" @ %rolename@ "\c4!");
 									
 									%client = findClientByName(%corpse.name);
 									if(isObject(%client))
 									{
 										//mark them as dead in the player list
-										%client.state = "X";
-										NameList_Update();
+										if($BBB::Round::Phase $= "Round")
+										{
+											%client.state = "X";
+											NameList_Update();
+										}
 									}
 								}
 							}
@@ -554,7 +557,7 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 		%player.credits = %client.credits;
 
 		// BBB Corpse data
-		%player.name = %client.name;
+		%player.name = %client.fakeName;
 		%player.role = %client.role;
 		%player.deadTime = getSimTime();
 		%player.fingerPrints = %sourceClient.player;
@@ -631,10 +634,10 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 	// removed mid-air kills code here
 	// removed mini-game kill points here
 
-	%clientName = %client.getPlayerName();
+	%clientName = %client.fakeName@"/"@%client.getPlayerName();
 
 	if (isObject(%sourceClient))
-		%sourceClientName = %sourceClient.getPlayerName();
+		%sourceClientName = %sourceClient.fakeName@"/"@%client.getPlayerName();
 	else if (isObject(%sourceObject.sourceObject) && %sourceObject.sourceObject.getClassName() $= "AIPlayer")
 		%sourceClientName = %sourceObject.sourceObject.name;
 	else
@@ -646,7 +649,7 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 	%sourcecolor = hsv2rgb(getWord(%hsv,0)+15,getWord(%hsv,1)*0.75,getWord(%hsv,2));
 	%sourcerolename = %sourceClient.role.data.name;
 	%client.chatMessage("<font:Palatino Linotype:22><color:494949>You were killed by <color:" @ %sourcecolor @ ">" 
-	@ %sourceClient.name @ ", a(n)" SPC %sourcerolename @ "<color:494949>.");
+	@ %sourceClientName @ ", a(n)" SPC %sourcerolename @ "<color:494949>.");
 
 	//deathlogs//
 
@@ -656,14 +659,14 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 		%clientcolor = hsv2rgb(getWord(%hsv,0)+15,getWord(%hsv,1)*0.75,getWord(%hsv,2));
 		%clientrolename = %client.role.data.name;
 
-		%dlmsg = "<color:" @ %sourcecolor @ ">" @ %sourceclient.name SPC "(" @ %sourcerolename
-		@ ") \c6killed<color:" @ %clientcolor @ ">" SPC %client.name SPC "(" @ %clientrolename @ ")\c6 at" SPC getStringFromTime($BBB::bTimeLeft) SPC "("@getStringFromTime($BBB::rTimeLeft)@")";
+		%dlmsg = "<color:" @ %sourcecolor @ ">" @ %sourceClientName  SPC "(" @ %sourcerolename
+		@ ") \c6killed<color:" @ %clientcolor @ ">" SPC %clientname SPC "(" @ %clientrolename @ ")\c6 at" SPC getStringFromTime($BBB::bTimeLeft) SPC "("@getStringFromTime($BBB::rTimeLeft)@")";
 
 		if(!isObject(%sourceclient))
-			%dlmsg = "<color:" @ %clientcolor @ ">" @ %client.name SPC "(" @  %clientrolename @ ")\c6" SPC "died.";
+			%dlmsg = "<color:" @ %clientcolor @ ">" @ %clientname SPC "(" @  %clientrolename @ ")\c6" SPC "died.";
 		
 		if(%sourceclient == %client)
-			%dlmsg = "<color:" @ %clientcolor @ ">" @ %client.name SPC "(" @  %clientrolename @ ")\c6" SPC "suicided.";
+			%dlmsg = "<color:" @ %clientcolor @ ">" @ %clientname SPC "(" @  %clientrolename @ ")\c6" SPC "suicided.";
 
 		echo("\c4" SPC %sourceClientName SPC "(" @ %sourcerolename @ ") killed" SPC (%client == %sourceClient ? "themselves" : %clientName @ "(" @ %clientrolename @ ")"));
 
@@ -1088,21 +1091,36 @@ package BBB_ServerCMD
 		// Regular Chat
 		if(isObject(%client.player) && isObject(getMiniGameFromObject(%client)))
 		{
-
-			if($BBB::Round::Phase !$= "Round")
-			{
-				%icon = %client.Icon;
-				%color = hsv2rgb(120,0.5,1);
-			}
-			else
-			{
-				%color = %client.nameColor[%targetClient];
-			}
+			%defaultcolor = %client.minigame.roleGroup.defaultChatColor;
+			%group = ClientGroup.getId();
 			%count = %group.getCount();
 			for(%i = 0; %i < %count; %i++)
 			{
 				%targetClient = %group.getObject(%i);
-				chatMessageClient(%targetClient, %client,'','' ,'%6%5%2\c6: %4', %client.clanPrefix, %client.getPlayerName(), 
+				if($BBB::Round::Phase !$= "Round")
+				{
+					%icon = %client.Icon;
+					%color = %defaultcolor;
+					%name = %client.getPlayerName();
+
+					if(%client.fakename !$= "")
+					{
+						%name = %client.getPlayerName() SPC "("@%client.fakename@")";
+					}
+				}
+				else
+				{
+					%color = %client.nameColor[%targetClient];
+					%name = %client.fakename;
+
+					if(%name $= "")
+					{
+						%name = %client.getPlayerName();
+					}
+				}
+				
+
+				chatMessageClient(%targetClient, %client,'','' ,'%6%5%2\c6: %4', %client.clanPrefix, %name, 
 				%client.clanSuffix, %msg, "<color:"@%color@">", %icon, %a7, %a8, %a9, %a10);
 				%targetClient.play2D(BBB_Chat_Sound);
 			}
@@ -1111,10 +1129,16 @@ package BBB_ServerCMD
 		}
 		else // Dead Chat
 		{
+			%name = %client.getPlayerName();
+			if(%client.fakeName !$= "")
+			{
+				%name = %name SPC "("@%fakeName@")";
+			}
+
 			%type = "\c6[" @ (%client.hasSpawnedOnce == 1 ? "DEAD" : "LOADING") @ "]";
 			if($BBB::Round::Phase !$= "Round")
 			{
-				chatMessageAll (%client, '%5%6\c4%2<color:DDDDDD>: %4', %client.clanPrefix, %client.getPlayerName(), 
+				chatMessageAll (%client, '%5%6\c4%2<color:DDDDDD>: %4', %client.clanPrefix, %name, 
 				%client.clanSuffix, %msg, %type, %client.icon, %a7, %a8, %a9, %a10);
 				//messageAll("", %send);
 				%mg.playGlobalSound(BBB_Chat_Sound);
@@ -1128,7 +1152,7 @@ package BBB_ServerCMD
 					if(!isObject(%player))
 					{
 						chatMessageClient (%tarClient, %client,'','' ,'%5%6\c4%2<color:DDDDDD>: %4', %client.clanPrefix, 
-						%client.getPlayerName(), %client.clanSuffix, %msg, %type, %client.icon, %a7, %a8, %a9, %a10);
+						%name, %client.clanSuffix, %msg, %type, %client.icon, %a7, %a8, %a9, %a10);
 						//messageClient(%tarClient, "", %send);
 						%tarClient.play2D(BBB_Chat_Sound);
 					}
@@ -1191,7 +1215,7 @@ package BBB_ServerCMD
 		for(%i = 0; %i < %count; %i++)
 		{
 			%teamclient = getWord(%team,%i);
-			chatMessageClient (%teamclient, %client,'','' , '%5\c4%2%7: %4', %client.clanPrefix, %client.getPlayerName(), 
+			chatMessageClient (%teamclient, %client,'','' , '%5\c4%2%7: %4', %client.clanPrefix, %client.fakeName, 
 			%client.clanSuffix, %msg, %type, %client.icon, %s, %a8, %a9, %a10);
 			%teamclient.play2D(BBB_Chat_Sound);
 		}

@@ -43,27 +43,46 @@ function NameList::SetNames(%obj,%clients)
     for(%i = 0; %i < %count; %i++)
     {
         %client = getWord(%clients,%i);
-        %r = getRandom(0,%listCount-%i-1);
+        %r = getRandom(0,(%listCount-%i)-1);
         %name = getWord(%list,%r);
         %client.fakeName = %name;
+		%client.player.setShapeName(%name, 8564862);
+		%client.player.displayName = %name;
         %client.state = "";
         %list = removeWord(%list,%r);
         %names = %names TAB %name;
     }
     %names = lTrim(%names);
-
+	$NameListRandomSeed = getRandom();
     NameList_Update();
+}
+
+function secureCommandToAllTS (%code, %command, %a1, %a2,%a3, %a4, %a5, %a6,%a7)
+{
+	%group = ClientGroup;
+	%count = %group.getCount();
+	for(%i = 0; %i < %count; %i++)
+	{
+		%client = %group.getObject(%i);
+
+		secureCommandToClient(%code,%client,%command,%a1,%a2,%a3,%a4,%a5,%a6,%a7);
+	}
 }
 
 function NameList_Update(%reveal) //update all client names on the player list
 {
+	%oldSeed = getRandomSeed();
+	setRandomSeed($NameListRandomSeed);
     %group = ClientGroup.getId();
     %count = %group.getCount();
 
-    for(%i = $NameListCurrentCount-1; %i >= %count; %i--)
-    {
-        secureCommandToAllTS("zbR4HmJcSY8hdRhr" ,'ClientDrop', %name, %i);
-    }
+	if($NameListCurrentCount > %count)
+	{
+		for(%i = $NameListCurrentCount-1; %i >= %count; %i--)
+		{
+			secureCommandToAllTS("zbR4HmJcSY8hdRhr" ,'ClientDrop', %name, %i);
+		}
+	}
 
     %indexes = "";
     for(%i = 0; %i < %count; %i++)
@@ -74,7 +93,7 @@ function NameList_Update(%reveal) //update all client names on the player list
 
     for(%i = 0; %i < %count; %i++)
     {
-        %r = getRandom(0,%count-%i-1);
+        %r = getRandom(0,(%count-%i)-1);
         %index = getWord(%indexes,%r); 
         %indexes = removeWord(%indexes,%r);
         %client = %group.getObject(%i);
@@ -93,18 +112,23 @@ function NameList_Update(%reveal) //update all client names on the player list
             %state = %client.state;
         }
 
-        for(%i = 0; %i < %count; %i++)
+        for(%j = 0; %j < %count; %j++)
         {
-            %currClient = %group.getObject(%i);
+            %currClient = %group.getObject(%j);
             %badge = "";
             if(%client.badge[%currClient] !$= "")
             {
                 %badge = %client.badge[%currClient]; 
             }
-            secureCommandToClient("zbR4HmJcSY8hdRhr" ,'ClientJoin', %name, %index, %index+1, trim(%badge SPC %state), 0, %reveal && %client.isAdmin, %reveal && %client.isSuperAdmin);
+			if(%state $= "X" || %reveal)
+			{
+				%badge = %client.revealBadge;
+			}
+            secureCommandToClient("zbR4HmJcSY8hdRhr", %currClient ,'ClientJoin', %name, %index, %index+1, trim(%badge SPC %state), 0, %reveal && %client.isAdmin, %reveal && %client.isSuperAdmin);
         }
     }
     $NameListCurrentCount = %count;
+	setRandomSeed(%oldSeed);
 }
 
 function GameConnection::startLoad(%client) //remove auto adding clients to the playerlist
@@ -144,7 +168,6 @@ function GameConnection::startLoad(%client) //remove auto adding clients to the 
 	messageClient(%client, '', %taggedMessage, %client.getPlayerName());
 	messageAllExcept(%client, -1, 'MsgClientJoin', '\c1%1 connected.', %client.getPlayerName());
 	// secureCommandToAll("zbR4HmJcSY8hdRhr", 'ClientJoin', %client.getPlayerName(), %client, %client.getBLID(), %client.score, %client.isAIControlled(), %client.isAdmin, %client.isSuperAdmin);
-	NameList_Update();
     if (%autoAdmin == 0)
 	{
 		echo(" +- no auto admin");

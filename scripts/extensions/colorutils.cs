@@ -5,7 +5,7 @@ function hex2dec(%v)
     %conversionstring = "0123456789abcdef";
     for(%i = 0; %i < %count; %i++)
     {
-        %dec += mPow(16, (%count-%i-1)) * striPos(%conversionstring,getSubStr(%v,%i,1));
+        %dec += mPow(16, (%count-%i)-1) * striPos(%conversionstring,getSubStr(%v,%i,1));
     }
     return %dec;
 }

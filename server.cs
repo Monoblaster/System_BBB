@@ -173,7 +173,7 @@ function BBB() // -- The only non-packaged function not in functions.cs! Wow! (I
 		BBB_BuildMapList();
 		BBB_BuildShopList();
 		TTTInventoryV2_Init();
-		TTT_CreateRoles();
+		TTT_CreateGroups();
 		BBB_Minigame.rolegroup = RoleGroup_Find("Default");
 		BBB_Minigame.nameList = NameList_Find("Colors");
 

@@ -1484,7 +1484,7 @@ function BBB_Minigame::assignRoles(%so)
 	}
 	%so.numPlayers = %playerCount;
 
-	%defaultcolor = hsv2rgb(120,0.5,1);
+	%defaultcolor = %so.roleGroup.defaultChatColor;
 	for(%a = 0; %a < %playerCount; %a++)
 	{
 		%client = %so.playingClients[%a];
@@ -1500,24 +1500,14 @@ function BBB_Minigame::assignRoles(%so)
 			%client.inspectInfo[%targetclient] = "\c6";
 			%client.namecolor[%targetclient] = %defaultcolor;
 			%client.badge[%targetclient] = "";
+			%client.role = "";
 		}
 		%clients = %clients SPC %so.playingClients[%a];	
 	}
+	%clients = lTrim(%clients);
 	%so.nameList.setNames(%clients);
 	%so.activeRoleGroup = %so.rolegroup.setRoles(%clients);
 	NameList_Update();
-}
-
-function secureCommandToAllTS (%code, %command, %a1, %a2,%a3, %a4, %a5, %a6,%a7)
-{
-	%group = ClientGroup;
-	%count = %group.getCount();
-	for(%i = 0; %i < %count; %i++)
-	{
-		%client = %group.getObject(%i);
-
-		secureCommandToClient(%code,%client,%command,%a1,%a2,%a3,%a4,%a5,%a6,%a7);
-	}
 }
 
 function BBB_Minigame::CleanUp(%so)
@@ -1759,7 +1749,8 @@ function BBB_Minigame::spawnAllPlayers(%so, %override)
 			%client.instantRespawn();
 		}
 
-		%client.player.displayName = %client.name;
+		%client.player.displayName = %client.fakeName;
+		%client.player.setShapeName("", 8564862);
 	}
 }
 

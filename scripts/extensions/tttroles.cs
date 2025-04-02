@@ -40,6 +40,11 @@ function WinCondition_Basic::hasWon(%obj)
 {
 	%others = %obj.hasDifferentWinCondition();
 	%count = getWordCount(%others);
+	if(%count == 0)
+	{
+		return false;
+	}
+
 	for(%i = 0; %i < %count; %i++)
 	{
 		%client = getWord(%others,%i);
@@ -72,6 +77,42 @@ function WinCondition_Basic::hasSameWinCondition(%obj)
 	return ltrim(%clients);
 }
 
+function WinCondition_Basic::hasDifferentWinCondition(%obj)
+{
+	%obj = %obj.getId();
+	%clients = "";
+	%mg = BBB_Minigame.getId();
+	%count = %mg.numPlayers;
+	for(%i = 0; %i < %count; %i++)
+	{
+		%client = %mg.playingClients[%i];
+		if(%client.winCondition.getId() == %obj)
+		{
+			continue;
+		}
+
+		%clients = %clients SPC %client;
+	}
+	return ltrim(%clients);
+}
+
+function WinCondition_Basic::IsLiving(%obj)
+{
+	%clients = %obj.hasSameWinCondition();
+	%count = getWordCount(%clients);
+
+	for(%i = 0; %i < %count; %i++)
+	{
+		%client = getWord(%clients,%i);
+		if(!isObject(%client.player))
+		{
+			continue;
+		}
+		return true;
+	}
+	return false;
+}
+
 function WinCondition_Survivor::isMiskill(%obj,%target)
 {
 	return false;
@@ -89,6 +130,8 @@ function Role_Create(%name,%shortname,%color,%wincondition,%components,%descript
 		winCondition = %wincondition;
 
 		components = %components;
+
+		description = %description;
 	};
 	return %role;
 }
@@ -110,7 +153,7 @@ function RoleGroup_Find(%name)
 	return $RoleGroups.name[%name];
 }
 
-function RoleGroup_Create(%name,%time,%list,%description)
+function RoleGroup_Create(%name,%chatcolor,%time,%list,%description)
 {
 	%set = new ScriptGroup()
 	{
@@ -119,6 +162,7 @@ function RoleGroup_Create(%name,%time,%list,%description)
 		list = %list;
 		description = %description;
 		time = %time;
+		defaultChatColor = %chatColor;
 	};
 
 	return %set;
@@ -157,16 +201,22 @@ function RoleGroup::SetRoles(%obj,%clients)
 	}
 
 	%count = getWordCount(%clients);
-	%roles = getWords(%obj.string,0,%count-1);
+	%roles = getWords(%obj.list,0,%count-1);
 	for(%i = 0; %i < %count; %i++)
 	{
 		%client = getWord(%clients,%i);
 
-		%r = getRandom(0,%count-%i-1);
+		%r = getRandom(0,(%count-%i)-1);
 		%ActiveRoleGroup.SetRole(getWord(%roles,%r),%client);
 		%roles = removeWord(%roles,%r);
 	}
 
+	%count = %ActiveRoleGroup.getCount();
+	for(%i = 0; %i < %count; %i++)
+	{
+		%ActiveRoleGroup.getObject(%i).StartCallback("OnGiven");
+	}
+	
 	%count = %obj.getCount();
 	for(%a = 0; %a < %count; %a++)
 	{
@@ -181,14 +231,13 @@ function RoleGroup::SetRoles(%obj,%clients)
 		%hsv = rgb2hsv(%t);
 		%s = hsv2rgb(getWord(%hsv,0),getWord(%hsv,1) * 0.2,getWord(%hsv,2));
 		%ls = hsv2rgb(getWord(%hsv,0),getWord(%hsv,1) * 0.5,getWord(%hsv,2));
-
 		%names = "";
 		for(%i = 0; %i < %withrolecount; %i++)
 		{
 			%client = getWord(%withrole,%i);
-			%names = %names TAB %client.getPlayerName();
+			%names = %names TAB %client.fakeName;
 
-			%client.chatMessage("<color:"@%s@">You are a <color:"@%s@">"@%rolename@"<color:"@%s@">! Use /gamehelp for your objective.");
+			%client.schedule(0,"chatMessage","<color:"@%s@">You are a <color:"@%s@">"@%rolename@"<color:"@%s@">! Use /gamehelp for your objective.");
 		}
 		%names = ltrim(%names);
 
@@ -201,7 +250,7 @@ function RoleGroup::SetRoles(%obj,%clients)
 			for(%i = 0; %i < %withrolecount; %i++)
 			{
 				%client = getWord(%withrole,%i);
-				%client.chatMessage(%msg @ stringList(trim(strReplace(%names,%client.getPlayerName(),"You")),"\t",", ","and"));
+				%client.chatMessage(%msg @ stringList(trim(strReplace(%names,%client.fakeName,"You")),"\t",", ","and"));
 
 				for(%j = 0; %j < %withrolecount; %j++)
 				{
@@ -233,9 +282,6 @@ function RoleGroup::SetRoles(%obj,%clients)
 		if(%data.publicbillboard !$= "")
 		{
 			%badge = "["@%data.shortname@"]";
-			%hsv = rgb2hsv(%t);
-			%s = hsv2rgb(getWord(%hsv,0),getWord(%hsv,1) * 0.2,getWord(%hsv,2));
-			%ls = hsv2rgb(getWord(%hsv,0),getWord(%hsv,1) * 0.5,getWord(%hsv,2));
 			%msg = "<color:"@%s@">The <color:"@%t@">"@%rolename@"s <color:"@%s@">are: <color:"@%t@">";
 			for(%i = 0; %i < %withrolecount; %i++)
 			{
@@ -262,9 +308,6 @@ function RoleGroup::SetRoles(%obj,%clients)
 		}
 		else if(%withrolecount > 0)
 		{
-			%hsv = rgb2hsv(%t);
-			%s = hsv2rgb(getWord(%hsv,0),getWord(%hsv,1) * 0.2,getWord(%hsv,2));
-			%ls = hsv2rgb(getWord(%hsv,0),getWord(%hsv,1) * 0.5,getWord(%hsv,2));
 			if(%withrolecount == 1)
 			{
 				%msg = "<color:"@%s@">There is <color:"@%t@">"@%withrolecount SPC %rolename;
@@ -306,18 +349,12 @@ function RoleGroup::SetRoles(%obj,%clients)
 		}
 	}
 
-	%count = %ActiveRoleGroup.getCount();
-	for(%i = 0; %i < %count; %i++)
-	{
-		%ActiveRoleGroup.getObject(%i).StartCallback("OnGiven");
-	}
-
 	return %ActiveRoleGroup;
 }
 
 function ActiveRoleGroup::Set(%obj,%role)
 {
-	%obj._[%name.data.name] = %role;
+	%obj._[%role.data.name] = %role;
 	%obj.add(%role);
 }
 
@@ -331,7 +368,14 @@ function ActiveRoleGroup::SetRole(%obj,%index,%client)
 	%role = %obj.getObject(%index);
 	%data = %role.data;
 
+	if(%client.role !$= "")
+	{
+		%n = %client.role.data.name;
+		%obj.roleClients[%n] = trim(strReplace(%obj.roleClients[%n] @ " ",%client @ " ",""));
+	}
+
 	%client.role = %role;
+	%client.revealBadge = "["@%data.shortName@"]";
 	WinCondition_set(%client,%data.wincondition);
 	%client.credits = %data.credits;
 	%n = %data.name;
@@ -339,13 +383,13 @@ function ActiveRoleGroup::SetRole(%obj,%index,%client)
 	%client.print = "<just:left><font:Palatino Linotype:22>\c3ROLE\c6: <font:Palatino Linotype:45>"@%c@getSubStr(%n,0,1)
 	@"<font:Palatino Linotype:43>"@getSubStr(%n,1,strLen(%n)-1);
 
-	if(%obj.roleClients[%name] $= "")
+	if(%obj.roleClients[%n] $= "")
 	{
-		%obj.roleClients[%name] = %client;
+		%obj.roleClients[%n] = %client;
 	}
 	else
 	{
-		%obj.roleClients[%name] = %obj.roleClients[%name] SPC %client;
+		%obj.roleClients[%n] = %obj.roleClients[%n] SPC %client;
 	}
 }
 
@@ -356,12 +400,12 @@ function ActiveRoleGroup::WithRole(%obj,%name)
 
 function ActiveRoleGroup::WithoutRole(%obj,%name)
 {
-	%ignoreRole = %obj._[%name];
+	%ignoreRole = %obj._[%name].getId();
 	%count = %obj.getCount();
 	for(%i = 0; %i < %count; %i++)
 	{
-		%role = %obj.get(%i);
-		if(%ignoreRole == %role)
+		%role = %obj.getObject(%i);
+		if(%ignoreRole == %role.getId())
 		{
 			continue;
 		}
@@ -378,14 +422,14 @@ function ActiveRoleGroup::WinCheck(%obj,%timeUp)
 	for(%i = 0; %i < %count; %i++)
 	{
 		%winCondition = %obj.getObject(%i).data.winCondition;
-		if(%won[%winCondition] || (!%winCondition.hasWon() && (!%winCondition.winOnTimeup || %timeUp)))
+		if(%won[%winCondition] || (!%winCondition.hasWon() && (!%winCondition.winOnTimeup || !%timeUp)))
 		{
 			continue;
 		}
 		%won[%winCondition] = true;
 		%winners = %winners SPC %winCondition;
 	}
-
+	
 	%winners = ltrim(%winners);
 
 	if(%winners $= "")
@@ -396,20 +440,19 @@ function ActiveRoleGroup::WinCheck(%obj,%timeUp)
 	for(%i = 0; %i < %count; %i++)
 	{
 		%winCondition = %obj.getObject(%i).data.winCondition;
-		if(%won[%winCondition] || %winCondition.winBlocking)
+		if(%won[%winCondition] || %winCondition.winBlocking || !%wincondition.IsLiving())
 		{
 			continue;
 		}
 		%won[%winCondition] = true;
 		%winners = %winners SPC %winCondition;
 	}
-
 	return %winners;
 }
 
 function serverCmdGameHelp(%client)
 {
-	%string = %client.role.getGroup().description NL %role.data.description;
+	%string = %client.minigame.roleGroup.description NL %client.role.data.description;
 	%count = getRecordCount(%string);
 	for(%i = 0; %i < %count; %i++)
 	{
@@ -460,9 +503,30 @@ function Traitor_OnKill(%obj,%target,%deadclient)
 	%obj.gainedRewards++;
 }
 
+function TraitorWar_OnGiven(%obj) //demote over people to survivor
+{
+	%activeRoleGroup = %obj.getGroup();
+	%mine = %activeRoleGroup.WithRole(%obj.data.name);
+	%r = %activeRoleGroup.WithRole("Red Traitor");
+	%g = %activeRoleGroup.WithRole("Blue Traitor");
+	%b = %activeRoleGroup.WithRole("Green Traitor");
+	%max = getMax(getMin(getMin(getWordCount(%r),getWordCount(%g)),getWordCount(%b)),1);
+	%count = getWordCount(%mine);
+	%demotion = %count - %max;
+	for(%i = 0; %i < %demotion; %i++)
+	{
+		%r = getRandom(0,(%count-%i)-1);
+		%selection = getWord(%mine,%r);
+		%mine = removeWord(%mine,%r);
+		talk(%r SPC %selection);
+		%activeRoleGroup.SetRole(3,%selection);
+	}
+}
+
 function Innocent_OnGiven(%obj) //promote people to detective
 {
 	%minigame = BBB_Minigame.getId();
+	%activeRoleGroup = %obj.getGroup();
 	%players = %minigame.numPlayers;
 	%detectives = mFloor(%players / 8);
 
@@ -470,24 +534,23 @@ function Innocent_OnGiven(%obj) //promote people to detective
 	%innocount = getWordCount(%innos);
 	for(%i = 0; %i < %detectives; %i++)
 	{
-		%r = getRandom(0,%innocount-1);
-		%innocount--;
+		%r = getRandom(0,(%innocount-%i)-1);
 		%selection = getWord(%innos,%r);
 		%innos = removeWord(%innos,%r);
 		
-		%selection.TTT_SetRole("Detective");
+		%activeRoleGroup.SetRole(2,%selection);
 	}
 }
 
 function TTT_CreateGroups()
 {
 	WinCondition_new("WinCondition_Innocent",true,true,"\c2INNOCENTS");
-	WinCondition_new("WinCondition_Survivor",false,true,"\c4SURVIVORS");
+	WinCondition_new("WinCondition_Survivor",false,true,"\c3SURVIVORS");
 	WinCondition_new("WinCondition_Traitor",true,false,"\c0TRAITORS","Traitor_Win");
-	WinCondition_new("WinCondition_Traitor2",true, false,"\c0TRAITORS","Traitor_Win");
-	WinCondition_new("WinCondition_Traitor3",true, false,"\c0TRAITORS","Traitor_Win");
+	WinCondition_new("WinCondition_Traitor2",true, false,"\c2TRAITORS","Traitor_Win");
+	WinCondition_new("WinCondition_Traitor3",true, false,"\c1TRAITORS","Traitor_Win");
 
-	%group = RoleGroup_Create("Default",60000 * 3 ,"0 1 1 1 1 1 1"SPC
+	%group = RoleGroup_Create("Default",hsv2rgb(120,0.5,1),60000 * 3 ,"0 1 1 1 1 1 1"SPC
 	"1 1 1 0"SPC
 	"1 1 1 0"SPC
 	"1 1 1 0"SPC
@@ -544,13 +607,14 @@ function TTT_CreateGroups()
 	%role.hasteMode = false;
 	%group.role(%role);
 
-	%group = RoleGroup_Create("Traitor War",60000 * 5,"3 0 1 2 0 1 2 0 1 2 3 0 1 2 0 1 2 0 1 2 3 0 1 2 0 1 2 0 1 2 3 3",
+	%group = RoleGroup_Create("Traitor War",hsv2rgb(60,0.5,1),60000 * 5,"0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1",
 	"Traitor War."NL
 	"3 teams of traitors and neutral survivors."NL
 	"You don't know who you're fighting but you know they all must die.");
 
 	%component = Component_Create("Traitor");
 	%component.callback("OnKill","Traitor_OnKill");
+	%component.callback("OnGiven","TraitorWar_OnGiven");
 	%role = Role_Create("Red Traitor","RT","ff0000","WinCondition_Traitor",%component,
 	"You are a red traitor one of many."NL
 	"Kill all other teams of traitors."NL
@@ -569,6 +633,7 @@ function TTT_CreateGroups()
 
 	%component = Component_Create("Traitor");
 	%component.callback("OnKill","Traitor_OnKill");
+	%component.callback("OnGiven","TraitorWar_OnGiven");
 	%role = Role_Create("Green Traitor","GT","00ff00","WinCondition_Traitor2",%component,
 	"You are a green traitor one of many."NL
 	"Kill all other teams of traitors."NL
@@ -587,6 +652,7 @@ function TTT_CreateGroups()
 
 	%component = Component_Create("Traitor");
 	%component.callback("OnKill","Traitor_OnKill");
+	%component.callback("OnGiven","TraitorWar_OnGiven");
 	%role = Role_Create("Blue Traitor","BT","0000ff","WinCondition_Traitor3",%component,
 	"You are a blue traitor one of many."NL
 	"Kill all other teams of traitors."NL
@@ -611,7 +677,7 @@ function TTT_CreateGroups()
 	%role.rolechat = false;
 	%role.rolebillboard = "";
 	%role.publicbillboard = "";
-	%role.startingItems = "";
+	%role.startingItems = "BodyArmorItem";
 	%role.hasteMode = false;
 	%group.role(%role);
 }
