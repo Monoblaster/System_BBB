@@ -434,6 +434,10 @@ function ActiveRoleGroup::WinCheck(%obj,%timeUp)
 
 	if(%winners $= "")
 	{
+		if(%timeup)
+		{
+			return "WinCondition_None";
+		}
 		return "";
 	}
 
@@ -544,6 +548,7 @@ function Innocent_OnGiven(%obj) //promote people to detective
 
 function TTT_CreateGroups()
 {
+	WinCondition_new("WinCondition_None",true,true,"\c8NO ONE");
 	WinCondition_new("WinCondition_Innocent",true,true,"\c2INNOCENTS");
 	WinCondition_new("WinCondition_Survivor",false,true,"\c3SURVIVORS");
 	WinCondition_new("WinCondition_Traitor",true,false,"\c0TRAITORS","Traitor_Win");
