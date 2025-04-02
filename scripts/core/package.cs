@@ -249,7 +249,8 @@ package BBB_Armor
 									if(isObject(%client))
 									{
 										//mark them as dead in the player list
-										secureCommandToAllTS("zbR4HmJcSY8hdRhr", 'ClientJoin', "[Dead "@%corpse.role.data.badge@"]" SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+										%client.state = "X";
+										NameList_Update();
 									}
 								}
 							}

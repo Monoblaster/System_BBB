@@ -114,7 +114,7 @@ function RoleGroup_Create(%name,%time,%list,%description)
 {
 	%set = new ScriptGroup()
 	{
-		name = %name
+		name = %name;
 		class = "RoleGroup";
 		list = %list;
 		description = %description;
@@ -136,7 +136,7 @@ function RoleGroup::OnAdd(%obj)
 
 function RoleGroup::OnRemove(%obj)
 {
-	$RoleGroups.name[%obj.name] = "";;
+	$RoleGroups.name[%obj.name] = "";
 	$RoleGroups.remove(%obj);
 }
 
@@ -145,7 +145,7 @@ function RoleGroup::Role(%obj,%role)
 	%obj.add(%role);
 }
 
-function RoleGroup::SetRoles(%obj,%clients);
+function RoleGroup::SetRoles(%obj,%clients)
 {
 	%ActiveRoleGroup = new ScriptGroup(){class = "ActiveRoleGroup";};
 
@@ -171,7 +171,7 @@ function RoleGroup::SetRoles(%obj,%clients);
 	for(%a = 0; %a < %count; %a++)
 	{
 		%role = %ActiveRoleGroup.getObject(%a);
-		%data = %role.data
+		%data = %role.data;
 		%rolename = %data.name;
 		%withrole = %ActiveRoleGroup.WithRole(%roleName);
 		%withrolecount = getWordCount(%withrole);
@@ -208,7 +208,7 @@ function RoleGroup::SetRoles(%obj,%clients);
 					%roleclient = getWord(%withrole,%j);
 					%client.inspectInfo[%roleclient] = "<br><br><br><font:impact:50><color:"@%t@">X<br><font:palatino linotype:23>Fellow "@%rolename@"<br>";
 					%client.namecolor[%roleclient] = %ls;
-					secureCommandToClient("zbR4HmJcSY8hdRhr",%client ,'ClientJoin', %badge SPC %roleclient.getPlayerName(), %roleclient, %roleclient.getBLID (), %roleclient.score, 0, %roleclient.isAdmin, %roleclient.isSuperAdmin);
+					%client.badge[%roleClient] = %badge;
 				}
 			}
 		}
@@ -247,7 +247,7 @@ function RoleGroup::SetRoles(%obj,%clients);
 					%currclient = getWord(%withoutrole,%j);
 					%client.inspectInfo[%currclient] = "<br><br><br><br><br><color:"@%t@">"@%rolename@"<br>";
 					%client.namecolor[%currclient] = %ls;
-					secureCommandToClient("zbR4HmJcSY8hdRhr",%currclient ,'ClientJoin', %badge SPC %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
+					%client.badge[%currClient] = %badge;
 				}
 			}
 
@@ -484,8 +484,8 @@ function TTT_CreateGroups()
 	WinCondition_new("WinCondition_Innocent",true,true,"\c2INNOCENTS");
 	WinCondition_new("WinCondition_Survivor",false,true,"\c4SURVIVORS");
 	WinCondition_new("WinCondition_Traitor",true,false,"\c0TRAITORS","Traitor_Win");
-	WinCondition_new("WinCondition_Traitor2",true false,"\c0TRAITORS","Traitor_Win");
-	WinCondition_new("WinCondition_Traitor3",true false,"\c0TRAITORS","Traitor_Win");
+	WinCondition_new("WinCondition_Traitor2",true, false,"\c0TRAITORS","Traitor_Win");
+	WinCondition_new("WinCondition_Traitor3",true, false,"\c0TRAITORS","Traitor_Win");
 
 	%group = RoleGroup_Create("Default",60000 * 3 ,"0 1 1 1 1 1 1"SPC
 	"1 1 1 0"SPC

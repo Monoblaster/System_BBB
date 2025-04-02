@@ -1494,16 +1494,18 @@ function BBB_Minigame::assignRoles(%so)
 			%player.roleBBM = OverheadBillboardMount.Make();
 		}
 		%player.mountObject(%player.roleBBM,8);
-		secureCommandToAllTS("zbR4HmJcSY8hdRhr" ,'ClientJoin', %client.getPlayerName(), %client, %client.getBLID (), %client.score, 0, %client.isAdmin, %client.isSuperAdmin);
 		for(%b = 0; %b < %playerCount; %b++)
 		{
 			%targetclient = %so.playingClients[%b];
 			%client.inspectInfo[%targetclient] = "\c6";
 			%client.namecolor[%targetclient] = %defaultcolor;
+			%client.badge[%targetclient] = "";
 		}
-		%clients = %clients SPC %so.playingClients[%a]
+		%clients = %clients SPC %so.playingClients[%a];	
 	}
+	%so.nameList.setNames(%clients);
 	%so.activeRoleGroup = %so.rolegroup.setRoles(%clients);
+	NameList_Update();
 }
 
 function secureCommandToAllTS (%code, %command, %a1, %a2,%a3, %a4, %a5, %a6,%a7)
@@ -1632,6 +1634,8 @@ function BBB_Minigame::roundEnd(%so, %type)
 
 	$BBB::rTimeLeft = $BBB::Time::PostRound;
 	BBB_TimerLoop();
+
+	NameList_Update(true);
 }
 
 function BBB_Minigame::roundSetup(%so)
