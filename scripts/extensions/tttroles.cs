@@ -237,7 +237,7 @@ function RoleGroup::SetRoles(%obj,%clients)
 			%client = getWord(%withrole,%i);
 			%names = %names TAB %client.fakeName;
 
-			%client.schedule(0,"chatMessage","<color:"@%s@">You are a <color:"@%s@">"@%rolename@"<color:"@%s@">! Use /gamehelp for your objective.");
+			%client.schedule(0,"chatMessage","<color:"@%s@">You are a "%client.fakeName" the <color:"@%s@">"@%rolename@"<color:"@%s@">! Use /help games default "@%rolename@" for your objective.");
 		}
 		%names = ltrim(%names);
 
@@ -454,15 +454,15 @@ function ActiveRoleGroup::WinCheck(%obj,%timeUp)
 	return %winners;
 }
 
-function serverCmdGameHelp(%client)
-{
-	%string = %client.minigame.roleGroup.description NL %client.role.data.description;
-	%count = getRecordCount(%string);
-	for(%i = 0; %i < %count; %i++)
-	{
-		%client.chatMessage("\c6"@getRecord(%string,%i));
-	}
-}
+// function serverCmdGameHelp(%client)
+// {
+// 	%string = %client.minigame.roleGroup.description NL %client.role.data.description;
+// 	%count = getRecordCount(%string);
+// 	for(%i = 0; %i < %count; %i++)
+// 	{
+// 		%client.chatMessage("\c6"@getRecord(%string,%i));
+// 	}
+// }
 
 function Traitor_OnKill(%obj,%target,%deadclient)
 {
