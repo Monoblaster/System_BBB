@@ -237,7 +237,7 @@ function RoleGroup::SetRoles(%obj,%clients)
 			%client = getWord(%withrole,%i);
 			%names = %names TAB %client.fakeName;
 
-			%client.schedule(0,"chatMessage","<color:"@%s@">You are a "%client.fakeName" the <color:"@%s@">"@%rolename@"<color:"@%s@">! Use /help games default for your objective.");
+			%client.schedule(0,"chatMessage","<color:"@%s@">You are a "@%client.fakeName@" the <color:"@%s@">"@%rolename@"<color:"@%s@">! Use /help games default for your objective.");
 		}
 		%names = ltrim(%names);
 
