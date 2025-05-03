@@ -237,7 +237,7 @@ function RoleGroup::SetRoles(%obj,%clients)
 			%client = getWord(%withrole,%i);
 			%names = %names TAB %client.fakeName;
 
-			%client.schedule(0,"chatMessage","<color:"@%s@">You are a "@%client.fakeName@" the <color:"@%s@">"@%rolename@"<color:"@%s@">! Use /help games default for your objective.");
+			%client.schedule(0,"chatMessage","<color:"@%s@">You are <color:"@%t@">"@%client.fakeName@"<color:"@%s@"> the <color:"@%t@">"@%rolename@"<color:"@%s@">! For your objective use <color:"@%ls@">/help games default.");
 		}
 		%names = ltrim(%names);
 
@@ -509,22 +509,21 @@ function Traitor_OnKill(%obj,%target,%deadclient)
 
 function TraitorWar_OnGiven(%obj) //demote over people to survivor
 {
-	%activeRoleGroup = %obj.getGroup();
-	%mine = %activeRoleGroup.WithRole(%obj.data.name);
-	%r = %activeRoleGroup.WithRole("Red Traitor");
-	%g = %activeRoleGroup.WithRole("Blue Traitor");
-	%b = %activeRoleGroup.WithRole("Green Traitor");
-	%max = getMax(getMin(getMin(getWordCount(%r),getWordCount(%g)),getWordCount(%b)),1);
-	%count = getWordCount(%mine);
-	%demotion = %count - %max;
-	for(%i = 0; %i < %demotion; %i++)
-	{
-		%r = getRandom(0,(%count-%i)-1);
-		%selection = getWord(%mine,%r);
-		%mine = removeWord(%mine,%r);
-		talk(%r SPC %selection);
-		%activeRoleGroup.SetRole(3,%selection);
-	}
+	// %activeRoleGroup = %obj.getGroup();
+	// %mine = %activeRoleGroup.WithRole(%obj.data.name);
+	// %r = %activeRoleGroup.WithRole("Red Traitor");
+	// %g = %activeRoleGroup.WithRole("Blue Traitor");
+	// %b = %activeRoleGroup.WithRole("Green Traitor");
+	// %max = getMax(getMin(getMin(getWordCount(%r),getWordCount(%g)),getWordCount(%b)),1);
+	// %count = getWordCount(%mine);
+	// %demotion = %count - %max;
+	// for(%i = 0; %i < %demotion; %i++)
+	// {
+	// 	%r = getRandom(0,(%count-%i)-1);
+	// 	%selection = getWord(%mine,%r);
+	// 	%mine = removeWord(%mine,%r);
+	// 	%activeRoleGroup.SetRole(3,%selection);
+	// }
 }
 
 function Innocent_OnGiven(%obj) //promote people to detective
@@ -556,12 +555,12 @@ function TTT_CreateGroups()
 	WinCondition_new("WinCondition_Traitor3",true, false,"\c1TRAITORS","Traitor_Win");
 
 	%group = RoleGroup_Create("Default",hsv2rgb(120,0.5,1),60000 * 3 ,"0 1 1 1 1 1 1"SPC
-	"1 1 1 0"SPC
-	"1 1 1 0"SPC
-	"1 1 1 0"SPC
-	"1 1 1 0"SPC
-	"1 1 1 0"SPC
-	"1 1 1 0",
+	"0 1 1 1"SPC
+	"0 1 1 1"SPC
+	"0 1 1 1"SPC
+	"0 1 1 1"SPC
+	"0 1 1 1"SPC
+	"0 1 1 1",
 	"Default."NL
 	"1 Traitor per 4 players and 1 Detective per 8 players."NL
 	"Everyone else vs. the Traitors, only the Traitors know eachother and everyone knows the Detectives.");

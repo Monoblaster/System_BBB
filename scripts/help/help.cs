@@ -154,6 +154,11 @@ function serverCmdHelp(%client, %a, %b, %c, %d, %e, %f)
 	while(!$BBBHelp.display(%client,"main", %input))
 	{
 		%input = removeWord(%input,getWordCount(%input)-1);
+		if(%c++ > 20)
+		{
+			talk(%input SPC "safety broken");
+			break;
+		}
 	}
 
 	if(%client.isAdmin)

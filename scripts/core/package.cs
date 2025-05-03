@@ -220,9 +220,18 @@ package BBB_Armor
 							messageClient(%client, '', "\c6[\c4Corpse Data\c6]");
 							
 							%rolecolor = %corpse.role.data.color;
+							if(%rolecolor !$= "")
+							{
+								%rolecolorml = "<color:"@%rolecolor@">";
+							}
+
 							%rolename =  %corpse.role.data.name;
+							if(%rolename $= "")
+							{
+								%rolename = "???";
+							}
 							messageClient(%client, '', "\c6 > \c3Name\c6: " @ %corpse.name);
-							messageClient(%client, '', "\c6 > \c3Role\c6: <color:"@%rolecolor@">" @ %rolename);
+							messageClient(%client, '', "\c6 > \c3Role\c6: " @ %rolecolorml @ %rolename);
 							messageClient(%client, '', "\c6 > \c3Cause of death\c6: [" @ %corpse.SOD @ "\c6]");
 							if(%corpse.deadTime !$= "")
 							{
@@ -243,7 +252,7 @@ package BBB_Armor
 								%corpse.unIDed = false;
 								if($BBB::Announce::BodyFound)
 								{
-									chatMessageAll("", "\c6" @ %obj.client.fakeName SPC "\c4found\c6" SPC %corpse.displayName @ "\c4!" SPC "They were" @ (%rolename $= "Innocent" ? " " : " a ") @ "<color:"@%rolecolor@">" @ %rolename@ "\c4!");
+									chatMessageAll("", "\c6" @ %obj.client.fakeName SPC "\c4found\c6" SPC %corpse.displayName @ "\c4!" SPC "They were" @ (%rolename $= "Innocent" ? " " : " a ") @ %rolecolorml @ %rolename @ "\c4!");
 									
 									%client = findClientByName(%corpse.name);
 									if(isObject(%client))
@@ -634,10 +643,25 @@ function GameConnection::onDeath(%client, %sourceObject, %sourceClient, %damageT
 	// removed mid-air kills code here
 	// removed mini-game kill points here
 
-	%clientName = %client.fakeName@"/"@%client.getPlayerName();
+	if(%client.fakeName $= %client.getPlayerName())
+	{
+		%clientName = %client.getPlayerName();
+	}
+	else
+	{
+		%clientName = %client.fakeName@"/"@%client.getPlayerName();
+	}
+	
 
 	if (isObject(%sourceClient))
-		%sourceClientName = %sourceClient.fakeName@"/"@%client.getPlayerName();
+		if(%client.fakeName $= %client.getPlayerName())
+		{
+			%sourceClientName = %sourceClient.getPlayerName();
+		}
+		else
+		{
+			%sourceClientName = %sourceClient.fakeName@"/"@%sourceClient.getPlayerName();
+		}
 	else if (isObject(%sourceObject.sourceObject) && %sourceObject.sourceObject.getClassName() $= "AIPlayer")
 		%sourceClientName = %sourceObject.sourceObject.name;
 	else
@@ -1103,7 +1127,7 @@ package BBB_ServerCMD
 					%color = %defaultcolor;
 					%name = %client.getPlayerName();
 
-					if(%client.fakename !$= "")
+					if(%client.fakename !$= "" && %client.fakename !$= %client.getPlayerName())
 					{
 						%name = %client.getPlayerName() SPC "("@%client.fakename@")";
 					}
@@ -1130,9 +1154,9 @@ package BBB_ServerCMD
 		else // Dead Chat
 		{
 			%name = %client.getPlayerName();
-			if(%client.fakeName !$= "")
+			if(%client.fakeName !$= "" && %client.fakename !$= %client.getPlayerName())
 			{
-				%name = %name SPC "("@%fakeName@")";
+				%name = %name SPC "("@%client.fakeName@")";
 			}
 
 			%type = "\c6[" @ (%client.hasSpawnedOnce == 1 ? "DEAD" : "LOADING") @ "]";

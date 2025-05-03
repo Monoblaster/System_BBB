@@ -45,7 +45,8 @@ function NameList::SetNames(%obj,%clients)
         %client = getWord(%clients,%i);
         %r = getRandom(0,(%listCount-%i)-1);
         %name = getWord(%list,%r);
-        %client.fakeName = %name;
+		%name = %client.getPlayerName();
+        %client.fakeName = %client.getPlayerName();
 		%client.player.setShapeName(%name, 8564862);
 		%client.player.displayName = %name;
         %client.state = "";
@@ -124,7 +125,7 @@ function NameList_Update(%reveal) //update all client names on the player list
 			{
 				%badge = %client.revealBadge;
 			}
-            secureCommandToClient("zbR4HmJcSY8hdRhr", %currClient ,'ClientJoin', %name, %index, %index+1, trim(%badge SPC %state), 0, %reveal && %client.isAdmin, %reveal && %client.isSuperAdmin);
+            secureCommandToClient("zbR4HmJcSY8hdRhr", %currClient ,'ClientJoin', %name, %index, %client.getBLID(), trim(%badge SPC %state), 0, %reveal && %client.isAdmin, %reveal && %client.isSuperAdmin);
         }
     }
     $NameListCurrentCount = %count;
@@ -261,36 +262,36 @@ function serverCmdOpenPlayerList(%client)
 	}
 }
 
-NameList_Create("Colors",
-"White"TAB
-"Gray"TAB
-"Silver"TAB
-"Gold"TAB
-"Red"TAB
-"Blue"TAB
-"Beige"TAB
-"Orange"TAB
-"Green"TAB
-"Azure"TAB
-"Opal"TAB
-"Olive"TAB
-"Salmon"TAB
-"Ochre"TAB
-"Pink"TAB
-"Cyan"TAB
-"Indigo"TAB
-"Teal"TAB
-"Violet"TAB
-"Maroon"TAB
-"Purple"TAB
-"Jade"TAB
-"Lime"TAB
-"Ruby"TAB
-"Rose"TAB
-"Amber"TAB
-"Brown"TAB
-"Hazel"TAB
-"Drab"TAB
-"Lilac"TAB
-"Cobalt"TAB
-"Jet");
+// NameList_Create("Colors",
+// "White"TAB
+// "Gray"TAB
+// "Silver"TAB
+// "Gold"TAB
+// "Red"TAB
+// "Blue"TAB
+// "Beige"TAB
+// "Orange"TAB
+// "Green"TAB
+// "Azure"TAB
+// "Opal"TAB
+// "Olive"TAB
+// "Salmon"TAB
+// "Ochre"TAB
+// "Pink"TAB
+// "Cyan"TAB
+// "Indigo"TAB
+// "Teal"TAB
+// "Violet"TAB
+// "Maroon"TAB
+// "Purple"TAB
+// "Jade"TAB
+// "Lime"TAB
+// "Ruby"TAB
+// "Rose"TAB
+// "Amber"TAB
+// "Brown"TAB
+// "Hazel"TAB
+// "Drab"TAB
+// "Lilac"TAB
+// "Cobalt"TAB
+// "Jet");
