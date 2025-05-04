@@ -10,7 +10,7 @@ function DataInstance_ListDelete(%list)
 	for(%i = 0; %i < %count; %i++)
 	{
 		%curr = getWord(%list,%i);
-		if(isObject(%curr))
+		if(isObject(%curr) && %curr.class $= "DataInstance")
 		{
 			%curr.delete();
 		}
@@ -60,6 +60,12 @@ function DataInstance_Create(%obj,%index)
 	return %d;
 }
 
+function DataInstance::Reparent(%obj,%newparent)
+{
+	%obj.DataInstance_Parent = %newparent;
+	return "";
+}
+
 // if index is empty returns nothing
 function SimObject::GetDataInstance(%obj,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a10,%a11,%a12,%a13)
 {
@@ -67,7 +73,7 @@ function SimObject::GetDataInstance(%obj,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9
 	while(%a[%c] !$= "")
 	{
 		%d = getWord(%obj.DataInstance_List,%a[%c]);
-		if(%d $= "")
+		if(!isObject(%d))
 		{
 			return "";
 		}
@@ -83,7 +89,7 @@ function SimObject::DataInstance(%obj,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a
 	while(%a[%c] !$= "")
 	{
 		%d = getWord(%obj.DataInstance_List,%a[%c]);
-		if(%d $= "")
+		if(!isObject(%d))
 		{
 			%d = DataInstance_Create(%obj,%a[%c]);
 		}
@@ -96,20 +102,28 @@ function SimObject::DataInstance(%obj,%a0,%a1,%a2,%a3,%a4,%a5,%a6,%a7,%a8,%a9,%a
 function SimObject::DataInstance_MoveTo(%obj,%from,%target,%to)
 {
 	%curr = getWord(%target.DataInstance_List,%to);
-	if(%curr !$= "")
+	if(isObject(%curr))
 	{
 		%curr.delete();
 	}
-
-	%target.DataInstance_List = setWord(%target.DataInstance_List,%to,getWord(%obj.DataInstance_List,%from));
+	%data = getWord(%obj.DataInstance_List,%from);
+	%data.DataInstance_Parent = %target;
+	%target.DataInstance_List = setWord(%target.DataInstance_List,%to,%data);
 	%obj.DataInstance_List = setWord(%obj.DataInstance_List,%from,"");
 	return "";
 }
 
 function SimObject::DataInstance_Set(%obj,%slot,%s)
 {
+	%parent = %s.DataInstance_Parent;
+	if(%parent !$= %obj && %parent !$= "")
+	{
+		warn("Invalid parent move. Try using Reparent before.");
+		backtrace();
+		return;
+	}
 	%curr = getWord(%obj.DataInstance_List,%slot);
-	if(%curr !$= "")
+	if(isObject(%curr))
 	{
 		%curr.delete();
 	}
@@ -120,6 +134,13 @@ function SimObject::DataInstance_Set(%obj,%slot,%s)
 
 function SimObject::DataInstance_Add(%obj,%s,%slot)
 {
+	%parent = %s.DataInstance_Parent;
+	if(%parent !$= %obj && %parent !$= "")
+	{
+		warn("Invalid parent move. Try using Reparent before.");
+		backtrace();
+		return;
+	}
 	if(%slot $= "")
 	{
 		%slot = getWordCount(%obj.DataInstance_List);
@@ -141,6 +162,23 @@ function SimObject::DataInstance_ListSet(%obj,%s)
 	return "";
 }
 
+function SimObject::DataInstance_HasSave(%obj)
+{
+	%id = %obj.DataIdentifier();
+	return isFile($DataInstance::FilePath @ "/" @ %id @ ".cs");
+}
+
+function SimObject::DataInstance_DeleteSave(%obj)
+{
+	%id = %obj.DataIdentifier();
+	%path = $DataInstance::FilePath @ "/" @ %id @ ".cs";
+	if(!isFile(%path))
+	{
+		return;
+	}
+	fileDelete(%path);
+}
+
 function SimObject::DataInstance_ListSave(%obj)
 {
 	%id = %obj.DataIdentifier();
@@ -151,7 +189,6 @@ function SimObject::DataInstance_ListSave(%obj)
 	}
 	%fo = new FileObject();
 	%s = DataInstance_ListStringSerialize(%obj.DataInstance_List);
-	%fo.close();
 	if(%fo.OpenForWrite($DataInstance::FilePath @ "/" @ %id @ ".cs"))
 	{
 		%fo.writeLine(%s);
@@ -175,48 +212,43 @@ function SimObject::DataInstance_ListLoad(%obj)
 
 function DataInstance_ListLoad(%path,%parent)
 {
+	DataInstance_ListDelete(%parent.DataInstance_List);
+	%parent.DataInstance_List = "";
+
 	%fo = new FileObject();
 	if(%fo.OpenForRead(%path))
 	{
 		%c = 0;
 		while(!%fo.isEOF())
 		{
-			%o = eval(%fo.readLine());
-			%o.DataInstance_Parent = %parent;
-			%data[%c] = %o;
-			%c++;
+			%line = %fo.readLine();
+			if(%line !$= "")
+			{
+				%o = eval(%line);
+				%o.DataInstance_Parent = %parent;
+				%data[%c] = %o;
+				%c++;
+			}
+			%list = %list SPC %o;
 		}
 	}
 	%fo.close();
 	%fo.delete();
+	%parent.DataInstance_List = removeWord(%list,0);
 
-	DataInstance_ListDelete(%parent.DataInstance_List);
-
-	if(%c == 0)
+	if(%parent.DataInstance_List $= "")
 	{
-		%parent.DataInstance_List = "";
 		return "";
 	}
 
-	//unwrapped first loop to ensure propper formatting without trimming
-	%currData = %data[0];
-	%s = %currData;
-	if(isObject(%currData))
-	{
-		%currData.DataInstance_ListLoad();
-	}
-	
-	for(%i = 1; %i < %c; %i++)
+	for(%i = 0; %i < %c; %i++)
 	{
 		%currData = %data[%i];
-		%s = %s SPC %currData;
 		if(isObject(%currData))
 		{
 			%currData.DataInstance_ListLoad();
 		}
 	}
-	
-	%parent.DataInstance_List = %s;
 }
 
 function SimObject::DataIdentifier(%obj,%append)
@@ -243,10 +275,9 @@ function MinigameSO::DataIdentifier(%obj,%append)
 	return %obj.class @ %obj.getName() @ %append;
 }
 
-
 function fxDtsBrick::DataIdentifier(%obj,%append)
 {
-	return %obj.getClassName() @ %obj.getTransform() @ %obj.getDatablock() @ %append;
+	return %obj.getClassName() @ %obj.getTransform() @ %obj.getDatablock() @ %obj.getGroup().bl_id @ %append;
 }
 
 function DataInstance::DataIdentifier(%obj,%append)
@@ -266,7 +297,13 @@ function DataInstance::DataIdentifier(%obj,%append)
 
 function DataInstance::StringSerialize(%d)
 {
-	%s = "new" SPC %d.getClassName() @ "(){class = \"DataInstance\";";
+	%classstring  = "class = \""@%d.class@"\";";
+	if(%d.superclass !$= "")
+	{
+		%classstring = %classstring SPC "superclass = \""@%d.superclass@"\";";
+	}
+	
+	%s = "return new" SPC %d.getClassName() @ "(){"@%classstring;
 	%c = 0;
 	while((%field = %d.getTaggedField(%c)) !$= "")
 	{
@@ -304,7 +341,6 @@ function DataInstance_GetFromThrower(%item)  //item support
 		if(!isObject(%player.tool[%i]) && getWord(%itemDataList,%i) !$= "")
 		{
 			%itemData.DataInstance_MoveTo(%i,%item,0);
-			return "";
 		}
 	}
 }
@@ -381,10 +417,12 @@ package DataInstance
 		{
 			if(%before[%i] != %user.tool[%i])
 			{
-				%user.dataInstance($DataInstance::Item).DataInstance_Set(%i,%itemData);
+				%itemData.Reparent(%user.dataInstance($DataInstance::Item));
+				%itemData.DataInstance_Parent.DataInstance_Set(%i,%itemData);
 				return %r;
 			}
 		}
+        
         return %r;
     }
 
