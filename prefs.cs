@@ -156,3 +156,5 @@ function L4BIceAxeImage::TT_isRaycastCritical(%this,%obj,%slot,%col,%pos,%normal
 	
 	return TT_isMeleeRaycastCrit(%this,%obj,%slot,%col,%pos,%normal,%hit) || (ae_calculateDamagePosition(%col, %pos) $= "head");
 }
+
+$DataInstance::FilePath = "Config/Server/DataInstance/TTT"; // to prevent ttt from nuking deathrace saves
