@@ -99,7 +99,8 @@ function NameList_Update(%reveal) //update all client names on the player list
         %indexes = removeWord(%indexes,%r);
         %client = %group.getObject(%i);
         %name = %client.getPlayerName();
-        %state = "O";
+		%state = "O";
+
         if(%client.fakeName !$= "")
         {
             %name = %client.fakeName;
@@ -262,36 +263,36 @@ function serverCmdOpenPlayerList(%client)
 	}
 }
 
-// NameList_Create("Colors",
-// "White"TAB
-// "Gray"TAB
-// "Silver"TAB
-// "Gold"TAB
-// "Red"TAB
-// "Blue"TAB
-// "Beige"TAB
-// "Orange"TAB
-// "Green"TAB
-// "Azure"TAB
-// "Opal"TAB
-// "Olive"TAB
-// "Salmon"TAB
-// "Ochre"TAB
-// "Pink"TAB
-// "Cyan"TAB
-// "Indigo"TAB
-// "Teal"TAB
-// "Violet"TAB
-// "Maroon"TAB
-// "Purple"TAB
-// "Jade"TAB
-// "Lime"TAB
-// "Ruby"TAB
-// "Rose"TAB
-// "Amber"TAB
-// "Brown"TAB
-// "Hazel"TAB
-// "Drab"TAB
-// "Lilac"TAB
-// "Cobalt"TAB
-// "Jet");
+NameList_Create("Colors",
+"White"TAB
+"Gray"TAB
+"Silver"TAB
+"Gold"TAB
+"Red"TAB
+"Blue"TAB
+"Beige"TAB
+"Orange"TAB
+"Green"TAB
+"Azure"TAB
+"Opal"TAB
+"Olive"TAB
+"Salmon"TAB
+"Ochre"TAB
+"Pink"TAB
+"Cyan"TAB
+"Indigo"TAB
+"Teal"TAB
+"Violet"TAB
+"Maroon"TAB
+"Purple"TAB
+"Jade"TAB
+"Lime"TAB
+"Ruby"TAB
+"Rose"TAB
+"Amber"TAB
+"Brown"TAB
+"Hazel"TAB
+"Drab"TAB
+"Lilac"TAB
+"Cobalt"TAB
+"Jet");

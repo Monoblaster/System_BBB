@@ -1668,14 +1668,15 @@ function BBB_Minigame::roundStart(%so)
 	if(isEventPending($BBB::Round::Schedule))
 		cancel($BBB::Round::Schedule);
 
-	$BBB::Round++;
-
 	%so.respawnTime = "-1";
 	%so.weapondamage = true;
 	%so.spawnAllPlayers();
 	%so.healAllPlayers();
 
-	$BBB::Round::AwardPercentOffset = 0;//for use with traitor rewards
+	$BBB::Round++;
+	messageAll("", "<font:Palatino Linotype:35>\c4B<font:Palatino Linotype:34>\c4EGINNING ROUND \c6" @ $BBB::Round);
+	messageAll("", "<font:Palatino Linotype:28>\c4T<font:Palatino Linotype:27>\c4HERE ARE\c6" SPC %so.numPlayers SPC "\c4PLAYERS THIS ROUND...");
+
 	%so.assignRoles();
 
 	%so.playGlobalSound(BBB_StartRound_Sound);
@@ -1688,8 +1689,6 @@ function BBB_Minigame::roundStart(%so)
 	BBB_LookLoop();
 	BBB_TimerLoop();
 
-	messageAll("", "<font:Palatino Linotype:35>\c4B<font:Palatino Linotype:34>\c4EGINNING ROUND \c6" @ $BBB::Round);
-	messageAll("", "<font:Palatino Linotype:28>\c4T<font:Palatino Linotype:27>\c4HERE ARE\c6" SPC %so.numPlayers SPC "\c4PLAYERS THIS ROUND...");
 	%so.playGlobalSound(BBB_Chat_Sound);
 }
 

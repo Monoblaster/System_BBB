@@ -70,6 +70,7 @@ function servercmdsetOopsies(%client,%a,%b,%c,%d,%e,%f,%g)
 
 	%target.dataInstance($TTT::Data).oopsies = %amount;
 	%client.chatMessage("You have set" SPC %target.getPlayerName() @ "'s oopsies to" SPC %amount);
+	%target.chatMessage("Your oopsies have been set to" SPC %amount);
 }
 
 function Oopsies_AdminNotification(%msg)
@@ -160,7 +161,7 @@ $KillType::CriminalInvalid = 2;
 $KillType::Uknown = 3;
 function Oopsies_KillCheck(%client,%targetclient)
 {
-	Oopsies_AdminNotification(%client.getPlayerName() SPC "killed" SPC %targetclient.getPlayername() SPC %targetclient.player.validStateFor[%client.player]  SPC %client.player.validStateFor[%targetClient.player]);
+	//Oopsies_AdminNotification(%client.getPlayerName() SPC "killed" SPC %targetclient.getPlayername() SPC %targetclient.player.validStateFor[%client.player]  SPC %client.player.validStateFor[%targetClient.player]);
 	if( $BBB::Round::Phase !$= "Round")
 	{
 		return;
@@ -182,7 +183,7 @@ function Oopsies_KillCheck(%client,%targetclient)
 	//invalid
 	if(%targetPlayer.isValidState(%player,$ValidState::Invalid))
 	{
-		%client.AddOopsies(-3);
+		%client.AddOopsies(-2);
 		return;
 	}
 
@@ -190,18 +191,18 @@ function Oopsies_KillCheck(%client,%targetclient)
 	%soonest = %player.getSoonestCriminal(%targetplayer);
 	if(%soonest !$= "")
 	{
-		Oopsies_AdminNotification(%soonest.client.getPlayerName());
+		//Oopsies_AdminNotification(%soonest.client.getPlayerName());
 	}
 
 	if(%soonest == %targetplayer)
 	{
-		%client.AddOopsies(-1);
+		%client.AddOopsies(-2);
 		return;
 	}
 
 	if(%targetPlayer.isValidState(%player,$ValidState::Baiting))
 	{
-		%client.AddOopsies(-1);
+		%client.AddOopsies(-2);
 		return;
 	}
 
@@ -319,7 +320,7 @@ function Player::isValidStateOrLower(%player,%target,%state)
 
 function Player::getSoonestCriminal(%player,%target)
 {
-	Oopsies_AdminNotification(%player.isValidStateOrHigher(%target,$ValidState::Criminal) SPC %target.isValidStateOrHigher(%player,$ValidState::Criminal));
+	//Oopsies_AdminNotification(%player.isValidStateOrHigher(%target,$ValidState::Criminal) SPC %target.isValidStateOrHigher(%player,$ValidState::Criminal));
 	if(%player.isValidStateOrHigher(%target,$ValidState::Criminal) && %target.isValidStateOrHigher(%player,$ValidState::Criminal))
 	{
 		if(getWord(%player.validStateFor[%target],1) < getWord(%target.validStateFor[%player],1))
@@ -576,10 +577,10 @@ package TTT_Oopsies
 		{
 			Oopsies_DoLoopingVisibleEvent(%player,"Contraband",$ValidState::Criminal);
 		}
-		else
-		{
-			Oopsies_DoLoopingVisibleEvent(%player,"Baiting",$ValidState::Baiting);
-		}
+		// else
+		// {
+		// 	Oopsies_DoLoopingVisibleEvent(%player,"Baiting",$ValidState::Baiting);
+		// }
 		return parent::MountImage(%player,%image,%slot);
 	}
 

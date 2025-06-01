@@ -37,7 +37,8 @@ function Hellen::onRemove(%this)
 
 function Hellen::loadData(%this)
 {
-	if(!isFile("./help.hlp"))
+	%file = "add-ons/system_bbb/scripts/help/help.hlp";
+	if(!isFile(%file))
 	{
 		echo(%this.getName() @ "::onAdd(): Help file not found!");
 		
@@ -48,7 +49,7 @@ function Hellen::loadData(%this)
 	%l = "\c6";
 	%a = "\c2";
 	%file = new fileObject();
-	%file.openForRead(findFirstFile("./help.hlp"));
+	%file.openForRead(findFirstFile(%file));
 	while(!%file.isEOF())
 	{
 		%line = %file.readLine();
@@ -133,7 +134,7 @@ function Hellen::display(%this, %client, %base, %input)
 	%count = %this.sectionCount[%term];
 	if(%count == 0)
 	{
-		return true;
+		return false;
 
 	}
 	
@@ -149,6 +150,11 @@ function Hellen::display(%this, %client, %base, %input)
 
 function serverCmdHelp(%client, %a, %b, %c, %d, %e, %f)
 {
+	if(!isOBject($BBBHelp))
+	{
+		return;
+	}
+
 	%client.chatMessage("\c2===");
 	%input = trim(%a SPC %b SPC %c SPC %d SPC %e SPC %f);
 	while(!$BBBHelp.display(%client,"main", %input))
