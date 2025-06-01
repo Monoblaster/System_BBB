@@ -48,12 +48,11 @@ function Hellen::loadData(%this)
 	%t = "\c7";
 	%l = "\c6";
 	%a = "\c2";
-	%file = new fileObject();
-	%file.openForRead(findFirstFile(%file));
-	while(!%file.isEOF())
+	%fileobject = new fileObject();
+	%fileobject.openForRead(%file);
+	while(!%fileobject.isEOF())
 	{
-		%line = %file.readLine();
-		
+		%line = %fileobject.readLine();
 		if(getSubStr(%line, 0, 2) $= "//")
 		{
 			continue;
@@ -106,8 +105,8 @@ function Hellen::loadData(%this)
 		%this.sectionline[%sectionName] = %this.sectionLine[%sectionName] NL %line;
 	}
 	
-	%file.close();
-	%file.delete();
+	%fileobject.close();
+	%fileobject.delete();
 	
 	return true;
 }
