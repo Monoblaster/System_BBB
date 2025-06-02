@@ -133,8 +133,7 @@ function Hellen::display(%this, %client, %base, %input)
 	%count = %this.sectionCount[%term];
 	if(%count == 0)
 	{
-		return false;
-
+		return true;
 	}
 	
 	%client.chatMessage(rtrim("\c6Type \c2/help" SPC %input) SPC "\c6followed by one of the following to access a category.");
