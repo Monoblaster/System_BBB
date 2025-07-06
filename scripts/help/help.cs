@@ -4,27 +4,8 @@
 // File Name: help.cs								
 // Description: Help code, from Iban's Cityrpg (Credit: Iban)
 // =================================================
-if(isObject($BBBHelp))
-{
-	$BBBHelp.delete();
-}
-
-$BBBHelp = new scriptObject()
-{
-	class = "Hellen";
-};
-	
 function Hellen::onAdd(%this)
-{
-	// if(%this.getName() $= "")
-	// {
-	// 	echo("Hellen::onAdd(): This database has no name! Deleting database..");
-		
-	// 	%this.schedule(0, "delete");
-		
-	// 	return false;
-	// }
-	
+{	
 	%this.loadData();
 	
 	return true;
@@ -88,7 +69,10 @@ function Hellen::loadData(%this)
 			error("Hellen: Info without sectionname");
 			return;
 		}
-
+$BBBHelp = new scriptObject()
+{
+	class = "Hellen";
+};
 		%line = strReplace(strReplace(strReplace(collapseEscape(%line),"<t>",%t),"<l>",%l),"<a>",%a);
 		if(%this.sectionInfo[%sectionName] $= "")
 		{
@@ -171,3 +155,13 @@ function serverCmdHelp(%client, %a, %b, %c, %d, %e, %f)
 	}
 	%client.chatMessage("\c6Press \c2pageUp \c6or \c2pageDown \c6to scroll.");
 }
+
+if(isObject($BBBHelp))
+{
+	$BBBHelp.delete();
+}
+	
+$BBBHelp = new scriptObject()
+{
+	class = "Hellen";
+};
