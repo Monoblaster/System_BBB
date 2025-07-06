@@ -101,6 +101,11 @@ function NameList_Update(%reveal) //update all client names on the player list
         %name = %client.getPlayerName();
 		%state = "O";
 
+		if(!%client.hasspawnedonce)
+		{
+			continue;
+		}
+		
         if(%client.fakeName !$= "")
         {
             %name = %client.fakeName;
@@ -126,7 +131,7 @@ function NameList_Update(%reveal) //update all client names on the player list
 			{
 				%badge = %client.revealBadge;
 			}
-            secureCommandToClient("zbR4HmJcSY8hdRhr", %currClient ,'ClientJoin', %name, %index, %client.getBLID(), trim(%badge SPC %state), 0, %reveal && %client.isAdmin, %reveal && %client.isSuperAdmin);
+            secureCommandToClient("zbR4HmJcSY8hdRhr", %currClient ,'ClientJoin', %name, %index, %client.getBLID(), trim(%state SPC %badge), 0, %reveal && %client.isAdmin, %reveal && %client.isSuperAdmin);
         }
     }
     $NameListCurrentCount = %count;
