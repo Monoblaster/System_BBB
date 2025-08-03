@@ -101,7 +101,7 @@ function NameList_Update(%reveal) //update all client names on the player list
         %name = %client.getPlayerName();
 		%state = "O";
 
-		if(!%client.hasspawnedonce)
+		if(!BBB_MInigame.isMember(%client))
 		{
 			continue;
 		}
