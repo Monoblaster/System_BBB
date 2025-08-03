@@ -72,10 +72,10 @@ function secureCommandToAllTS (%code, %command, %a1, %a2,%a3, %a4, %a5, %a6,%a7)
 
 function NameList_Update(%reveal) //update all client names on the player list
 {
+	%minigame = BBB_Minigame;
 	%oldSeed = getRandomSeed();
 	setRandomSeed($NameListRandomSeed);
-    %group = ClientGroup.getId();
-    %count = %group.getCount();
+	%count = %minigame.numPlayers;
 
 	if($NameListCurrentCount > %count)
 	{
@@ -97,7 +97,7 @@ function NameList_Update(%reveal) //update all client names on the player list
         %r = getRandom(0,(%count-%i)-1);
         %index = getWord(%indexes,%r); 
         %indexes = removeWord(%indexes,%r);
-        %client = %group.getObject(%i);
+        %client = %minigame.playingClients[%i];
         %name = %client.getPlayerName();
 		%state = "O";
 
