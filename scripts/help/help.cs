@@ -69,10 +69,7 @@ function Hellen::loadData(%this)
 			error("Hellen: Info without sectionname");
 			return;
 		}
-$BBBHelp = new scriptObject()
-{
-	class = "Hellen";
-};
+
 		%line = strReplace(strReplace(strReplace(collapseEscape(%line),"<t>",%t),"<l>",%l),"<a>",%a);
 		if(%this.sectionInfo[%sectionName] $= "")
 		{
