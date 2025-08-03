@@ -7,6 +7,7 @@ $Pref::AEBase::HUDPos = 3;
 $Pref::AEBase::HUD = 9;
 $Pref::AEBase::laserBlind = 0.3;
 $Pref::AEBase::flashlightBlind = 0.3;
+$Pref::AEBase::playerRecoilMult = 0;
 $Blood::MinDecalAmt = 1;
 $Blood::MaxDecalAmt = 10;
 $Blood::DeathDecalAmt = 20;

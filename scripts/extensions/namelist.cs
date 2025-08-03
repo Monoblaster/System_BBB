@@ -75,6 +75,8 @@ function NameList_Update(%reveal) //update all client names on the player list
 	%minigame = BBB_Minigame;
 	%oldSeed = getRandomSeed();
 	setRandomSeed($NameListRandomSeed);
+	%group = ClientGroup;
+	%groupcount = %group.getCount();
 	%count = %minigame.numPlayers;
 
 	if($NameListCurrentCount > %count)
@@ -101,7 +103,7 @@ function NameList_Update(%reveal) //update all client names on the player list
         %name = %client.getPlayerName();
 		%state = "O";
 
-		if(!BBB_MInigame.isMember(%client))
+		if(!%minigame.isMember(%client))
 		{
 			continue;
 		}
@@ -119,7 +121,7 @@ function NameList_Update(%reveal) //update all client names on the player list
             %state = %client.state;
         }
 
-        for(%j = 0; %j < %count; %j++)
+        for(%j = 0; %j < %groupcount; %j++)
         {
             %currClient = %group.getObject(%j);
             %badge = "";

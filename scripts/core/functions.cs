@@ -1484,6 +1484,9 @@ function BBB_Minigame::assignRoles(%so)
 	}
 	%so.numPlayers = %playerCount;
 
+	messageAll("", "<font:Palatino Linotype:35>\c4B<font:Palatino Linotype:34>\c4EGINNING ROUND \c6" @ $BBB::Round);
+	messageAll("", "<font:Palatino Linotype:28>\c4T<font:Palatino Linotype:27>\c4HERE ARE\c6" SPC %so.numPlayers SPC "\c4PLAYERS THIS ROUND...");
+
 	%defaultcolor = %so.roleGroup.defaultChatColor;
 	for(%a = 0; %a < %playerCount; %a++)
 	{
@@ -1674,8 +1677,6 @@ function BBB_Minigame::roundStart(%so)
 	%so.healAllPlayers();
 
 	$BBB::Round++;
-	messageAll("", "<font:Palatino Linotype:35>\c4B<font:Palatino Linotype:34>\c4EGINNING ROUND \c6" @ $BBB::Round);
-	messageAll("", "<font:Palatino Linotype:28>\c4T<font:Palatino Linotype:27>\c4HERE ARE\c6" SPC %so.numPlayers SPC "\c4PLAYERS THIS ROUND...");
 
 	%so.assignRoles();
 
