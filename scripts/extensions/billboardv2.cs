@@ -65,6 +65,7 @@ function BillboardMount_AddBillboard(%bbm,%lightData,%dontGhost)
 	%obj = new fxLight()
 	{
 		dataBlock = %lightData;
+		networkPriority = 9999;
 	};
 	%obj.setNetFlag(6,true);
 	if(!%dontGhost)

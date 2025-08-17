@@ -159,3 +159,40 @@ function L4BIceAxeImage::TT_isRaycastCritical(%this,%obj,%slot,%col,%pos,%normal
 }
 
 $DataInstance::FilePath = "Config/Server/DataInstance/TTT"; // to prevent ttt from nuking deathrace saves
+
+function mineCanTrigger(%src, %col)
+{
+	if(!isObject(%src)) return 1;
+	if(!isObject(%col)) return 0;
+
+	if(isObject(%src.client))
+		%src = %src.client;
+
+	if(%col.getType() & $TypeMasks::VehicleObjectType)
+	{
+		if(isObject(%con = %col.getControllingObject()))
+			%col = %con;
+		else return minigameCanDamage(%src, %col) == 1;
+	}
+
+	if(isObject(%src.winCondition) && %src.winCondition.isMiskill(%col.client.winCondition))
+		return 0;
+
+	if((%mini = getMinigameFromObject(%src)) == getMinigameFromObject(%col) && %src != %col.client && %src != %col)
+	{
+		if(%mini.isSlayerMinigame)
+		{
+			%srcTeam = (isObject(%src) ? %src.getTeam() : 0);
+			if(%col.IsA("GameConnection"))
+				%colTeam = %col.getTeam();
+			else
+				%colTeam = (isObject(%col.client) ? %col.client.getTeam() : 0);
+
+			if(%srcTeam == 0 || %colTeam == 0 || %srcTeam != %colTeam && !%srcTeam.isAlliedTeam(%colTeam))
+				return minigameCanDamage(%src, %col) == 1;
+		}
+		else return minigameCanDamage(%src, %col) == 1;
+	}
+	
+	return 0;
+}
