@@ -189,6 +189,7 @@ function RoleGroup::Role(%obj,%role)
 	%obj.add(%role);
 }
 
+//i hate this function
 function RoleGroup::SetRoles(%obj,%clients)
 {
 	%ActiveRoleGroup = new ScriptGroup(){class = "ActiveRoleGroup";};
