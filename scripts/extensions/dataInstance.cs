@@ -263,6 +263,7 @@ function Player::DataIdentifier(%obj,%append)
 	{
 		return %obj.getClassName() @ %c.getBLID() @ %append;
 	}
+	return "";
 }
 
 function GameConnection::DataIdentifier(%obj,%append)
@@ -278,6 +279,16 @@ function MinigameSO::DataIdentifier(%obj,%append)
 function fxDtsBrick::DataIdentifier(%obj,%append)
 {
 	return %obj.getClassName() @ %obj.getTransform() @ %obj.getDatablock() @ %obj.getGroup().bl_id @ %append;
+}
+
+function SimGroup::DataIdentifier(%obj,%append)
+{
+	%name = %obj.getName();
+	if(%name !$= "")
+	{
+		return %name @ %append;
+	}
+	return "";
 }
 
 function DataInstance::DataIdentifier(%obj,%append)

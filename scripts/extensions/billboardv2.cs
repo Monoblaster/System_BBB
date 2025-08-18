@@ -65,7 +65,6 @@ function BillboardMount_AddBillboard(%bbm,%lightData,%dontGhost)
 	%obj = new fxLight()
 	{
 		dataBlock = %lightData;
-		networkPriority = 9999;
 	};
 	%obj.setNetFlag(6,true);
 	if(!%dontGhost)
@@ -88,7 +87,8 @@ function BillboardMount_FinishAddBillboard(%bbm,%light)
 	%count = %group.getCount();
 	for(%i = 0; %i < %count; %i++)
 	{
-		if(%group.getObject(%i).getGhostID(%bbm) == -1)
+		%client = %group.getObject(%i); //using the currentphase to see if they're loaded
+		if(%client.currentPhase == 3 && %client.getGhostID(%bbm) == -1)
 		{
 			schedule(100,%bbm,"BillboardMount_FinishAddBillboard",%bbm,%light);
 			return "";
@@ -104,6 +104,7 @@ function BillboardMount_ClearBillboards(%bbm)
 	for(%i = %count - 1; %i >= 0; %i--)
 	{
 		%obj = %group.getObject(%i);
+		%group.remove(%obj);
 		%obj.delete();
 	}
 
