@@ -196,3 +196,107 @@ function mineCanTrigger(%src, %col)
 	
 	return 0;
 }
+
+function BBB_ClosestPointOnLine(%p1,%p2,%point)
+{
+	%t = vectorDot(vectorSub(%p1,%p2),vectorSub(%p2,%point))/vectorDot(vectorSub(%p1,%p2),vectorSub(%p1,%p2));
+	%g = vectorSub(%p2,vectorScale(vectorSub(%p1,%p2),%t));
+
+	%d = vectorSub(%p1,%p2);
+	%f = vectorSub(%g,%p2);
+	%z = 0;
+	for(%i = 0; %i < 3; %i++)
+	{
+		%a = getWord(%d,%i);
+		%b = getWord(%f,%i);
+		if(%a == 0 || %b == 0)
+		{
+			continue;
+		}
+		%z = %b / %a;
+		break;
+	}
+
+	if(%z > 1)
+	{
+		return %p1;
+	}
+	else if(%z < 0)
+	{
+		return %p2;
+	}
+	else
+	{
+		return %g;
+	}
+}
+
+function AESuppressArea(%pos, %dir, %shape, %img)
+{
+	%super = %img.whizzSupersonic;
+
+	if(%shape.previousPoint $= "")
+	{
+		%shape.previousPoint = %shape.originPoint;
+	}
+
+	if(%shape.previousPoint $= %pos)
+	{
+		return;
+	}
+
+	if(%super == 0)
+		%sfx = AESubsonicWhizz @ getRandom(1, 4) @ Sound;
+	else if(%super == 1)
+		%sfx = AESupersonicCrack @ getRandom(1, 4) @ Sound;
+	else if(%super == 2)
+		%sfx = AESupersonicBigCrack @ getRandom(1, 4) @ Sound;
+	
+	%angle = 1 - (%img.whizzAngle / 90);
+	%chance = mClampF(%img.whizzChance / 100, 0, 1);
+	%through = %img.whizzThrough;
+
+	%sourcePlayer = %shape.sourceObject;
+	%sourceClient = %sourcePlayer.client;
+
+	for(%i = 0; %i < ClientGroup.getCount(); %i++)
+	{
+		%cc = ClientGroup.getObject(%i);
+
+		%obj = %cc.getControlObject();
+
+		if(!isObject(%obj) || %shape.suppressed[%obj])
+			continue;
+		
+		%eye = %obj.getEyePoint();
+
+		%linePoint = BBB_ClosestPointOnLine(%shape.previousPoint,%pos,%eye);
+		%dist = vectorDist(%linePoint, %eye);
+		%dot = vectorDot(%dir, vectorNormalize(vectorSub(%shape.previousPoint, %eye)));
+		if(%dist < 6 && %dot <= %angle && getRandom() <= %chance)
+		{
+			if(%through || !isObject(containerRayCast(%linepoint, %eye, $TypeMasks::fxBrickObjectType | $TypeMasks::StaticObjectType)))
+			{
+				%shape.suppressed[%obj] = true;
+				%cc.play3D(%sfx, %linePoint);
+				if(isObject(%sourcePlayer))
+				{
+					Oopsies_DoVisibleEvent(%sourcePlayer,$ValidState::Criminal);
+				}
+
+				%p = new Projectile()
+				{
+					dataBlock = R_ShotgunRecoilProjectile;
+					initialPosition = %eye;
+				};
+
+				%p.setScale("0.1 0.1 0.1");
+
+				MissionCleanup.add(%p);
+
+				%p.explode();
+			}
+		}
+	}
+	%shape.previousPoint = %pos;
+}
