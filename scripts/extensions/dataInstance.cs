@@ -319,7 +319,7 @@ function DataInstance::StringSerialize(%d)
 	while((%field = %d.getTaggedField(%c)) !$= "")
 	{
 		%name = getField(%field,0);
-		%value = getField(%field,1);
+		%value = getFields(%field,1,getFieldCount(%field) - 1);
 		if(%name $= "DataInstance_List")
 		{
 			%value = %d.DataInstance_ListSave();
